@@ -3,8 +3,16 @@ mongoose.set('bufferCommands', false);
 
 const connectDB = async () => {
   try {
+    // Use MONGODB_URI from env (consistent naming)
+    const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI;
+    
+    if (!mongoUri) {
+      console.warn('⚠️ MongoDB URI not provided. Running in Mock Mode.');
+      return;
+    }
+
     // Attempt connection but don't crash if it fails (using mock mode for dev)
-    const conn = await mongoose.connect(process.env.MONGO_URI, {
+    const conn = await mongoose.connect(mongoUri, {
       serverSelectionTimeoutMS: 5000
     });
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
