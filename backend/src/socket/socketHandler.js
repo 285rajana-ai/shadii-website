@@ -17,7 +17,7 @@ module.exports = (io) => {
       socket.userId = user._id.toString();
       socket.user = user;
       next();
-    } catch {
+    } catch (err) {
       next(new Error('Invalid token'));
     }
   });
@@ -40,6 +40,15 @@ module.exports = (io) => {
       try {
         const Message = require('../models/Message');
         const { scanMessage, handleViolation } = require('../services/chatFilter');
+
+        // Validate input
+        if (!content || typeof content !== 'string' || content.trim().length === 0) {
+          return socket.emit('message:error', { error: 'Message content cannot be empty' });
+        }
+
+        if (!receiverId || !conversationId) {
+          return socket.emit('message:error', { error: 'Invalid receiver or conversation ID' });
+        }
 
         // Check violation
         const { isViolation, label } = scanMessage(content);
@@ -64,7 +73,7 @@ module.exports = (io) => {
           conversationId,
           sender: socket.userId,
           receiver: receiverId,
-          content,
+          content: content.trim(),
           status: 'delivered',
           deliveredAt: new Date(),
           isFreeMessage,
@@ -100,13 +109,15 @@ module.exports = (io) => {
         const Message = require('../models/Message');
         const user = await User.findById(socket.userId);
 
-        if (user.hasActiveSubscription()) {
+        if (user && user.hasActiveSubscription()) {
           await Message.updateMany(
             { conversationId, receiver: socket.userId, status: { $ne: 'seen' } },
             { status: 'seen', seenAt: new Date() }
           );
         }
-      } catch {}
+      } catch (err) {
+        console.error('Error marking messages as seen:', err.message);
+      }
     });
 
     // Disconnect

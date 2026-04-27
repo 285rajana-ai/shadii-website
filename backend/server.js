@@ -1,4 +1,3 @@
-require('dotenv').config();
 const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
@@ -6,6 +5,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const cron = require('node-cron');
+const morgan = require('morgan');
 
 const connectDB = require('./src/config/db');
 const { generateMatchesForAllUsers } = require('./src/services/matchingAlgorithm');
@@ -23,36 +23,56 @@ const adminRoutes = require('./src/routes/admin.routes');
 const app = express();
 const server = http.createServer(app);
 
-// Socket.IO
+// Socket.IO with secure configuration
 const io = socketIO(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || '*',
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
     methods: ['GET', 'POST'],
+    credentials: true,
   },
+  transports: ['websocket', 'polling'],
 });
 
 // Connect DB
 connectDB();
 
 // Middleware
-app.use(helmet());
-app.use(cors({ origin: process.env.FRONTEND_URL || '*', credentials: true }));
+app.use(helmet({
+  contentSecurityPolicy: false, // Disable for development
+  crossOriginEmbedderPolicy: false,
+}));
+app.use(cors({ 
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000', 
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
+// Logging
+if (process.env.NODE_ENV === 'development') {
+  app.use(morgan('dev'));
+}
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Rate limiting
-const limiter = rateLimit({
+// Rate limiting - API wide
+const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 min
   max: 100,
   message: { success: false, message: 'Too many requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
-app.use('/api/', limiter);
+app.use('/api/', apiLimiter);
 
 // Auth rate limit (stricter)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 20,
   message: { success: false, message: 'Too many auth attempts, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 // Routes
@@ -66,7 +86,30 @@ app.use('/api/admin', adminRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
-  res.json({ status: 'OK', app: 'Shadii.pk API', version: '1.0.0' });
+  res.json({ 
+    status: 'OK', 
+    app: 'Shadii.pk API', 
+    version: '1.0.0',
+    environment: process.env.NODE_ENV || 'development',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({ 
+    success: false, 
+    message: `Route ${req.method} ${req.path} not found` 
+  });
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('Global error:', err.stack);
+  res.status(err.status || 500).json({
+    success: false,
+    message: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error',
+  });
 });
 
 // Socket handler
@@ -87,6 +130,7 @@ cron.schedule('0 * * * *', async () => {
     { status: 'suspended', suspendedUntil: { $lte: now } },
     { status: 'active', $unset: { suspendedUntil: 1 } }
   );
+  console.log('✅ Auto-lifted expired suspensions');
 });
 
 // Mark messages as "seen" after 6-hour delay (free tier)
@@ -107,7 +151,8 @@ const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`🌸 Shadii.pk Server running on port ${PORT}`);
   console.log(`📧 Admin: ${process.env.ADMIN_EMAIL || 'admin@shadii.pk'}`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🔒 CORS enabled for: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
 });
 
 module.exports = { app, io };

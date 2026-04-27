@@ -130,6 +130,23 @@ router.post('/photo', protect, upload.single('photo'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ success: false, message: 'No photo uploaded' });
 
+    // Validate file type
+    const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedMimeTypes.includes(req.file.mimetype)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid file type. Only JPEG, PNG, and WebP images are allowed' 
+      });
+    }
+
+    // Validate file size (max 5MB)
+    if (req.file.size > 5 * 1024 * 1024) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'File size must be less than 5MB' 
+      });
+    }
+
     const result = await uploadProfilePhoto(req.file.path, req.user.id, req.user.gender);
 
     const user = await User.findById(req.user.id);
@@ -145,7 +162,8 @@ router.post('/photo', protect, upload.single('photo'), async (req, res) => {
 
     res.json({ success: true, photo: photoObj, message: 'Photo uploaded successfully' });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error('Photo upload error:', err.message);
+    res.status(500).json({ success: false, message: 'Photo upload failed. Please try again.' });
   }
 });
 
@@ -155,6 +173,25 @@ router.post('/verify', protect, upload.fields([{ name: 'cnicFront' }, { name: 'c
     const { files } = req;
     if (!files.cnicFront || !files.cnicBack || !files.livePhoto) {
       return res.status(400).json({ success: false, message: 'Please upload CNIC front, back, and live photo' });
+    }
+
+    // Validate file types
+    const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    for (const field of ['cnicFront', 'cnicBack', 'livePhoto']) {
+      const file = Array.isArray(files[field]) ? files[field][0] : files[field];
+      if (!allowedMimeTypes.includes(file.mimetype)) {
+        return res.status(400).json({ 
+          success: false, 
+          message: `Invalid file type for ${field}. Only JPEG, PNG, and WebP images are allowed` 
+        });
+      }
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        return res.status(400).json({ 
+          success: false, 
+          message: `File size for ${field} must be less than 5MB` 
+        });
+      }
     }
 
     const [cnicFront, cnicBack, livePhotoResult] = await Promise.all([
@@ -172,7 +209,8 @@ router.post('/verify', protect, upload.fields([{ name: 'cnicFront' }, { name: 'c
 
     res.json({ success: true, message: 'Verification submitted! Our team will review within 24-48 hours.' });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error('Verification upload error:', err.message);
+    res.status(500).json({ success: false, message: 'Verification upload failed. Please try again.' });
   }
 });
 

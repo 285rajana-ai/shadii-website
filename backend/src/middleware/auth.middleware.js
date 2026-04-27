@@ -32,7 +32,7 @@ exports.protect = async (req, res, next) => {
 
 // Middleware to check active subscription
 exports.requireSubscription = async (req, res, next) => {
-  if (!req.user.hasActiveSubscription()) {
+  if (!req.user || !req.user.hasActiveSubscription()) {
     return res.status(403).json({
       success: false,
       message: 'This feature requires a subscription. Upgrade your plan starting from PKR 1,000.',
@@ -45,7 +45,7 @@ exports.requireSubscription = async (req, res, next) => {
 
 // Admin middleware
 exports.isAdmin = async (req, res, next) => {
-  if (!req.user.isAdmin) {
+  if (!req.user || !req.user.isAdmin) {
     return res.status(403).json({ success: false, message: 'Admin access required' });
   }
   next();
