@@ -1,0 +1,33 @@
+.DS_Store
+.tmp-*
+
+# Dependencies
+**/node_modules/
+
+# Build output
+**/.next/
+**/.expo/
+**/dist/
+**/build/
+**/coverage/
+**/web-build/
+
+# Logs
+**/*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment files
+**/.env
+**/.env.*
+!**/.env.example
+
+# TypeScript
+**/*.tsbuildinfo
+
+# Local tooling
+**/.vercel/
+**/.pnp
+**/.pnp.*

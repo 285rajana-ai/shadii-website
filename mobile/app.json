@@ -1,0 +1,52 @@
+{
+  "expo": {
+    "name": "Shadii.pk",
+    "slug": "shadii-pk",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0D0D0D"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "pk.shadii.app"
+    },
+    "android": {
+      "package": "pk.shadii.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0D0D0D"
+      },
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "INTERNET",
+        "ACCESS_NETWORK_STATE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Shadii.pk needs camera access for profile photo and verification."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Shadii.pk needs photo access to set your profile picture."
+        }
+      ]
+    ]
+  }
+}
