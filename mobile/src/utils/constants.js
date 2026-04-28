@@ -1,6 +1,5 @@
-// For physical device testing use your Mac's LAN IP (not localhost)
-// Run `ifconfig | grep "inet " | grep -v 127` to get your IP
-export const API_BASE_URL = 'http://192.168.10.102:5001/api';
+// Production backend on Railway — works on any network, no WiFi dependency
+export const API_BASE_URL = 'https://shadi-production.up.railway.app/api';
 
 export const SUBSCRIPTION_PLANS = [
   {

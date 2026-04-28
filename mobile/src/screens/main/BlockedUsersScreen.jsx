@@ -12,6 +12,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
 import colors from '../../theme/colors';
 import { glassStyles } from '../../theme/glassmorphism';
@@ -19,6 +20,7 @@ import { API_BASE_URL } from '../../utils/constants';
 
 export default function BlockedUsersScreen({ navigation }) {
     const { token } = useSelector((s) => s.auth);
+    const insets = useSafeAreaInsets();
     const [blockedUsers, setBlockedUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const slideAnim = useRef(new Animated.Value(30)).current;
@@ -112,7 +114,7 @@ export default function BlockedUsersScreen({ navigation }) {
             <LinearGradient colors={['#1A000A', '#0D0D0D']} style={StyleSheet.absoluteFill} />
 
             {/* Header */}
-            <View style={styles.header}>
+            <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
                     <MaterialCommunityIcons name="arrow-left" size={24} color={colors.text} />
                 </TouchableOpacity>
@@ -156,7 +158,7 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
     header: {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-        paddingTop: 56, paddingBottom: 16, paddingHorizontal: 20,
+        paddingBottom: 16, paddingHorizontal: 20,
     },
     backBtn: { padding: 8, backgroundColor: colors.glass, borderRadius: 12, borderWidth: 1, borderColor: colors.glassBorderLight },
     headerTitle: { fontSize: 20, fontWeight: '700', color: colors.text },

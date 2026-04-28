@@ -3,15 +3,16 @@ import { useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, FlatList, Image, RefreshControl, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
 import colors from '../../theme/colors';
 import { glassStyles, spacing } from '../../theme/glassmorphism';
 import { API_BASE_URL } from '../../utils/constants';
-import { MOCK_CHATS } from '../../utils/mockData';
 
 export default function ChatListScreen({ navigation }) {
   const { token } = useSelector((s) => s.auth);
-  const [conversations, setConversations] = useState(MOCK_CHATS);
+  const insets = useSafeAreaInsets();
+  const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -21,8 +22,8 @@ export default function ChatListScreen({ navigation }) {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
-      if (data.success && data.conversations.length > 0) {
-        setConversations(data.conversations);
+      if (data.success) {
+        setConversations(data.conversations || []);
       }
     } catch (e) {
       console.log('Chat list fetch error, using mocks:', e.message);
@@ -42,34 +43,34 @@ export default function ChatListScreen({ navigation }) {
   const onRefresh = () => { setRefreshing(true); fetchConversations(); };
 
   const renderItem = ({ item }) => {
-    const user = item.user || item.otherUser;
+    const user = item.otherUser || item.user;
     const lastMsg = item.lastMessage;
 
     return (
       <TouchableOpacity
         style={[glassStyles.card, styles.chatCard]}
-        onPress={() => navigation.navigate('ChatDetail', { userId: user.id || user._id, userName: user.name })}
+        onPress={() => navigation.navigate('ChatDetail', { userId: user?.id || user?._id, userName: user?.name })}
         activeOpacity={0.8}
       >
         <View style={styles.avatarContainer}>
-          <Image source={{ uri: user.photos?.[0] || user.photo || 'https://via.placeholder.com/150' }} style={styles.avatar} />
-          {user.isOnline && <View style={styles.onlineDot} />}
+          <Image source={{ uri: user?.photo || user?.photos?.[0] || 'https://via.placeholder.com/150' }} style={styles.avatar} />
+          {user?.isOnline && <View style={styles.onlineDot} />}
         </View>
 
         <View style={styles.chatInfo}>
           <View style={styles.chatHeader}>
             <Text style={styles.userName} numberOfLines={1}>{user.name}</Text>
             {user.isVerified && <MaterialCommunityIcons name="check-decagram" size={16} color={colors.accent} style={{ marginLeft: 4 }} />}
-            <Text style={styles.timeText}>{item.time || '12:45 PM'}</Text>
+            <Text style={styles.timeText}>{item.lastMessage?.createdAt ? new Date(item.lastMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : item.time || ''}</Text>
           </View>
 
           <View style={styles.msgPreviewRow}>
-            <Text style={[styles.msgPreview, item.unread > 0 && styles.unreadText]} numberOfLines={1}>
+            <Text style={[styles.msgPreview, item.unreadCount > 0 && styles.unreadText]} numberOfLines={1}>
               {typeof lastMsg === 'string' ? lastMsg : (lastMsg?.content || 'Sent a photo')}
             </Text>
-            {item.unread > 0 && (
+            {item.unreadCount > 0 && (
               <LinearGradient colors={colors.gradients.gold} style={styles.unreadBadge}>
-                <Text style={styles.unreadCountText}>{item.unread}</Text>
+                <Text style={styles.unreadCountText}>{item.unreadCount}</Text>
               </LinearGradient>
             )}
           </View>
@@ -83,9 +84,9 @@ export default function ChatListScreen({ navigation }) {
       <StatusBar barStyle="light-content" />
       <LinearGradient colors={colors.gradients.luxury} style={StyleSheet.absoluteFill} />
 
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
         <Text style={styles.headerTitle}>Messages</Text>
-        <TouchableOpacity style={styles.iconButton}>
+        <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Discover')}>
           <MaterialCommunityIcons name="message-plus-outline" size={24} color={colors.accent} />
         </TouchableOpacity>
       </View>
@@ -119,7 +120,6 @@ export default function ChatListScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   header: {
-    paddingTop: 60,
     paddingBottom: 20,
     paddingHorizontal: spacing.lg,
     flexDirection: 'row',

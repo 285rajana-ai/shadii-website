@@ -12,10 +12,12 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../store/slices/authSlice';
 import colors from '../../theme/colors';
 import { glassStyles } from '../../theme/glassmorphism';
+import { API_BASE_URL } from '../../utils/constants';
 
 const CONTACT_EMAILS = {
     general: 'help@shadii.pk',
@@ -25,21 +27,21 @@ const CONTACT_EMAILS = {
 };
 
 export default function SettingsScreen({ navigation }) {
-    const { user } = useSelector((s) => s.auth);
+    const { user, token } = useSelector((s) => s.auth);
     const dispatch = useDispatch();
+    const insets = useSafeAreaInsets();
     const slideAnim = useRef(new Animated.Value(40)).current;
     const fadeAnim = useRef(new Animated.Value(0)).current;
 
     const [notifications, setNotifications] = useState({
-        messages: true,
-        matches: true,
-        profileViews: false,
-        promotions: false,
+        messages: user?.settings?.notifications?.messages ?? true,
+        matches: user?.settings?.notifications?.matches ?? true,
+        profileViews: user?.settings?.notifications?.profileViews ?? false,
+        promotions: user?.settings?.notifications?.promotions ?? false,
     });
     const [privacy, setPrivacy] = useState({
-        showOnlineStatus: true,
-        showLastSeen: true,
-        blurMyPhoto: false,
+        showOnlineStatus: user?.settings?.privacy?.showOnlineStatus ?? true,
+        showLastSeen: user?.settings?.privacy?.showLastSeen ?? true,
     });
 
     useEffect(() => {
@@ -48,6 +50,28 @@ export default function SettingsScreen({ navigation }) {
             Animated.timing(fadeAnim, { toValue: 1, duration: 450, useNativeDriver: true }),
         ]).start();
     }, []);
+
+    const saveSettings = async (newNotifications, newPrivacy) => {
+        try {
+            await fetch(`${API_BASE_URL}/profile/settings`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ notifications: newNotifications, privacy: newPrivacy }),
+            });
+        } catch (_) { }
+    };
+
+    const updateNotification = (key, val) => {
+        const updated = { ...notifications, [key]: val };
+        setNotifications(updated);
+        saveSettings(updated, privacy);
+    };
+
+    const updatePrivacy = (key, val) => {
+        const updated = { ...privacy, [key]: val };
+        setPrivacy(updated);
+        saveSettings(notifications, updated);
+    };
 
     const handleLogout = () => {
         Alert.alert('Logout', 'Are you sure you want to log out?', [
@@ -75,7 +99,7 @@ export default function SettingsScreen({ navigation }) {
             <LinearGradient colors={['#1A000A', '#0D0D0D']} style={StyleSheet.absoluteFill} />
 
             {/* Header */}
-            <View style={styles.header}>
+            <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
                     <MaterialCommunityIcons name="arrow-left" size={24} color={colors.text} />
                 </TouchableOpacity>
@@ -126,7 +150,7 @@ export default function SettingsScreen({ navigation }) {
                                     </View>
                                     <Switch
                                         value={notifications[item.key]}
-                                        onValueChange={(v) => setNotifications((p) => ({ ...p, [item.key]: v }))}
+                                        onValueChange={(v) => updateNotification(item.key, v)}
                                         trackColor={{ false: colors.inactive, true: colors.accent }}
                                         thumbColor="#FFF"
                                     />
@@ -151,7 +175,7 @@ export default function SettingsScreen({ navigation }) {
                                     </View>
                                     <Switch
                                         value={privacy[item.key]}
-                                        onValueChange={(v) => setPrivacy((p) => ({ ...p, [item.key]: v }))}
+                                        onValueChange={(v) => updatePrivacy(item.key, v)}
                                         trackColor={{ false: colors.inactive, true: colors.accent }}
                                         thumbColor="#FFF"
                                     />
@@ -239,7 +263,7 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
     header: {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-        paddingTop: 56, paddingBottom: 16, paddingHorizontal: 20,
+        paddingBottom: 16, paddingHorizontal: 20,
     },
     backBtn: { padding: 8, backgroundColor: colors.glass, borderRadius: 12, borderWidth: 1, borderColor: colors.glassBorderLight },
     headerTitle: { fontSize: 20, fontWeight: '700', color: colors.text, letterSpacing: 0.5 },

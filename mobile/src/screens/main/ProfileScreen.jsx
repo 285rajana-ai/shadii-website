@@ -1,16 +1,46 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, StatusBar } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useSelector, useDispatch } from 'react-redux';
-import { logout } from '../../store/slices/authSlice';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useEffect, useState } from 'react';
+import { Alert, Image, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useDispatch, useSelector } from 'react-redux';
+import { logout, updateUser } from '../../store/slices/authSlice';
 import colors from '../../theme/colors';
-import { glassStyles, radius, spacing } from '../../theme/glassmorphism';
+import { glassStyles, spacing } from '../../theme/glassmorphism';
+import { API_BASE_URL } from '../../utils/constants';
 
 export default function ProfileScreen({ navigation }) {
-  const { user } = useSelector((s) => s.auth);
+  const { user, token } = useSelector((s) => s.auth);
   const dispatch = useDispatch();
+  const insets = useSafeAreaInsets();
+  const [matchCount, setMatchCount] = useState(null);
+
+  useEffect(() => {
+    // Refresh user data from API to get latest stats
+    const refreshUser = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
+        const data = await res.json();
+        if (data.success) dispatch(updateUser(data.user));
+      } catch (_) { }
+    };
+    // Fetch match count
+    const fetchMatchCount = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/matches/today`, { headers: { Authorization: `Bearer ${token}` } });
+        const data = await res.json();
+        if (data.success) setMatchCount(data.matches?.length ?? 0);
+      } catch (_) { }
+    };
+    refreshUser();
+    fetchMatchCount();
+  }, []);
+
+  const getSubscriptionExpiry = () => {
+    const endDate = user?.subscription?.endDate;
+    if (!endDate) return null;
+    return new Date(endDate).toLocaleDateString('en-PK', { month: 'short', year: 'numeric' });
+  };
 
   const handleLogout = () => {
     Alert.alert('Logout', 'Are you sure you want to log out?', [
@@ -31,8 +61,8 @@ export default function ProfileScreen({ navigation }) {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
       <LinearGradient colors={colors.gradients.luxury} style={StyleSheet.absoluteFill} />
-      
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 16 }]}>
         {/* Luxury Header */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Account</Text>
@@ -62,8 +92,8 @@ export default function ProfileScreen({ navigation }) {
             </View>
             <Text style={styles.userName}>{user?.name || 'Test User'}</Text>
             <Text style={styles.userEmail}>{user?.email || 'test@shadii.pk'}</Text>
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               style={styles.editBtn}
               onPress={() => navigation.navigate('EditProfile')}
             >
@@ -73,30 +103,30 @@ export default function ProfileScreen({ navigation }) {
           </View>
 
           <View style={styles.statsContainer}>
-            <StatItem label="Profile Views" value={user?.profileViews || '1.2k'} icon="eye-outline" />
+            <StatItem label="Profile Views" value={user?.profileViews ?? 0} icon="eye-outline" />
             <View style={styles.statDivider} />
-            <StatItem label="Trust Score" value={`${user?.profileCompleteness || 85}%`} icon="shield-check-outline" />
+            <StatItem label="Trust Score" value={`${user?.profileCompleteness ?? 0}%`} icon="shield-check-outline" />
             <View style={styles.statDivider} />
-            <StatItem label="Matches" value="24" icon="heart-outline" />
+            <StatItem label="Matches" value={matchCount ?? 0} icon="heart-outline" />
           </View>
         </View>
 
         {/* Subscription / Membership Section */}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.membershipCard}
           onPress={() => navigation.navigate('Plans')}
         >
-          <LinearGradient 
-            colors={user?.subscription?.isActive ? colors.gradients.gold : colors.gradients.royal} 
+          <LinearGradient
+            colors={user?.subscription?.isActive ? colors.gradients.gold : colors.gradients.royal}
             style={StyleSheet.absoluteFill}
-            start={{x:0, y:0}} end={{x:1, y:0}}
+            start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
           />
           <View style={styles.membershipContent}>
             <View style={styles.membershipIconBg}>
-              <MaterialCommunityIcons 
-                name={user?.subscription?.isActive ? "crown" : "star-outline"} 
-                size={24} 
-                color={user?.subscription?.isActive ? colors.maroon : '#FFF'} 
+              <MaterialCommunityIcons
+                name={user?.subscription?.isActive ? "crown" : "star-outline"}
+                size={24}
+                color={user?.subscription?.isActive ? colors.maroon : '#FFF'}
               />
             </View>
             <View style={{ flex: 1, marginLeft: 16 }}>
@@ -104,13 +134,15 @@ export default function ProfileScreen({ navigation }) {
                 {user?.subscription?.isActive ? 'Premium Member' : 'Go Premium'}
               </Text>
               <Text style={[styles.membershipSub, user?.subscription?.isActive && { color: 'rgba(92, 15, 49, 0.7)' }]}>
-                {user?.subscription?.isActive ? 'Valid until Dec 2026' : 'Reveal all photos & get featured'}
+                {user?.subscription?.isActive
+                  ? `Valid until ${getSubscriptionExpiry() || 'N/A'}`
+                  : 'Reveal all photos & get featured'}
               </Text>
             </View>
-            <MaterialCommunityIcons 
-              name="chevron-right" 
-              size={24} 
-              color={user?.subscription?.isActive ? colors.maroon : '#FFF'} 
+            <MaterialCommunityIcons
+              name="chevron-right"
+              size={24}
+              color={user?.subscription?.isActive ? colors.maroon : '#FFF'}
             />
           </View>
         </TouchableOpacity>
@@ -129,7 +161,7 @@ export default function ProfileScreen({ navigation }) {
           <Text style={styles.menuSectionTitle}>Support</Text>
           <View style={[glassStyles.card, styles.menuList]}>
             <MenuAction icon="help-circle-outline" label="Help Center" onPress={() => navigation.navigate('Help')} />
-            <MenuAction icon="file-document-outline" label="Terms of Service" onPress={() => {}} />
+            <MenuAction icon="file-document-outline" label="Terms of Service" onPress={() => { }} />
             <MenuAction icon="logout" label="Logout" onPress={handleLogout} color={colors.error} last />
           </View>
         </View>
@@ -153,8 +185,8 @@ function StatItem({ label, value, icon }) {
 
 function MenuAction({ icon, label, onPress, color, last }) {
   return (
-    <TouchableOpacity 
-      style={[styles.menuItem, last && { borderBottomWidth: 0 }]} 
+    <TouchableOpacity
+      style={[styles.menuItem, last && { borderBottomWidth: 0 }]}
       onPress={onPress}
       activeOpacity={0.7}
     >
@@ -169,83 +201,83 @@ function MenuAction({ icon, label, onPress, color, last }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  scroll: { paddingTop: 60, paddingHorizontal: spacing.lg },
-  header: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
+  scroll: { paddingHorizontal: spacing.lg },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 24 
+    marginBottom: 24
   },
   headerTitle: { fontSize: 28, fontWeight: '900', color: colors.text },
-  settingsBtn: { 
-    width: 44, height: 44, borderRadius: 12, 
-    backgroundColor: colors.surfaceLight, alignItems: 'center', justifyContent: 'center' 
+  settingsBtn: {
+    width: 44, height: 44, borderRadius: 12,
+    backgroundColor: colors.surfaceLight, alignItems: 'center', justifyContent: 'center'
   },
 
   profileCard: { padding: 24, alignItems: 'center', marginBottom: 24 },
   profileInfo: { alignItems: 'center', marginBottom: 24 },
   avatarContainer: { marginBottom: 16 },
-  avatarBorder: { 
-    width: 110, height: 110, borderRadius: 55, 
-    borderWidth: 3, borderColor: colors.accent, padding: 4 
+  avatarBorder: {
+    width: 110, height: 110, borderRadius: 55,
+    borderWidth: 3, borderColor: colors.accent, padding: 4
   },
   avatar: { width: '100%', height: '100%', borderRadius: 50 },
   avatarPlaceholder: { width: '100%', height: '100%', borderRadius: 50, alignItems: 'center', justifyContent: 'center' },
   avatarInitial: { fontSize: 40, color: '#FFF', fontWeight: 'bold' },
-  verifiedBadge: { 
-    position: 'absolute', bottom: 0, right: 0, 
-    backgroundColor: colors.surface, borderRadius: 15, padding: 2 
+  verifiedBadge: {
+    position: 'absolute', bottom: 0, right: 0,
+    backgroundColor: colors.surface, borderRadius: 15, padding: 2
   },
   userName: { fontSize: 22, fontWeight: '800', color: colors.text },
   userEmail: { color: colors.textSecondary, fontSize: 14, marginTop: 4 },
-  editBtn: { 
-    flexDirection: 'row', alignItems: 'center', gap: 6, 
-    marginTop: 16, backgroundColor: 'rgba(212, 175, 55, 0.1)', 
+  editBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    marginTop: 16, backgroundColor: 'rgba(212, 175, 55, 0.1)',
     paddingHorizontal: 16, paddingVertical: 8, borderRadius: 12,
     borderWidth: 0.5, borderColor: colors.accent
   },
   editBtnText: { color: colors.accent, fontSize: 13, fontWeight: '700' },
 
-  statsContainer: { 
-    flexDirection: 'row', width: '100%', 
-    paddingTop: 24, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)' 
+  statsContainer: {
+    flexDirection: 'row', width: '100%',
+    paddingTop: 24, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)'
   },
   statItem: { flex: 1, alignItems: 'center' },
   statValue: { color: colors.text, fontSize: 18, fontWeight: '800', marginTop: 4 },
   statLabel: { color: colors.textSecondary, fontSize: 11, marginTop: 2, textTransform: 'uppercase', letterSpacing: 0.5 },
   statDivider: { width: 1, height: 30, backgroundColor: 'rgba(255,255,255,0.1)', alignSelf: 'center' },
 
-  membershipCard: { 
+  membershipCard: {
     borderRadius: 24, overflow: 'hidden', marginBottom: 32,
     shadowColor: colors.accent, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8
   },
   membershipContent: { flexDirection: 'row', alignItems: 'center', padding: 20 },
-  membershipIconBg: { 
-    width: 48, height: 48, borderRadius: 12, 
-    backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' 
+  membershipIconBg: {
+    width: 48, height: 48, borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center'
   },
   membershipTitle: { color: '#FFF', fontSize: 17, fontWeight: '800' },
   membershipSub: { color: 'rgba(255,255,255,0.8)', fontSize: 12, marginTop: 2 },
 
   menuSection: { marginBottom: 32 },
-  menuSectionTitle: { 
-    color: colors.textSecondary, fontSize: 13, 
-    fontWeight: '700', textTransform: 'uppercase', 
-    letterSpacing: 1, marginBottom: 12, marginLeft: 4 
+  menuSectionTitle: {
+    color: colors.textSecondary, fontSize: 13,
+    fontWeight: '700', textTransform: 'uppercase',
+    letterSpacing: 1, marginBottom: 12, marginLeft: 4
   },
   menuList: { paddingVertical: 8 },
-  menuItem: { 
-    flexDirection: 'row', alignItems: 'center', 
-    padding: 16, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.03)' 
+  menuItem: {
+    flexDirection: 'row', alignItems: 'center',
+    padding: 16, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.03)'
   },
-  menuIconBg: { 
-    width: 36, height: 36, borderRadius: 10, 
-    backgroundColor: colors.surfaceLight, alignItems: 'center', justifyContent: 'center' 
+  menuIconBg: {
+    width: 36, height: 36, borderRadius: 10,
+    backgroundColor: colors.surfaceLight, alignItems: 'center', justifyContent: 'center'
   },
   menuLabel: { flex: 1, color: colors.text, fontSize: 16, fontWeight: '500', marginLeft: 16 },
-  
-  versionText: { 
-    textAlign: 'center', color: colors.textMuted, 
-    fontSize: 12, marginTop: 10, marginBottom: 40 
+
+  versionText: {
+    textAlign: 'center', color: colors.textMuted,
+    fontSize: 12, marginTop: 10, marginBottom: 40
   }
 });

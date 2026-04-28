@@ -2,10 +2,11 @@ const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/auth.middleware');
 const User = require('../models/User');
-const { uploadProfilePhoto, uploadCNIC, uploadLivePhoto } = require('../config/cloudinary');
 const { sendEmail } = require('../config/mailer');
 const multer = require('multer');
-const upload = multer({ dest: '/tmp/' });
+const fs = require('fs');
+const path = require('path');
+const upload = multer({ dest: '/tmp/', limits: { fileSize: 5 * 1024 * 1024 } });
 
 // GET /api/profile/discover — browse profiles with filters
 router.get('/discover', protect, async (req, res) => {
@@ -73,6 +74,34 @@ router.get('/discover', protect, async (req, res) => {
   }
 });
 
+// GET /api/profile/blocked — list blocked users (MUST be before /:id)
+router.get('/blocked', protect, async (req, res) => {
+  try {
+    const me = await User.findById(req.user.id).populate('blockedUsers', 'name age city photos isVerified');
+    const users = (me.blockedUsers || []).map((u) => ({
+      _id: u._id,
+      name: u.name,
+      age: u.age,
+      city: u.city,
+      photo: u.photos?.find((p) => p.isMain)?.url || u.photos?.[0]?.url || null,
+      isVerified: u.isVerified,
+    }));
+    res.json({ success: true, users });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// GET /api/profile/settings — get settings (MUST be before /:id)
+router.get('/settings', protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('settings');
+    res.json({ success: true, settings: user.settings || {} });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // GET /api/profile/:id — view profile
 router.get('/:id', protect, async (req, res) => {
   try {
@@ -125,35 +154,29 @@ router.put('/update', protect, async (req, res) => {
   }
 });
 
-// POST /api/profile/photo — upload profile photo
+// POST /api/profile/photo — upload profile photo (stores as base64 data URI)
 router.post('/photo', protect, upload.single('photo'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ success: false, message: 'No photo uploaded' });
 
-    // Validate file type
     const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp'];
     if (!allowedMimeTypes.includes(req.file.mimetype)) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Invalid file type. Only JPEG, PNG, and WebP images are allowed' 
-      });
+      return res.status(400).json({ success: false, message: 'Only JPEG, PNG, and WebP images are allowed' });
     }
 
-    // Validate file size (max 5MB)
-    if (req.file.size > 5 * 1024 * 1024) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'File size must be less than 5MB' 
-      });
-    }
+    // Read file and convert to base64 data URI
+    const fileBuffer = fs.readFileSync(req.file.path);
+    const base64 = fileBuffer.toString('base64');
+    const dataUri = `data:${req.file.mimetype};base64,${base64}`;
 
-    const result = await uploadProfilePhoto(req.file.path, req.user.id, req.user.gender);
+    // Clean up temp file
+    fs.unlinkSync(req.file.path);
 
     const user = await User.findById(req.user.id);
     const photoObj = {
-      url: result.originalUrl,
-      blurredUrl: result.blurredUrl,
-      publicId: result.publicId,
+      url: dataUri,
+      blurredUrl: null,
+      publicId: `local_${Date.now()}`,
       isMain: user.photos.length === 0,
     };
 
@@ -167,43 +190,31 @@ router.post('/photo', protect, upload.single('photo'), async (req, res) => {
   }
 });
 
-// POST /api/profile/verify — submit verification
+// POST /api/profile/verify — submit verification (stores as base64, no Cloudinary needed)
 router.post('/verify', protect, upload.fields([{ name: 'cnicFront' }, { name: 'cnicBack' }, { name: 'livePhoto' }]), async (req, res) => {
   try {
     const { files } = req;
-    if (!files.cnicFront || !files.cnicBack || !files.livePhoto) {
+    if (!files?.cnicFront || !files?.cnicBack || !files?.livePhoto) {
       return res.status(400).json({ success: false, message: 'Please upload CNIC front, back, and live photo' });
     }
 
-    // Validate file types
     const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp'];
-    for (const field of ['cnicFront', 'cnicBack', 'livePhoto']) {
-      const file = Array.isArray(files[field]) ? files[field][0] : files[field];
-      if (!allowedMimeTypes.includes(file.mimetype)) {
-        return res.status(400).json({ 
-          success: false, 
-          message: `Invalid file type for ${field}. Only JPEG, PNG, and WebP images are allowed` 
-        });
-      }
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        return res.status(400).json({ 
-          success: false, 
-          message: `File size for ${field} must be less than 5MB` 
-        });
-      }
-    }
+    const toDataUri = (file) => {
+      const f = Array.isArray(file) ? file[0] : file;
+      if (!allowedMimeTypes.includes(f.mimetype)) throw new Error(`Invalid file type: ${f.mimetype}`);
+      const buf = fs.readFileSync(f.path);
+      fs.unlinkSync(f.path);
+      return `data:${f.mimetype};base64,${buf.toString('base64')}`;
+    };
 
-    const [cnicFront, cnicBack, livePhotoResult] = await Promise.all([
-      uploadCNIC(files.cnicFront[0].path, req.user.id, 'front'),
-      uploadCNIC(files.cnicBack[0].path, req.user.id, 'back'),
-      uploadLivePhoto(files.livePhoto[0].path, req.user.id),
-    ]);
+    const cnicFrontUri = toDataUri(files.cnicFront);
+    const cnicBackUri = toDataUri(files.cnicBack);
+    const livePhotoUri = toDataUri(files.livePhoto);
 
     await User.findByIdAndUpdate(req.user.id, {
-      cnicFront: cnicFront.secure_url,
-      cnicBack: cnicBack.secure_url,
-      livePhoto: livePhotoResult.secure_url,
+      cnicFront: cnicFrontUri,
+      cnicBack: cnicBackUri,
+      livePhoto: livePhotoUri,
       verificationStatus: 'pending',
     });
 
@@ -214,19 +225,15 @@ router.post('/verify', protect, upload.fields([{ name: 'cnicFront' }, { name: 'c
   }
 });
 
-// GET /api/profile/blocked — list blocked users
-router.get('/blocked', protect, async (req, res) => {
+// PUT /api/profile/settings — save notification & privacy settings
+router.put('/settings', protect, async (req, res) => {
   try {
-    const me = await User.findById(req.user.id).populate('blockedUsers', 'name age city photos isVerified');
-    const users = (me.blockedUsers || []).map((u) => ({
-      _id: u._id,
-      name: u.name,
-      age: u.age,
-      city: u.city,
-      photo: u.photos?.find((p) => p.isMain)?.url || u.photos?.[0]?.url || null,
-      isVerified: u.isVerified,
-    }));
-    res.json({ success: true, users });
+    const { notifications, privacy } = req.body;
+    const update = {};
+    if (notifications) update['settings.notifications'] = notifications;
+    if (privacy) update['settings.privacy'] = privacy;
+    const user = await User.findByIdAndUpdate(req.user.id, { $set: update }, { new: true });
+    res.json({ success: true, settings: user.settings });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

@@ -1,5 +1,3 @@
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -11,6 +9,7 @@ import {
   TextInput, TouchableOpacity,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
 import { useSocket } from '../../hooks/useSocket';
 import colors from '../../theme/colors';
@@ -20,6 +19,7 @@ export default function ChatDetailScreen({ route, navigation }) {
   const { userId: otherUserId, userName } = route.params;
   const { token, user } = useSelector((s) => s.auth);
   const socket = useSocket();
+  const insets = useSafeAreaInsets();
 
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
@@ -45,13 +45,19 @@ export default function ChatDetailScreen({ route, navigation }) {
 
     socket.on('message:receive', (msg) => {
       if (msg.conversationId === conversationId) {
-        setMessages((prev) => [msg, ...prev]);
+        setMessages((prev) => {
+          if (prev.some((m) => m._id && m._id === msg._id)) return prev;
+          return [msg, ...prev];
+        });
         socket.emit('message:seen', { conversationId });
       }
     });
 
     socket.on('message:sent', (msg) => {
-      setMessages((prev) => [msg, ...prev]);
+      setMessages((prev) => {
+        if (prev.some((m) => m._id && m._id === msg._id)) return prev;
+        return [msg, ...prev];
+      });
     });
 
     socket.on('message:flagged', ({ action, label }) => {
@@ -154,11 +160,12 @@ export default function ChatDetailScreen({ route, navigation }) {
     );
   };
 
+  const headerHeight = insets.top + 64;
+
   return (
-    <LinearGradient colors={[colors.background, '#FCE4EC']} style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <BlurView intensity={80} tint="light" style={StyleSheet.absoluteFill} />
+    <View style={styles.container}>
+      {/* Header — outside KAV so it never gets pushed off screen */}
+      <View style={[styles.header, { paddingTop: insets.top + 10, height: headerHeight }]}>
         <View style={styles.headerInner}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
             <Text style={styles.backIcon}>←</Text>
@@ -177,9 +184,14 @@ export default function ChatDetailScreen({ route, navigation }) {
         </View>
       </View>
 
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.flex}>
+      {/* KAV only wraps messages + input */}
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={headerHeight}
+      >
         {loading ? (
-          <View style={styles.center}><ActivityIndicator color={colors.primary} /></View>
+          <View style={styles.center}><ActivityIndicator color={colors.accent} /></View>
         ) : (
           <FlatList
             ref={flatListRef}
@@ -189,19 +201,19 @@ export default function ChatDetailScreen({ route, navigation }) {
             contentContainerStyle={styles.list}
             inverted
             showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
           />
         )}
 
         {/* Input */}
-        <View style={styles.inputArea}>
-          <BlurView intensity={80} tint="light" style={StyleSheet.absoluteFill} />
+        <View style={[styles.inputArea, { paddingBottom: Math.max(insets.bottom, 4) + 4 }]}>
           <View style={styles.inputRow}>
             <TextInput
               style={styles.input}
               value={inputText}
               onChangeText={handleTyping}
               placeholder="Type a message..."
-              placeholderTextColor={colors.textMuted}
+              placeholderTextColor="rgba(255,255,255,0.4)"
               multiline
               maxLength={500}
             />
@@ -216,21 +228,22 @@ export default function ChatDetailScreen({ route, navigation }) {
           <Text style={styles.safetyNote}>🔒 Contact sharing is monitored. Stay safe.</Text>
         </View>
       </KeyboardAvoidingView>
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1 },
   header: {
-    paddingTop: 50, paddingBottom: 12,
-    borderBottomWidth: 1, borderBottomColor: colors.glassBorder,
+    paddingBottom: 12,
+    borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: colors.surface,
     zIndex: 10
   },
   headerInner: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 },
   backBtn: { padding: 8, marginRight: 8 },
-  backIcon: { fontSize: 24, color: colors.primary },
+  backIcon: { fontSize: 24, color: colors.text },
   headerInfo: { flex: 1 },
   headerName: { fontSize: 18, fontWeight: '800', color: colors.text },
   onlineText: { fontSize: 12, color: colors.online, fontWeight: '500' },
@@ -244,7 +257,7 @@ const styles = StyleSheet.create({
   msgTheirs: { alignSelf: 'flex-start' },
   bubble: { paddingHorizontal: 16, paddingVertical: 12, borderRadius: 20 },
   bubbleMine: { backgroundColor: colors.bubbleSent, borderBottomRightRadius: 4 },
-  bubbleTheirs: { backgroundColor: colors.bubbleReceived, borderBottomLeftRadius: 4, borderWidth: 1, borderColor: colors.glassBorder },
+  bubbleTheirs: { backgroundColor: 'rgba(255,255,255,0.1)', borderBottomLeftRadius: 4, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
   msgContent: { fontSize: 15, lineHeight: 22 },
   msgContentMine: { color: '#fff' },
   msgContentTheirs: { color: colors.text },
@@ -256,16 +269,16 @@ const styles = StyleSheet.create({
   flagWarning: { fontSize: 11, color: colors.error, marginBottom: 4, alignSelf: 'flex-end' },
 
   inputArea: {
-    borderTopWidth: 1, borderTopColor: colors.glassBorder,
-    paddingHorizontal: 16, paddingVertical: 12,
-    paddingBottom: Platform.OS === 'ios' ? 24 : 12,
+    borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)',
+    paddingHorizontal: 16, paddingTop: 12,
+    backgroundColor: colors.surface,
   },
   inputRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 12 },
   input: {
-    flex: 1, backgroundColor: 'rgba(255,255,255,0.7)',
-    borderWidth: 1, borderColor: colors.border,
+    flex: 1, backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)',
     borderRadius: 20, paddingHorizontal: 16, paddingVertical: 12,
-    maxHeight: 100, fontSize: 15, color: colors.text
+    maxHeight: 100, fontSize: 15, color: '#fff'
   },
   sendBtn: {
     width: 44, height: 44, borderRadius: 22,

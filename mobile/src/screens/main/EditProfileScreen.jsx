@@ -1,19 +1,21 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Alert, Image } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
-import { useSelector, useDispatch } from 'react-redux';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useState } from 'react';
+import { Alert, Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useDispatch, useSelector } from 'react-redux';
 import { updateUser } from '../../store/slices/authSlice';
 import colors from '../../theme/colors';
-import { API_BASE_URL, EDUCATION_LEVELS, INTERESTS } from '../../utils/constants';
+import { API_BASE_URL, INTERESTS } from '../../utils/constants';
 
 export default function EditProfileScreen({ navigation }) {
   const { token, user } = useSelector((s) => s.auth);
   const dispatch = useDispatch();
+  const insets = useSafeAreaInsets();
 
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     name: user?.name || '',
     age: user?.age?.toString() || '',
@@ -120,17 +122,18 @@ export default function EditProfileScreen({ navigation }) {
   const updateForm = (key, val) => setFormData({ ...formData, [key]: val });
 
   return (
-    <LinearGradient colors={[colors.background, '#FCE4EC']} style={styles.container}>
-      <View style={styles.header}>
+    <View style={styles.container}>
+      <LinearGradient colors={[colors.background, '#1A000A']} style={StyleSheet.absoluteFill} />
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Edit Profile</Text>
       </View>
 
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.flex}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-          
+
           {/* Photo Edit */}
           <View style={styles.photoSection}>
             <View style={styles.avatarWrap}>
@@ -165,8 +168,8 @@ export default function EditProfileScreen({ navigation }) {
               {INTERESTS.map((interest) => {
                 const isSelected = selectedInterests.includes(interest);
                 return (
-                  <TouchableOpacity 
-                    key={interest} 
+                  <TouchableOpacity
+                    key={interest}
                     style={[styles.tag, isSelected && styles.tagSelected]}
                     onPress={() => toggleInterest(interest)}
                   >
@@ -186,7 +189,7 @@ export default function EditProfileScreen({ navigation }) {
 
         </ScrollView>
       </KeyboardAvoidingView>
-    </LinearGradient>
+    </View>
   );
 }
 
@@ -200,33 +203,33 @@ const InputField = ({ label, style, multiline, ...props }) => (
 const styles = StyleSheet.create({
   container: { flex: 1 },
   flex: { flex: 1 },
-  header: { paddingTop: 60, paddingBottom: 16, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center' },
+  header: { paddingBottom: 16, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center' },
   backBtn: { padding: 8, marginRight: 8 },
-  backIcon: { fontSize: 24, color: colors.primary },
+  backIcon: { fontSize: 24, color: colors.accent },
   headerTitle: { fontSize: 20, fontWeight: '700', color: colors.text },
   scroll: { padding: 24, paddingBottom: 40 },
-  
+
   photoSection: { alignItems: 'center', marginBottom: 32 },
-  avatarWrap: { width: 100, height: 100, borderRadius: 50, overflow: 'hidden', marginBottom: 12, borderWidth: 2, borderColor: colors.primaryLight },
+  avatarWrap: { width: 100, height: 100, borderRadius: 50, overflow: 'hidden', marginBottom: 12, borderWidth: 2, borderColor: colors.accent },
   avatar: { width: '100%', height: '100%', resizeMode: 'cover' },
-  placeholder: { width: '100%', height: '100%', backgroundColor: colors.primaryLight, alignItems: 'center', justifyContent: 'center' },
-  initials: { fontSize: 40, color: '#fff', fontWeight: 'bold' },
-  changePhotoBtn: { backgroundColor: 'rgba(139,26,74,0.1)', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 },
-  changePhotoText: { color: colors.primary, fontWeight: '600', fontSize: 13 },
+  placeholder: { width: '100%', height: '100%', backgroundColor: 'rgba(212,175,55,0.2)', alignItems: 'center', justifyContent: 'center' },
+  initials: { fontSize: 40, color: colors.accent, fontWeight: 'bold' },
+  changePhotoBtn: { backgroundColor: 'rgba(212,175,55,0.15)', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(212,175,55,0.3)' },
+  changePhotoText: { color: colors.accent, fontWeight: '600', fontSize: 13 },
 
   form: { marginBottom: 24 },
   row: { flexDirection: 'row' },
   inputGroup: { marginBottom: 16 },
-  label: { fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: 8 },
-  input: { backgroundColor: '#fff', borderWidth: 1, borderColor: colors.border, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, color: colors.text, fontSize: 15 },
-  
+  label: { fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
+  input: { backgroundColor: 'rgba(255,255,255,0.07)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, color: colors.text, fontSize: 15 },
+
   section: { marginBottom: 32 },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 12 },
   tagsContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  tag: { backgroundColor: '#fff', borderWidth: 1, borderColor: colors.border, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 },
-  tagSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
+  tag: { backgroundColor: 'rgba(255,255,255,0.07)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 },
+  tagSelected: { backgroundColor: 'rgba(212,175,55,0.2)', borderColor: colors.accent },
   tagText: { color: colors.textSecondary, fontSize: 13, fontWeight: '500' },
-  tagTextSelected: { color: '#fff' },
+  tagTextSelected: { color: colors.accent, fontWeight: '700' },
 
   btnWrap: { borderRadius: 16, overflow: 'hidden' },
   btn: { paddingVertical: 18, alignItems: 'center' },

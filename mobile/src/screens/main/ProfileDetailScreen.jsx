@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, Dimensions } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Dimensions, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
 import colors from '../../theme/colors';
 import { API_BASE_URL } from '../../utils/constants';
@@ -11,6 +12,7 @@ const { width } = Dimensions.get('window');
 export default function ProfileDetailScreen({ route, navigation }) {
   const { userId } = route.params;
   const { token, user } = useSelector((s) => s.auth);
+  const insets = useSafeAreaInsets();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -37,11 +39,11 @@ export default function ProfileDetailScreen({ route, navigation }) {
   };
 
   if (loading) {
-    return <View style={styles.center}><ActivityIndicator size="large" color={colors.primary} /></View>;
+    return <View style={[styles.center, { backgroundColor: colors.background }]}><ActivityIndicator size="large" color={colors.accent} /></View>;
   }
 
   if (!profile) {
-    return <View style={styles.center}><Text>Profile not found</Text></View>;
+    return <View style={[styles.center, { backgroundColor: colors.background }]}><Text style={{ color: colors.textSecondary, fontSize: 16 }}>Profile not found</Text></View>;
   }
 
   return (
@@ -50,10 +52,10 @@ export default function ProfileDetailScreen({ route, navigation }) {
         {/* Photo Header */}
         <View style={styles.photoContainer}>
           {profile.photo ? (
-            <Image 
-              source={{ uri: profile.photo }} 
-              style={styles.photo} 
-              blurRadius={profile.isPhotoBlurred ? 20 : 0} 
+            <Image
+              source={{ uri: profile.photo }}
+              style={styles.photo}
+              blurRadius={profile.isPhotoBlurred ? 20 : 0}
             />
           ) : (
             <LinearGradient colors={colors.gradients.primary} style={styles.photoPlaceholder}>
@@ -72,7 +74,7 @@ export default function ProfileDetailScreen({ route, navigation }) {
             </View>
           )}
 
-          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+          <TouchableOpacity style={[styles.backBtn, { top: insets.top + 10 }]} onPress={() => navigation.goBack()}>
             <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
@@ -84,7 +86,7 @@ export default function ProfileDetailScreen({ route, navigation }) {
             <Text style={styles.name}>{profile.name}, {profile.age}</Text>
             {profile.isVerified && <Text style={styles.verifiedBadge}>✅ Verified</Text>}
           </View>
-          
+
           <Text style={styles.basicInfo}>
             {profile.city}, {profile.country} • {profile.education}
           </Text>
@@ -142,7 +144,7 @@ export default function ProfileDetailScreen({ route, navigation }) {
               <Text style={styles.reportText}>⚠️ Report {profile.name}</Text>
             </TouchableOpacity>
           </View>
-          
+
           <View style={{ height: 40 }} />
         </View>
       </ScrollView>
@@ -170,11 +172,11 @@ const styles = StyleSheet.create({
   photo: { width: '100%', height: '100%', resizeMode: 'cover' },
   photoPlaceholder: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   initials: { fontSize: 80, color: '#fff', fontWeight: 'bold' },
-  backBtn: { position: 'absolute', top: 50, left: 16, width: 44, height: 44, borderRadius: 22, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
+  backBtn: { position: 'absolute', left: 16, width: 44, height: 44, borderRadius: 22, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
   backIcon: { color: '#fff', fontSize: 24 },
   blurOverlay: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
   lockIcon: { fontSize: 48, marginBottom: 16 },
-  blurText: { color: '#fff', fontSize: 16, fontWeight: '700', marginBottom: 24, textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: {width: 0, height: 1}, textShadowRadius: 4 },
+  blurText: { color: '#fff', fontSize: 16, fontWeight: '700', marginBottom: 24, textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
   subscribeBtn: { backgroundColor: colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 20 },
   subscribeBtnText: { color: '#fff', fontWeight: '700' },
   content: { padding: 24, backgroundColor: colors.background, marginTop: -30, borderTopLeftRadius: 30, borderTopRightRadius: 30 },
@@ -186,19 +188,19 @@ const styles = StyleSheet.create({
   msgBtn: { flex: 1, borderRadius: 16, overflow: 'hidden' },
   btnGradient: { paddingVertical: 16, alignItems: 'center', justifyContent: 'center' },
   msgBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  likeBtn: { width: 56, height: 56, borderRadius: 16, backgroundColor: colors.glassMedium, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
+  likeBtn: { width: 56, height: 56, borderRadius: 16, backgroundColor: colors.glassMedium, borderWidth: 1, borderColor: colors.glassBorderLight, alignItems: 'center', justifyContent: 'center' },
   likeIcon: { fontSize: 24 },
   section: { marginBottom: 32 },
   sectionTitle: { fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: 16 },
   aboutText: { fontSize: 15, color: colors.textSecondary, lineHeight: 24 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
-  detailItem: { width: '47%', flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#fff', padding: 12, borderRadius: 16, borderWidth: 1, borderColor: colors.glassBorder },
+  detailItem: { width: '47%', flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.surface, padding: 12, borderRadius: 16, borderWidth: 1, borderColor: colors.glassBorder },
   detailIcon: { fontSize: 20 },
   detailLabel: { fontSize: 11, color: colors.textMuted, marginBottom: 2 },
   detailValue: { fontSize: 13, fontWeight: '600', color: colors.text },
   tagsContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  tag: { backgroundColor: colors.glassMedium, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 },
+  tag: { backgroundColor: colors.glassMedium, borderWidth: 1, borderColor: colors.glassBorderLight, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 },
   tagText: { color: colors.textSecondary, fontSize: 13, fontWeight: '500' },
-  footerActions: { alignItems: 'center', marginTop: 16, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 24 },
+  footerActions: { alignItems: 'center', marginTop: 16, borderTopWidth: 1, borderTopColor: colors.glassBorderLight, paddingTop: 24 },
   reportText: { color: colors.error, fontSize: 14, fontWeight: '600' },
 });

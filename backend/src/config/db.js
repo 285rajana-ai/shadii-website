@@ -1,24 +1,43 @@
 const mongoose = require('mongoose');
 mongoose.set('bufferCommands', false);
 
-const connectDB = async () => {
-  try {
-    // Use MONGODB_URI from env (consistent naming)
-    const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI;
-    
-    if (!mongoUri) {
-      console.warn('⚠️ MongoDB URI not provided. Running in Mock Mode.');
-      return;
-    }
+// Atlas replica set hosts
+const ATLAS_HOSTS = [
+  'ac-b7nm95o-shard-00-00.nq4a2dl.mongodb.net:27017',
+  'ac-b7nm95o-shard-00-01.nq4a2dl.mongodb.net:27017',
+  'ac-b7nm95o-shard-00-02.nq4a2dl.mongodb.net:27017',
+].join(',');
 
-    // Attempt connection but don't crash if it fails (using mock mode for dev)
-    const conn = await mongoose.connect(mongoUri, {
-      serverSelectionTimeoutMS: 5000
-    });
+const connectDB = async () => {
+  const username = process.env.MONGO_USERNAME;
+  const password = process.env.MONGO_PASSWORD;
+  const dbName = process.env.MONGO_DB || 'shadi_pk';
+
+  if (!username || !password) {
+    console.error('❌ MONGO_USERNAME or MONGO_PASSWORD not set. Cannot connect to database.');
+    process.exit(1);
+  }
+
+  try {
+    const conn = await mongoose.connect(
+      `mongodb://${ATLAS_HOSTS}/${dbName}`,
+      {
+        auth: { username, password },
+        tls: true,
+        authSource: 'admin',
+        replicaSet: 'atlas-f19au4-shard-0',
+        retryWrites: true,
+        serverSelectionTimeoutMS: 15000,
+        family: 4,
+        maxPoolSize: 10,
+        minPoolSize: 1,
+        maxConnecting: 1,
+      }
+    );
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
-    console.warn(`⚠️ MongoDB Error: ${error.message}. Running in Mock Mode.`);
-    // We don't exit(1) here so the server stays up for UI testing
+    console.error(`❌ MongoDB Connection Error: ${error.message}`);
+    process.exit(1);
   }
 };
 

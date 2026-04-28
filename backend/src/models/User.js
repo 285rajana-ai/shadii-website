@@ -117,15 +117,31 @@ const userSchema = new mongoose.Schema(
 
     // Fake review flag (admin only)
     isFeaturedTestimonial: { type: Boolean, default: false },
+
+    // User settings (notifications & privacy)
+    settings: {
+      notifications: {
+        messages: { type: Boolean, default: true },
+        matches: { type: Boolean, default: true },
+        profileViews: { type: Boolean, default: false },
+        promotions: { type: Boolean, default: false },
+      },
+      privacy: {
+        showOnlineStatus: { type: Boolean, default: true },
+        showLastSeen: { type: Boolean, default: true },
+      },
+    },
+
+    // Admin access
+    isAdmin: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
 
 // Hash password before saving
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
+userSchema.pre('save', async function () {
+  if (!this.isModified('password')) return;
   this.password = await bcrypt.hash(this.password, 12);
-  next();
 });
 
 // Compare password

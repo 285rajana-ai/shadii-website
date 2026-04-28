@@ -26,6 +26,11 @@ export const colors = {
   textMuted: '#666666',
   textAccent: '#D4AF37',    // Gold text for highlights
 
+  // Missing referenced colors
+  border: 'rgba(255,255,255,0.1)',     // Generic border for dark theme
+  bubbleSent: '#5C0F31',              // Chat bubble for sent messages
+  primaryLight: '#8B1A4A',            // Light variant of primary for typing indicator
+
   // Status Colors
   success: '#2ECC71',
   warning: '#F1C40F',

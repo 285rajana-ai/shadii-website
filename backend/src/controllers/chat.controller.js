@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Message = require('../models/Message');
 const User = require('../models/User');
 const { scanMessage, handleViolation } = require('../services/chatFilter');
@@ -8,7 +9,7 @@ const getConversationId = (id1, id2) => [id1, id2].sort().join('_');
 // GET /api/chat/conversations
 exports.getConversations = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = new mongoose.Types.ObjectId(req.user.id);
 
     // Get latest message per conversation
     const conversations = await Message.aggregate([
@@ -50,14 +51,14 @@ exports.getConversations = async (req, res) => {
           conversationId: conv._id,
           otherUser: otherUser
             ? {
-                id: otherUser._id,
-                name: otherUser.name,
-                isVerified: otherUser.isVerified,
-                isOnline: otherUser.isOnline,
-                lastActive: otherUser.lastActive,
-                photo: otherUser.getProfilePhoto(viewerSubscribed),
-                gender: otherUser.gender,
-              }
+              id: otherUser._id,
+              name: otherUser.name,
+              isVerified: otherUser.isVerified,
+              isOnline: otherUser.isOnline,
+              lastActive: otherUser.lastActive,
+              photo: otherUser.getProfilePhoto(viewerSubscribed),
+              gender: otherUser.gender,
+            }
             : null,
           lastMessage: {
             content: lastMsg.isFlagged ? '[Message flagged]' : lastMsg.content,
@@ -165,11 +166,10 @@ exports.sendMessage = async (req, res) => {
       return res.status(200).json({
         success: false,
         warning: true,
-        message: `⚠️ Warning: Sharing ${label} is not allowed on Shadii.pk. ${
-          violationResult.action === 'suspended_24h'
+        message: `⚠️ Warning: Sharing ${label} is not allowed on Shadii.pk. ${violationResult.action === 'suspended_24h'
             ? 'Your account has been suspended for 24 hours.'
             : 'Repeated violations will result in suspension.'
-        }`,
+          }`,
         action: violationResult.action,
         flaggedMessage: message,
       });

@@ -4,48 +4,19 @@ import { useEffect, useRef, useState } from 'react';
 import {
     Animated, Easing,
     FlatList,
+    RefreshControl,
     StatusBar,
     StyleSheet,
     Text,
     TouchableOpacity,
     View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
 import colors from '../../theme/colors';
+import { API_BASE_URL } from '../../utils/constants';
 
-// Mock notifications for offline/demo
-const MOCK_NOTIFICATIONS = [
-    {
-        _id: '1', type: 'match', title: 'New Daily Matches Ready! 💫',
-        body: 'Your 5 new match suggestions are ready. Check them out!',
-        createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(), read: false,
-    },
-    {
-        _id: '2', type: 'message', title: 'Mahnoor sent you a message',
-        body: 'As-salamu alaykum! I saw your profile and...',
-        createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(), read: false,
-    },
-    {
-        _id: '3', type: 'view', title: 'Someone viewed your profile',
-        body: 'A verified member from Lahore viewed your profile.',
-        createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), read: true,
-    },
-    {
-        _id: '4', type: 'verification', title: 'Verification Approved ✅',
-        body: 'Congratulations! Your profile is now verified. You have a blue tick.',
-        createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), read: true,
-    },
-    {
-        _id: '5', type: 'subscription', title: 'Your Premium Plan is Active',
-        body: 'Welcome to Premium! You can now send unlimited messages and view all photos.',
-        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), read: true,
-    },
-    {
-        _id: '6', type: 'promo', title: 'Limited Offer 🎉',
-        body: 'Get 20% off Premium this week. Offer expires Sunday.',
-        createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), read: true,
-    },
-];
+// Remove the MOCK_NOTIFICATIONS block entirely
 
 const ICON_MAP = {
     match: { icon: 'heart-multiple-outline', color: colors.rose },
@@ -69,12 +40,30 @@ function timeAgo(dateStr) {
 
 export default function NotificationsScreen({ navigation }) {
     const { token } = useSelector((s) => s.auth);
-    const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS);
+    const insets = useSafeAreaInsets();
+    const [notifications, setNotifications] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [filter, setFilter] = useState('all');
     const slideAnim = useRef(new Animated.Value(30)).current;
     const fadeAnim = useRef(new Animated.Value(0)).current;
 
+    const fetchNotifications = async () => {
+        try {
+            const res = await fetch(`${API_BASE_URL}/notifications`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (data.success) setNotifications(data.notifications || []);
+        } catch (_) { }
+        finally {
+            setLoading(false);
+            setRefreshing(false);
+        }
+    };
+
     useEffect(() => {
+        fetchNotifications();
         Animated.parallel([
             Animated.timing(slideAnim, { toValue: 0, duration: 400, useNativeDriver: true, easing: Easing.out(Easing.cubic) }),
             Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }),
@@ -83,12 +72,24 @@ export default function NotificationsScreen({ navigation }) {
 
     const unreadCount = notifications.filter((n) => !n.read).length;
 
-    const markAllRead = () => {
+    const markAllRead = async () => {
         setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+        try {
+            await fetch(`${API_BASE_URL}/notifications/read-all`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+        } catch (_) { }
     };
 
-    const markRead = (id) => {
+    const markRead = async (id) => {
         setNotifications((prev) => prev.map((n) => n._id === id ? { ...n, read: true } : n));
+        try {
+            await fetch(`${API_BASE_URL}/notifications/${id}/read`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+        } catch (_) { }
     };
 
     const filtered = filter === 'unread' ? notifications.filter((n) => !n.read) : notifications;
@@ -121,7 +122,7 @@ export default function NotificationsScreen({ navigation }) {
             <LinearGradient colors={['#1A000A', '#0D0D0D']} style={StyleSheet.absoluteFill} />
 
             {/* Header */}
-            <View style={styles.header}>
+            <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
                     <MaterialCommunityIcons name="arrow-left" size={24} color={colors.text} />
                 </TouchableOpacity>
@@ -171,6 +172,13 @@ export default function NotificationsScreen({ navigation }) {
                         contentContainerStyle={styles.list}
                         showsVerticalScrollIndicator={false}
                         ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
+                        refreshControl={
+                            <RefreshControl
+                                refreshing={refreshing}
+                                onRefresh={() => { setRefreshing(true); fetchNotifications(); }}
+                                tintColor={colors.accent}
+                            />
+                        }
                     />
                 </Animated.View>
             )}
@@ -182,7 +190,7 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
     header: {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-        paddingTop: 56, paddingBottom: 12, paddingHorizontal: 20,
+        paddingBottom: 12, paddingHorizontal: 20,
     },
     backBtn: { padding: 8, backgroundColor: colors.glass, borderRadius: 12, borderWidth: 1, borderColor: colors.glassBorderLight },
     headerTitle: { fontSize: 20, fontWeight: '700', color: colors.text },

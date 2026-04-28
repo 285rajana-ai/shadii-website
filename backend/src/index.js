@@ -13,6 +13,7 @@ const chatRoutes = require('./routes/chat.routes');
 const subscriptionRoutes = require('./routes/subscription.routes');
 const reportRoutes = require('./routes/report.routes');
 const adminRoutes = require('./routes/admin.routes');
+const notificationRoutes = require('./routes/notification.routes');
 
 const socketHandler = require('./socket/socketHandler');
 const connectDB = require('./config/db');
@@ -42,6 +43,7 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/subscription', subscriptionRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Socket.io
 socketHandler(io);

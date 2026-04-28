@@ -6,7 +6,11 @@ const { sendEmail } = require('../config/mailer');
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$/;
 
 const generateToken = (userId) =>
-  jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN });
+  jwt.sign(
+    { id: userId },
+    process.env.JWT_SECRET || 'shadii-pk-dev-secret',
+    { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+  );
 
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -16,9 +20,9 @@ const validatePassword = (password) => {
     return { valid: false, message: 'Password must be at least 8 characters long' };
   }
   if (!PASSWORD_REGEX.test(password)) {
-    return { 
-      valid: false, 
-      message: 'Password must contain at least one uppercase letter, one lowercase letter, and one number' 
+    return {
+      valid: false,
+      message: 'Password must contain at least one uppercase letter, one lowercase letter, and one number'
     };
   }
   return { valid: true };
@@ -46,9 +50,9 @@ exports.register = async (req, res) => {
 
     // Validate required fields
     if (!gender || !name || !email || !phone || !password || !age) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Missing required fields: gender, name, email, phone, password, and age are required' 
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required fields: gender, name, email, phone, password, and age are required'
       });
     }
 
@@ -101,6 +105,7 @@ exports.register = async (req, res) => {
         name: user.name,
         email: user.email,
         gender: user.gender,
+        isAdmin: user.isAdmin,
         isPhoneVerified: user.isPhoneVerified,
         isEmailVerified: user.isEmailVerified,
         subscription: user.subscription,
@@ -122,7 +127,7 @@ exports.login = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Email and password are required' });
     }
 
-    const user = await User.findOne({ email }).select('+password');
+    const user = await User.findOne({ email: email.trim().toLowerCase() }).select('+password');
     if (!user) return res.status(401).json({ success: false, message: 'Invalid credentials' });
 
     const isMatch = await user.comparePassword(password);
@@ -140,9 +145,7 @@ exports.login = async (req, res) => {
       });
     }
 
-    user.lastActive = new Date();
-    user.isOnline = true;
-    await user.save();
+    await User.findByIdAndUpdate(user._id, { lastActive: new Date(), isOnline: true });
 
     const token = generateToken(user._id);
 
@@ -154,6 +157,7 @@ exports.login = async (req, res) => {
         name: user.name,
         email: user.email,
         gender: user.gender,
+        isAdmin: user.isAdmin,
         isVerified: user.isVerified,
         subscription: user.subscription,
         profileCompleteness: user.profileCompleteness,

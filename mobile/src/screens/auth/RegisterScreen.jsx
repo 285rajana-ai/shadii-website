@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  ScrollView, KeyboardAvoidingView, Platform, Alert, StatusBar,
+  ScrollView, KeyboardAvoidingView, Platform, Alert, StatusBar, ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -13,6 +13,7 @@ import { API_BASE_URL } from '../../utils/constants';
 export default function RegisterScreen({ navigation }) {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     name: '', email: '', phone: '', password: '',
     gender: '', age: '', height: '', education: '',
@@ -61,7 +62,7 @@ export default function RegisterScreen({ navigation }) {
       <StatusBar barStyle="light-content" />
       <LinearGradient colors={colors.gradients.luxury} style={StyleSheet.absoluteFill} />
       
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.flex}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           
           <View style={styles.header}>
@@ -133,7 +134,9 @@ export default function RegisterScreen({ navigation }) {
                   value={formData.password} 
                   onChange={(v) => updateForm('password', v)} 
                   placeholder="••••••••" 
-                  secureTextEntry 
+                  secureTextEntry={!showPassword}
+                  rightIcon={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                  onRightIconPress={() => setShowPassword(!showPassword)}
                 />
               </View>
             ) : (
@@ -215,16 +218,22 @@ export default function RegisterScreen({ navigation }) {
   );
 }
 
-const InputField = ({ label, icon, ...props }) => (
+const InputField = ({ label, icon, rightIcon, onRightIconPress, onChange, ...props }) => (
   <View style={styles.inputGroup}>
     <Text style={styles.inputLabel}>{label}</Text>
     <View style={styles.inputContainer}>
       <MaterialCommunityIcons name={icon} size={20} color={colors.textMuted} />
-      <TextInput 
-        style={[styles.input, props.multiline && { height: 100, textAlignVertical: 'top' }]} 
-        placeholderTextColor={colors.textMuted} 
-        {...props} 
+      <TextInput
+        style={[styles.input, props.multiline && { height: 100, textAlignVertical: 'top' }]}
+        placeholderTextColor={colors.textMuted}
+        onChangeText={onChange}
+        {...props}
       />
+      {rightIcon && (
+        <TouchableOpacity onPress={onRightIconPress} style={{ padding: 4 }}>
+          <MaterialCommunityIcons name={rightIcon} size={20} color={colors.textMuted} />
+        </TouchableOpacity>
+      )}
     </View>
   </View>
 );

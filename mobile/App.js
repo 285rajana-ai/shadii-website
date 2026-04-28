@@ -1,7 +1,8 @@
 import * as SecureStore from 'expo-secure-store';
-import { useEffect } from 'react';
-import { Platform, StatusBar, UIManager } from 'react-native';
+import React, { useEffect } from 'react';
+import { Platform, StatusBar, Text, UIManager, View } from 'react-native';
 import 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider, useDispatch } from 'react-redux';
 import AppNavigator from './src/navigation/AppNavigator';
 import store from './src/store';
@@ -58,9 +59,11 @@ function AppRoot() {
 export default function App() {
   return (
     <ErrorBoundary>
-      <Provider store={store}>
-        <AppRoot />
-      </Provider>
+      <SafeAreaProvider>
+        <Provider store={store}>
+          <AppRoot />
+        </Provider>
+      </SafeAreaProvider>
     </ErrorBoundary>
   );
 }

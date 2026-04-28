@@ -13,18 +13,19 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
 import colors from '../../theme/colors';
 import { glassStyles, spacing } from '../../theme/glassmorphism';
 import { API_BASE_URL } from '../../utils/constants';
-import { MOCK_MATCHES } from '../../utils/mockData';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.78;
 
 export default function HomeScreen({ navigation }) {
   const { user, token } = useSelector((s) => s.auth);
-  const [matches, setMatches] = useState(MOCK_MATCHES);
+  const insets = useSafeAreaInsets();
+  const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -34,8 +35,8 @@ export default function HomeScreen({ navigation }) {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      if (data.success && data.matches.length > 0) {
-        setMatches(data.matches);
+      if (data.success) {
+        setMatches(data.matches || []);
       }
     } catch (e) {
       console.log('Match fetch error, using mocks:', e.message);
@@ -70,7 +71,7 @@ export default function HomeScreen({ navigation }) {
       <ScrollView
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 16 }]}
       >
         {/* Header Section */}
         <View style={styles.header}>
@@ -121,6 +122,16 @@ export default function HomeScreen({ navigation }) {
             <View style={styles.loadingContainer}>
               <ActivityIndicator color={colors.accent} size="large" />
             </View>
+          ) : matches.length === 0 ? (
+            <TouchableOpacity
+              style={styles.emptyMatchesCard}
+              onPress={() => navigation.navigate('Discover')}
+              activeOpacity={0.8}
+            >
+              <MaterialCommunityIcons name="heart-search" size={40} color={colors.accent} />
+              <Text style={styles.emptyMatchesText}>Complete your profile to get matched</Text>
+              <Text style={styles.emptyMatchesSub}>Tap to discover profiles →</Text>
+            </TouchableOpacity>
           ) : (
             <ScrollView
               horizontal
@@ -130,7 +141,7 @@ export default function HomeScreen({ navigation }) {
               contentContainerStyle={styles.matchesScroll}
             >
               {matches.map((match) => (
-                <MatchCard key={match.id} match={match} navigation={navigation} />
+                <MatchCard key={String(match.id || match._id)} match={match} navigation={navigation} />
               ))}
             </ScrollView>
           )}
@@ -196,15 +207,19 @@ export default function HomeScreen({ navigation }) {
 }
 
 function MatchCard({ match, navigation }) {
-  const user = match.user || match; // Handle both Match object or User object
+  // API returns: { id, name, age, city, photo, isVerified, isOnline, matchScore }
+  // photo is singular field from backend
+  const photo = match.photo || (match.photos && match.photos[0]);
+  const userId = match.id || match._id;
+  const score = match.matchScore ? `${Math.round(match.matchScore)}%` : (match.compatibility || '');
   return (
     <TouchableOpacity
       style={styles.matchCard}
-      onPress={() => navigation.navigate('ProfileDetail', { userId: user.id || user._id })}
+      onPress={() => navigation.navigate('ProfileDetail', { userId })}
       activeOpacity={0.9}
     >
       <Image
-        source={{ uri: user.photos?.[0] || 'https://via.placeholder.com/400' }}
+        source={{ uri: photo || 'https://via.placeholder.com/400' }}
         style={styles.matchPhoto}
       />
       <LinearGradient
@@ -215,23 +230,25 @@ function MatchCard({ match, navigation }) {
       <View style={styles.matchContent}>
         <View style={styles.matchTopInfo}>
           <View style={styles.matchHeaderRow}>
-            <Text style={styles.matchName}>{user.name}, {user.age}</Text>
-            {user.isVerified && (
+            <Text style={styles.matchName}>{match.name}, {match.age}</Text>
+            {match.isVerified && (
               <MaterialCommunityIcons name="check-decagram" size={18} color={colors.accent} />
             )}
           </View>
           <Text style={styles.matchLocation}>
-            <MaterialCommunityIcons name="map-marker" size={12} color="rgba(255,255,255,0.7)" /> {user.city}
+            <MaterialCommunityIcons name="map-marker" size={12} color="rgba(255,255,255,0.7)" /> {match.city}
           </Text>
         </View>
 
         <View style={styles.matchFooter}>
-          <View style={styles.compatibilityBadge}>
-            <Text style={styles.compatibilityText}>{match.compatibility || '92%'} Match</Text>
-          </View>
+          {score ? (
+            <View style={styles.compatibilityBadge}>
+              <Text style={styles.compatibilityText}>{score} Match</Text>
+            </View>
+          ) : <View />}
           <TouchableOpacity
             style={styles.chatIconButton}
-            onPress={() => navigation.navigate('ChatDetail', { userId: user.id || user._id, userName: user.name })}
+            onPress={() => navigation.navigate('ChatDetail', { userId, userName: match.name })}
           >
             <MaterialCommunityIcons name="message-text" size={20} color={colors.primary} />
           </TouchableOpacity>
@@ -258,7 +275,7 @@ function QuickAction({ icon, title, onPress, highlight }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  scrollContent: { paddingTop: 60 },
+  scrollContent: {},
   header: { paddingHorizontal: spacing.lg, marginBottom: 24 },
   headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   greetingText: { color: colors.textSecondary, fontSize: 16, fontWeight: '500' },
@@ -302,6 +319,17 @@ const styles = StyleSheet.create({
   seeAll: { color: colors.accent, fontWeight: '600', fontSize: 14 },
 
   matchesScroll: { paddingHorizontal: spacing.lg, gap: 16 },
+  emptyMatchesCard: {
+    marginHorizontal: spacing.lg,
+    padding: 32,
+    borderRadius: 24,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(212,175,55,0.2)',
+  },
+  emptyMatchesText: { color: colors.text, fontWeight: '700', fontSize: 16, marginTop: 12, textAlign: 'center' },
+  emptyMatchesSub: { color: colors.accent, fontSize: 13, marginTop: 6 },
   matchCard: { width: CARD_WIDTH, height: 420, borderRadius: 32, overflow: 'hidden', backgroundColor: colors.surface },
   matchPhoto: { width: '100%', height: '100%' },
   matchGradient: { ...StyleSheet.absoluteFillObject },

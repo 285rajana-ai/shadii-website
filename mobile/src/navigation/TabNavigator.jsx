@@ -1,14 +1,13 @@
-import React from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import colors from '../theme/colors';
-import HomeScreen from '../screens/main/HomeScreen';
-import DiscoverScreen from '../screens/main/DiscoverScreen';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { BlurView } from 'expo-blur';
+import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ChatListScreen from '../screens/main/ChatListScreen';
+import DiscoverScreen from '../screens/main/DiscoverScreen';
+import HomeScreen from '../screens/main/HomeScreen';
 import ProfileScreen from '../screens/main/ProfileScreen';
+import colors from '../theme/colors';
 
 const Tab = createBottomTabNavigator();
 
@@ -20,8 +19,10 @@ const TABS = [
 ];
 
 function CustomTabBar({ state, descriptors, navigation }) {
+  const insets = useSafeAreaInsets();
+  const bottomPad = Math.max(insets.bottom, 8);
   return (
-    <View style={styles.tabBarContainer}>
+    <View style={[styles.tabBarContainer, { height: 60 + bottomPad, paddingBottom: bottomPad }]}>
       <BlurView intensity={Platform.OS === 'ios' ? 40 : 100} tint="dark" style={StyleSheet.absoluteFill} />
       <View style={styles.tabBar}>
         {state.routes.map((route, index) => {
@@ -43,10 +44,10 @@ function CustomTabBar({ state, descriptors, navigation }) {
               activeOpacity={0.7}
             >
               <View style={styles.iconContainer}>
-                <MaterialCommunityIcons 
-                  name={isFocused ? tab.iconActive : tab.icon} 
-                  size={26} 
-                  color={isFocused ? colors.accent : colors.textMuted} 
+                <MaterialCommunityIcons
+                  name={isFocused ? tab.iconActive : tab.icon}
+                  size={26}
+                  color={isFocused ? colors.accent : colors.textMuted}
                 />
                 {isFocused && (
                   <View style={styles.activeIndicator} />
@@ -80,20 +81,18 @@ export default function TabNavigator() {
 const styles = StyleSheet.create({
   tabBarContainer: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
-    height: Platform.OS === 'ios' ? 90 : 70,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(13,5,5,0.92)',
     borderTopWidth: 0.5,
     borderTopColor: 'rgba(255,255,255,0.1)',
   },
   tabBar: {
-    flexDirection: 'row', 
-    height: '100%',
-    paddingBottom: Platform.OS === 'ios' ? 20 : 0,
+    flexDirection: 'row',
+    height: 56,
     alignItems: 'center',
   },
-  tabItem: { 
-    flex: 1, 
-    alignItems: 'center', 
+  tabItem: {
+    flex: 1,
+    alignItems: 'center',
     justifyContent: 'center',
     height: '100%'
   },
