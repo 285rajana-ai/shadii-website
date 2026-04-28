@@ -1,12 +1,20 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Dimensions, FlatList, Image, RefreshControl, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Animated, Dimensions, FlatList, Image, RefreshControl, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
 import colors from '../../theme/colors';
-import { glassStyles, spacing } from '../../theme/glassmorphism';
+import { spacing } from '../../theme/glassmorphism';
 import { API_BASE_URL } from '../../utils/constants';
+
+const FILTERS = [
+  { id: 'all', label: 'All', icon: 'account-group-outline' },
+  { id: 'online', label: 'Online', icon: 'circle' },
+  { id: 'verified', label: 'Verified', icon: 'check-decagram' },
+  { id: 'premium', label: 'Premium', icon: 'crown' },
+  { id: 'new', label: 'New', icon: 'star-outline' },
+];
 
 const { width } = Dimensions.get('window');
 const COLUMN_WIDTH = (width - spacing.lg * 3) / 2;
@@ -19,25 +27,27 @@ export default function DiscoverScreen({ navigation }) {
   const [refreshing, setRefreshing] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [activeFilter, setActiveFilter] = useState('all');
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  const fetchProfiles = async (pageNum = 1, isRefresh = false) => {
+  const fetchProfiles = async (pageNum = 1, isRefresh = false, filter = activeFilter) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/profile/discover?page=${pageNum}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      let url = `${API_BASE_URL}/profile/discover?page=${pageNum}`;
+      if (filter === 'online') url += '&sort=active';
+      else if (filter === 'premium') url += '&sort=premium';
+      const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
       const data = await res.json();
       if (data.success) {
-        if (isRefresh) {
-          setProfiles(data.profiles || []);
-        } else {
-          setProfiles((prev) => [...prev, ...(data.profiles || [])]);
-        }
+        let result = data.profiles || [];
+        if (filter === 'verified') result = result.filter(p => p.isVerified);
+        if (filter === 'new') result = result.slice(0, 10);
+        if (isRefresh) setProfiles(result);
+        else setProfiles(prev => [...prev, ...result]);
         setHasMore(data.hasMore);
         setPage(pageNum);
       }
     } catch (e) {
-      console.log('Discover fetch error, using mock data:', e.message);
-      // Keep using mock data if fetch fails
+      console.log('Discover fetch error:', e.message);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -47,177 +57,220 @@ export default function DiscoverScreen({ navigation }) {
   useEffect(() => {
     setLoading(true);
     fetchProfiles(1);
+    Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }).start();
   }, []);
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    fetchProfiles(1, true);
+  const onFilterChange = (filterId) => {
+    setActiveFilter(filterId);
+    setLoading(true);
+    setProfiles([]);
+    fetchProfiles(1, true, filterId);
   };
 
-  const renderProfile = ({ item }) => (
-    <TouchableOpacity
-      style={[glassStyles.card, styles.card]}
-      activeOpacity={0.8}
-      onPress={() => navigation.navigate('ProfileDetail', { userId: item.id || item._id })}
-    >
-      <View style={styles.imageContainer}>
-        <Image
-          source={{ uri: item.photo || (item.photos && item.photos[0]) || 'https://via.placeholder.com/300' }}
-          style={styles.image}
-          resizeMode="cover"
-        />
+  const onRefresh = () => { setRefreshing(true); fetchProfiles(1, true); };
 
-        {/* Luxury Overlays */}
-        <LinearGradient
-          colors={['transparent', 'rgba(0,0,0,0.8)']}
-          style={styles.gradient}
-        />
-
-        {item.isPremium && (
-          <View style={styles.premiumBadge}>
-            <MaterialCommunityIcons name="crown" size={14} color={colors.accent} />
-            <Text style={styles.premiumText}>GOLD</Text>
-          </View>
-        )}
-
-        <View style={styles.badgeContainer}>
-          {item.isVerified && (
-            <View style={styles.verifiedBadge}>
-              <MaterialCommunityIcons name="check-decagram" size={16} color={colors.accent} />
-            </View>
-          )}
-          {item.isOnline && <View style={styles.onlineDot} />}
-        </View>
-      </View>
-
-      <View style={styles.infoContainer}>
-        <Text style={styles.nameText} numberOfLines={1}>
-          {item.name}, {item.age}
-        </Text>
-        <View style={styles.locationRow}>
-          <MaterialCommunityIcons name="map-marker-outline" size={12} color={colors.textSecondary} />
-          <Text style={styles.locationText}>{item.city}</Text>
-        </View>
-        <Text style={styles.professionText} numberOfLines={1}>
-          {item.profession || item.education}
-        </Text>
-      </View>
-    </TouchableOpacity>
+  const renderProfile = ({ item, index }) => (
+    <ProfileCard item={item} navigation={navigation} index={index} />
   );
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
-      <LinearGradient colors={colors.gradients.luxury} style={StyleSheet.absoluteFill} />
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <LinearGradient colors={['#1A000A', '#0D0509', '#0D0D0D']} style={StyleSheet.absoluteFill} />
+      <View style={styles.orb} />
 
-      {/* Premium Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
+      {/* Header */}
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <View>
-          <Text style={styles.headerSubtitle}>Find Your Perfect</Text>
-          <Text style={styles.headerTitle}>Humsafar</Text>
+          <Text style={styles.headerSubtitle}>Explore & Connect</Text>
+          <Text style={styles.headerTitle}>Discover</Text>
         </View>
-        <TouchableOpacity style={styles.iconButton} onPress={() => Alert.alert('Filters', 'Advanced filters coming soon!')}>
-          <MaterialCommunityIcons name="tune-variant" size={24} color={colors.accent} />
+        <TouchableOpacity style={styles.iconButton}
+          onPress={() => navigation.navigate('Discover')}>
+          <MaterialCommunityIcons name="tune-variant" size={22} color={colors.accent} />
         </TouchableOpacity>
       </View>
+
+      {/* Filter Chips */}
+      <ScrollView
+        horizontal showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.filterRow}
+        style={styles.filterScroll}
+      >
+        {FILTERS.map(f => (
+          <TouchableOpacity
+            key={f.id}
+            style={[styles.filterChip, activeFilter === f.id && styles.filterChipActive]}
+            onPress={() => onFilterChange(f.id)}
+            activeOpacity={0.75}
+          >
+            {activeFilter === f.id && (
+              <LinearGradient
+                colors={[colors.rose, colors.maroon]}
+                style={StyleSheet.absoluteFill}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                borderRadius={20}
+              />
+            )}
+            <MaterialCommunityIcons
+              name={f.icon}
+              size={13}
+              color={activeFilter === f.id ? '#fff' : colors.textSecondary}
+            />
+            <Text style={[styles.filterLabel, activeFilter === f.id && styles.filterLabelActive]}>
+              {f.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
 
       {loading && page === 1 ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color={colors.accent} />
-          <Text style={styles.loadingText}>Curating Premium Matches...</Text>
+          <Text style={styles.loadingText}>Finding your matches...</Text>
         </View>
       ) : (
-        <FlatList
-          data={profiles}
-          keyExtractor={(item) => String(item.id || item._id)}
-          renderItem={renderProfile}
-          numColumns={2}
-          contentContainerStyle={[styles.listContent, profiles.length === 0 && { flex: 1 }]}
-          columnWrapperStyle={profiles.length > 0 ? styles.columnWrapper : undefined}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor={colors.accent}
-              colors={[colors.accent]}
-            />
-          }
-          onEndReached={() => hasMore && fetchProfiles(page + 1)}
-          onEndReachedThreshold={0.5}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <MaterialCommunityIcons name="account-search-outline" size={64} color={colors.textMuted} />
-              <Text style={styles.emptyTitle}>No Profiles Yet</Text>
-              <Text style={styles.emptyText}>Be the first to join! Profiles will appear here once more members sign up.</Text>
-            </View>
-          }
-          ListFooterComponent={hasMore && page > 1 ? <ActivityIndicator style={{ margin: 20 }} color={colors.accent} /> : <View style={{ height: 100 }} />}
-        />
+        <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
+          <FlatList
+            data={profiles}
+            keyExtractor={(item) => String(item.id || item._id)}
+            renderItem={renderProfile}
+            numColumns={2}
+            contentContainerStyle={[styles.listContent, profiles.length === 0 && { flex: 1 }]}
+            columnWrapperStyle={profiles.length > 0 ? styles.columnWrapper : undefined}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh}
+                tintColor={colors.accent} colors={[colors.accent]} />
+            }
+            onEndReached={() => hasMore && fetchProfiles(page + 1)}
+            onEndReachedThreshold={0.5}
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <MaterialCommunityIcons name="account-heart-outline" size={72} color={colors.textMuted} />
+                <Text style={styles.emptyTitle}>No Profiles Found</Text>
+                <Text style={styles.emptyText}>Try a different filter or check back later</Text>
+              </View>
+            }
+            ListFooterComponent={hasMore && page > 1
+              ? <ActivityIndicator style={{ margin: 20 }} color={colors.accent} />
+              : <View style={{ height: 110 }} />}
+          />
+        </Animated.View>
       )}
     </View>
   );
 }
 
+function ProfileCard({ item, navigation, index }) {
+  const scaleAnim = useRef(new Animated.Value(0.95)).current;
+  useEffect(() => {
+    Animated.spring(scaleAnim, {
+      toValue: 1, delay: index * 60,
+      useNativeDriver: true, tension: 80, friction: 8
+    }).start();
+  }, []);
+
+  return (
+    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+      <TouchableOpacity
+        style={styles.card}
+        activeOpacity={0.88}
+        onPress={() => navigation.navigate('ProfileDetail', { userId: item.id || item._id })}
+      >
+        <Image
+          source={{ uri: item.photo || 'https://via.placeholder.com/300' }}
+          style={styles.cardImage}
+          resizeMode="cover"
+        />
+        {/* Dark gradient overlay */}
+        <LinearGradient
+          colors={['transparent', 'rgba(0,0,0,0.3)', 'rgba(0,0,0,0.88)']}
+          style={StyleSheet.absoluteFill}
+          start={{ x: 0, y: 0.3 }} end={{ x: 0, y: 1 }}
+        />
+        {/* Top badges */}
+        <View style={styles.cardTopRow}>
+          {item.isPremium && (
+            <LinearGradient colors={colors.gradients.gold} style={styles.goldBadge}>
+              <MaterialCommunityIcons name="crown" size={11} color={colors.maroon} />
+              <Text style={styles.goldText}>GOLD</Text>
+            </LinearGradient>
+          )}
+          <View style={{ flex: 1 }} />
+          {item.isOnline && <View style={styles.onlineDot} />}
+        </View>
+        {/* Bottom info */}
+        <View style={styles.cardInfo}>
+          <View style={styles.cardNameRow}>
+            <Text style={styles.cardName} numberOfLines={1}>
+              {item.name}, {item.age}
+            </Text>
+            {item.isVerified && (
+              <MaterialCommunityIcons name="check-decagram" size={14} color={colors.accent} />
+            )}
+          </View>
+          <Text style={styles.cardCity} numberOfLines={1}>
+            <MaterialCommunityIcons name="map-marker" size={11} color="rgba(255,255,255,0.6)" /> {item.city}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+}
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
+  orb: { position: 'absolute', width: width * 0.7, height: width * 0.7, borderRadius: width * 0.35, top: -width * 0.15, right: -width * 0.2, backgroundColor: 'rgba(139,26,74,0.1)' },
   header: {
-    paddingBottom: 20,
-    paddingHorizontal: spacing.lg,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end'
+    paddingBottom: 14, paddingHorizontal: spacing.lg,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end',
   },
-  headerSubtitle: { color: colors.textSecondary, fontSize: 14, letterSpacing: 1, textTransform: 'uppercase' },
-  headerTitle: { fontSize: 32, fontWeight: '900', color: colors.text, marginTop: 4 },
+  headerSubtitle: { color: colors.textSecondary, fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', fontWeight: '600' },
+  headerTitle: { fontSize: 32, fontWeight: '900', color: colors.text, marginTop: 2, letterSpacing: -0.5 },
   iconButton: {
-    width: 45,
-    height: 45,
-    borderRadius: 12,
-    backgroundColor: colors.surfaceLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)'
+    width: 44, height: 44, borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.07)',
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
   },
-  listContent: { paddingHorizontal: spacing.lg, paddingBottom: 100 },
-  emptyContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 80, paddingHorizontal: 40 },
-  emptyTitle: { color: colors.text, fontSize: 20, fontWeight: '800', marginTop: 16 },
-  emptyText: { color: colors.textSecondary, fontSize: 14, textAlign: 'center', marginTop: 8, lineHeight: 20 },
-  columnWrapper: { justifyContent: 'space-between', marginBottom: spacing.lg },
-  card: { width: COLUMN_WIDTH, height: COLUMN_WIDTH * 1.5, borderRadius: 24 },
-  imageContainer: { flex: 1, width: '100%' },
-  image: { width: '100%', height: '100%' },
-  gradient: { ...StyleSheet.absoluteFillObject },
-  premiumBadge: {
-    position: 'absolute',
-    top: 12,
-    left: 12,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+  filterScroll: { maxHeight: 48, marginBottom: 12 },
+  filterRow: { paddingHorizontal: spacing.lg, gap: 8, alignItems: 'center' },
+  filterChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    paddingHorizontal: 14, paddingVertical: 8,
+    borderRadius: 20, overflow: 'hidden',
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
+  },
+  filterChipActive: { borderColor: colors.rose },
+  filterLabel: { color: colors.textSecondary, fontSize: 13, fontWeight: '600' },
+  filterLabelActive: { color: '#fff', fontWeight: '700' },
+  listContent: { paddingHorizontal: spacing.lg, paddingBottom: 110 },
+  columnWrapper: { justifyContent: 'space-between', marginBottom: 14 },
+  card: {
+    width: COLUMN_WIDTH, height: COLUMN_WIDTH * 1.55,
+    borderRadius: 22, overflow: 'hidden',
+    backgroundColor: colors.surface,
+  },
+  cardImage: { width: '100%', height: '100%', position: 'absolute' },
+  cardTopRow: {
+    position: 'absolute', top: 10, left: 10, right: 10,
+    flexDirection: 'row', alignItems: 'center',
+  },
+  goldBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 3,
+    paddingHorizontal: 7, paddingVertical: 3,
     borderRadius: 8,
-    borderWidth: 0.5,
-    borderColor: colors.accent
   },
-  premiumText: { color: colors.accent, fontSize: 10, fontWeight: '800', letterSpacing: 0.5 },
-  badgeContainer: { position: 'absolute', top: 12, right: 12, alignItems: 'center', gap: 8 },
-  verifiedBadge: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  onlineDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.online, borderWidth: 1.5, borderColor: '#000' },
-  infoContainer: { padding: spacing.md, backgroundColor: colors.surface },
-  nameText: { fontSize: 17, fontWeight: '700', color: colors.text },
-  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
-  locationText: { color: colors.textSecondary, fontSize: 12 },
-  professionText: { color: colors.accent, fontSize: 12, marginTop: 4, fontWeight: '600' },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 },
-  loadingText: { color: colors.textSecondary, fontSize: 14, fontWeight: '500' }
+  goldText: { color: colors.maroon, fontSize: 9, fontWeight: '900', letterSpacing: 0.5 },
+  onlineDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.online, borderWidth: 2, borderColor: 'rgba(0,0,0,0.5)' },
+  cardInfo: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 12 },
+  cardNameRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  cardName: { fontSize: 15, fontWeight: '800', color: '#fff', flex: 1 },
+  cardCity: { color: 'rgba(255,255,255,0.65)', fontSize: 11, marginTop: 3 },
+  emptyContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 60, paddingHorizontal: 40 },
+  emptyTitle: { color: colors.text, fontSize: 20, fontWeight: '800', marginTop: 18 },
+  emptyText: { color: colors.textSecondary, fontSize: 14, textAlign: 'center', marginTop: 8, lineHeight: 22 },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14 },
+  loadingText: { color: colors.textSecondary, fontSize: 14, fontWeight: '500', letterSpacing: 0.3 },
 });

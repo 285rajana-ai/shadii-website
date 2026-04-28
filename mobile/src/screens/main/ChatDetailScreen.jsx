@@ -1,3 +1,5 @@
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -7,7 +9,7 @@ import {
   StyleSheet,
   Text,
   TextInput, TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
@@ -160,26 +162,43 @@ export default function ChatDetailScreen({ route, navigation }) {
     );
   };
 
-  const headerHeight = insets.top + 64;
+  const headerHeight = insets.top + 68;
 
   return (
     <View style={styles.container}>
+      <LinearGradient colors={['#1A000A', '#0D0509', '#0D0D0D']} style={StyleSheet.absoluteFill} />
       {/* Header — outside KAV so it never gets pushed off screen */}
-      <View style={[styles.header, { paddingTop: insets.top + 10, height: headerHeight }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 8, height: headerHeight }]}>
+        <LinearGradient colors={['rgba(26,0,10,0.98)', 'rgba(13,5,9,0.95)']} style={StyleSheet.absoluteFill} />
         <View style={styles.headerInner}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <Text style={styles.backIcon}>←</Text>
+            <MaterialCommunityIcons name="arrow-left" size={22} color={colors.text} />
           </TouchableOpacity>
-          <View style={styles.headerInfo}>
-            <Text style={styles.headerName}>{userName}</Text>
-            {typing ? (
-              <Text style={styles.typingText}>typing...</Text>
-            ) : (
-              <Text style={styles.onlineText}>Online</Text>
-            )}
-          </View>
-          <TouchableOpacity onPress={() => navigation.navigate('ProfileDetail', { userId: otherUserId })}>
-            <Text style={styles.profileIcon}>👤</Text>
+          <TouchableOpacity
+            style={styles.headerProfile}
+            onPress={() => navigation.navigate('ProfileDetail', { userId: otherUserId })}
+            activeOpacity={0.8}
+          >
+            <View style={styles.headerAvatarWrap}>
+              <View style={styles.headerAvatar}>
+                <Text style={styles.headerAvatarText}>{userName?.[0]?.toUpperCase() || '?'}</Text>
+              </View>
+              <View style={styles.headerOnlineDot} />
+            </View>
+            <View style={styles.headerInfo}>
+              <Text style={styles.headerName}>{userName}</Text>
+              {typing ? (
+                <Text style={styles.typingText}>typing...</Text>
+              ) : (
+                <Text style={styles.onlineText}>● Online</Text>
+              )}
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.headerActionBtn}
+            onPress={() => navigation.navigate('ProfileDetail', { userId: otherUserId })}
+          >
+            <MaterialCommunityIcons name="dots-vertical" size={22} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>
       </View>
@@ -213,19 +232,30 @@ export default function ChatDetailScreen({ route, navigation }) {
               value={inputText}
               onChangeText={handleTyping}
               placeholder="Type a message..."
-              placeholderTextColor="rgba(255,255,255,0.4)"
+              placeholderTextColor="rgba(255,255,255,0.3)"
               multiline
               maxLength={500}
             />
             <TouchableOpacity
               onPress={handleSend}
-              style={[styles.sendBtn, !inputText.trim() && styles.sendBtnDisabled]}
+              style={styles.sendBtnWrap}
               disabled={!inputText.trim()}
+              activeOpacity={0.8}
             >
-              <Text style={styles.sendIcon}>➤</Text>
+              <LinearGradient
+                colors={inputText.trim() ? [colors.rose, colors.maroon] : ['rgba(255,255,255,0.08)', 'rgba(255,255,255,0.04)']}
+                style={styles.sendBtn}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+              >
+                <MaterialCommunityIcons
+                  name="send"
+                  size={18}
+                  color={inputText.trim() ? '#fff' : colors.textMuted}
+                />
+              </LinearGradient>
             </TouchableOpacity>
           </View>
-          <Text style={styles.safetyNote}>🔒 Contact sharing is monitored. Stay safe.</Text>
+          <Text style={styles.safetyNote}>🔒 Contact sharing is monitored</Text>
         </View>
       </KeyboardAvoidingView>
     </View>
@@ -233,58 +263,73 @@ export default function ChatDetailScreen({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1 },
   flex: { flex: 1 },
   header: {
-    paddingBottom: 12,
-    borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.1)',
-    backgroundColor: colors.surface,
-    zIndex: 10
+    borderBottomWidth: 0.5, borderBottomColor: 'rgba(212,175,55,0.15)',
+    zIndex: 10, overflow: 'hidden',
   },
-  headerInner: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 },
-  backBtn: { padding: 8, marginRight: 8 },
-  backIcon: { fontSize: 24, color: colors.text },
+  headerInner: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, flex: 1 },
+  backBtn: { padding: 10, marginRight: 4 },
+  headerProfile: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  headerAvatarWrap: { position: 'relative' },
+  headerAvatar: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: colors.maroon,
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1.5, borderColor: 'rgba(212,175,55,0.4)',
+  },
+  headerAvatarText: { color: colors.accent, fontSize: 16, fontWeight: '800' },
+  headerOnlineDot: {
+    position: 'absolute', bottom: 0, right: 0,
+    width: 11, height: 11, borderRadius: 6,
+    backgroundColor: colors.online, borderWidth: 2, borderColor: colors.background,
+  },
   headerInfo: { flex: 1 },
-  headerName: { fontSize: 18, fontWeight: '800', color: colors.text },
-  onlineText: { fontSize: 12, color: colors.online, fontWeight: '500' },
-  typingText: { fontSize: 12, color: colors.primaryLight, fontStyle: 'italic' },
-  profileIcon: { fontSize: 24 },
+  headerName: { fontSize: 17, fontWeight: '800', color: colors.text, letterSpacing: -0.3 },
+  onlineText: { fontSize: 11, color: colors.online, fontWeight: '600', marginTop: 1 },
+  typingText: { fontSize: 11, color: colors.accent, fontStyle: 'italic', marginTop: 1 },
+  headerActionBtn: { padding: 10 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  list: { paddingHorizontal: 16, paddingVertical: 20 },
+  list: { paddingHorizontal: 14, paddingVertical: 16 },
 
-  msgWrapper: { marginBottom: 16, maxWidth: '80%' },
-  msgMine: { alignSelf: 'flex-end' },
-  msgTheirs: { alignSelf: 'flex-start' },
-  bubble: { paddingHorizontal: 16, paddingVertical: 12, borderRadius: 20 },
-  bubbleMine: { backgroundColor: colors.bubbleSent, borderBottomRightRadius: 4 },
-  bubbleTheirs: { backgroundColor: 'rgba(255,255,255,0.1)', borderBottomLeftRadius: 4, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  msgWrapper: { marginBottom: 10, maxWidth: '78%' },
+  msgMine: { alignSelf: 'flex-end', alignItems: 'flex-end' },
+  msgTheirs: { alignSelf: 'flex-start', alignItems: 'flex-start' },
+  bubble: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 18 },
+  bubbleMine: {
+    backgroundColor: colors.maroon,
+    borderBottomRightRadius: 4,
+    borderWidth: 0.5, borderColor: 'rgba(212,175,55,0.2)',
+  },
+  bubbleTheirs: {
+    backgroundColor: 'rgba(255,255,255,0.09)',
+    borderBottomLeftRadius: 4,
+    borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.1)',
+  },
   msgContent: { fontSize: 15, lineHeight: 22 },
   msgContentMine: { color: '#fff' },
   msgContentTheirs: { color: colors.text },
   statusRow: { flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 4 },
-  timeText: { fontSize: 11, color: colors.textMuted },
-  readReceipt: { fontSize: 12, color: colors.textMuted },
-  readReceiptSeen: { color: colors.primary },
-  freeDelayNote: { fontSize: 10, color: colors.primaryLight, fontStyle: 'italic' },
-  flagWarning: { fontSize: 11, color: colors.error, marginBottom: 4, alignSelf: 'flex-end' },
+  timeText: { fontSize: 10, color: 'rgba(255,255,255,0.4)' },
+  readReceipt: { fontSize: 11, color: 'rgba(255,255,255,0.4)' },
+  readReceiptSeen: { color: colors.accent },
+  freeDelayNote: { fontSize: 10, color: colors.textMuted, fontStyle: 'italic' },
+  flagWarning: { fontSize: 10, color: colors.error, marginBottom: 4, alignSelf: 'flex-end' },
 
   inputArea: {
-    borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)',
-    paddingHorizontal: 16, paddingTop: 12,
-    backgroundColor: colors.surface,
+    borderTopWidth: 0.5, borderTopColor: 'rgba(212,175,55,0.15)',
+    paddingHorizontal: 14, paddingTop: 10,
+    backgroundColor: 'rgba(13,5,9,0.97)',
   },
-  inputRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 12 },
+  inputRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 10 },
   input: {
-    flex: 1, backgroundColor: 'rgba(255,255,255,0.08)',
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 20, paddingHorizontal: 16, paddingVertical: 12,
-    maxHeight: 100, fontSize: 15, color: '#fff'
+    flex: 1, backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 22, paddingHorizontal: 16, paddingVertical: 11,
+    maxHeight: 110, fontSize: 15, color: '#fff',
   },
-  sendBtn: {
-    width: 44, height: 44, borderRadius: 22,
-    backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center'
-  },
-  sendBtnDisabled: { backgroundColor: colors.border },
-  sendIcon: { color: '#fff', fontSize: 18, transform: [{ rotate: '-45deg' }], marginLeft: 4, marginTop: -2 },
-  safetyNote: { fontSize: 10, color: colors.textMuted, textAlign: 'center', marginTop: 8 },
+  sendBtnWrap: { marginBottom: 2 },
+  sendBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  safetyNote: { fontSize: 10, color: colors.textMuted, textAlign: 'center', marginTop: 7, letterSpacing: 0.2 },
 });

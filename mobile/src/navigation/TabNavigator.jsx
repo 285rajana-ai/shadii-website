@@ -1,7 +1,8 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { BlurView } from 'expo-blur';
-import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ChatListScreen from '../screens/main/ChatListScreen';
 import DiscoverScreen from '../screens/main/DiscoverScreen';
@@ -21,9 +22,14 @@ const TABS = [
 function CustomTabBar({ state, descriptors, navigation }) {
   const insets = useSafeAreaInsets();
   const bottomPad = Math.max(insets.bottom, 8);
+
   return (
     <View style={[styles.tabBarContainer, { height: 60 + bottomPad, paddingBottom: bottomPad }]}>
-      <BlurView intensity={Platform.OS === 'ios' ? 40 : 100} tint="dark" style={StyleSheet.absoluteFill} />
+      <BlurView intensity={60} tint="dark" style={StyleSheet.absoluteFill} />
+      <LinearGradient
+        colors={['rgba(26,0,10,0.95)', 'rgba(13,5,9,0.98)']}
+        style={[StyleSheet.absoluteFill, { opacity: 0.85 }]}
+      />
       <View style={styles.tabBar}>
         {state.routes.map((route, index) => {
           const isFocused = state.index === index;
@@ -31,9 +37,7 @@ function CustomTabBar({ state, descriptors, navigation }) {
 
           const onPress = () => {
             const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-            if (!isFocused && !event.defaultPrevented) {
-              navigation.navigate(route.name);
-            }
+            if (!isFocused && !event.defaultPrevented) navigation.navigate(route.name);
           };
 
           return (
@@ -43,19 +47,24 @@ function CustomTabBar({ state, descriptors, navigation }) {
               style={styles.tabItem}
               activeOpacity={0.7}
             >
+              {isFocused && (
+                <LinearGradient
+                  colors={['rgba(212,175,55,0.18)', 'rgba(212,175,55,0)']}
+                  style={styles.activeGlow}
+                  start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }}
+                />
+              )}
               <View style={styles.iconContainer}>
                 <MaterialCommunityIcons
                   name={isFocused ? tab.iconActive : tab.icon}
-                  size={26}
-                  color={isFocused ? colors.accent : colors.textMuted}
+                  size={24}
+                  color={isFocused ? colors.accent : 'rgba(255,255,255,0.35)'}
                 />
-                {isFocused && (
-                  <View style={styles.activeIndicator} />
-                )}
               </View>
-              <Text style={[styles.tabLabel, { color: isFocused ? colors.accent : colors.textMuted }]}>
+              <Text style={[styles.tabLabel, { color: isFocused ? colors.accent : 'rgba(255,255,255,0.35)' }]}>
                 {tab.label}
               </Text>
+              {isFocused && <View style={styles.activeBar} />}
             </TouchableOpacity>
           );
         })}
@@ -81,9 +90,9 @@ export default function TabNavigator() {
 const styles = StyleSheet.create({
   tabBarContainer: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
-    backgroundColor: 'rgba(13,5,5,0.92)',
     borderTopWidth: 0.5,
-    borderTopColor: 'rgba(255,255,255,0.1)',
+    borderTopColor: 'rgba(212,175,55,0.15)',
+    overflow: 'hidden',
   },
   tabBar: {
     flexDirection: 'row',
@@ -91,33 +100,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   tabItem: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '100%'
+    flex: 1, alignItems: 'center', justifyContent: 'center',
+    height: '100%', overflow: 'hidden', position: 'relative',
+  },
+  activeGlow: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
   },
   iconContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 40,
-    width: 40,
+    alignItems: 'center', justifyContent: 'center',
+    height: 32, width: 32,
   },
-  activeIndicator: {
-    position: 'absolute',
-    bottom: -4,
-    width: 4,
-    height: 4,
-    borderRadius: 2,
+  activeBar: {
+    position: 'absolute', top: 0, left: '25%', right: '25%',
+    height: 2, borderRadius: 2,
     backgroundColor: colors.accent,
-    shadowColor: colors.accent,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 4,
   },
   tabLabel: {
-    fontSize: 10,
-    fontWeight: '600',
-    marginTop: 2,
-    letterSpacing: 0.5
+    fontSize: 10, fontWeight: '600',
+    marginTop: 3, letterSpacing: 0.4,
   },
 });
