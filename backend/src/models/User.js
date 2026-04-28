@@ -178,10 +178,8 @@ userSchema.methods.getProfilePhoto = function (viewerHasSubscription = false) {
 userSchema.methods.isSuspended = function () {
   if (this.status === 'suspended' && this.suspendedUntil) {
     if (new Date() < new Date(this.suspendedUntil)) return true;
-    // Auto-lift suspension
-    this.status = 'active';
-    this.suspendedUntil = null;
-    this.save();
+    // Auto-lift suspension (use updateOne to avoid validation errors)
+    mongoose.model('User').updateOne({ _id: this._id }, { status: 'active', suspendedUntil: null }).catch(() => { });
   }
   return false;
 };
