@@ -206,8 +206,8 @@ export default function ChatDetailScreen({ route, navigation }) {
       {/* KAV only wraps messages + input */}
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={headerHeight}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? headerHeight : 0}
       >
         {loading ? (
           <View style={styles.center}><ActivityIndicator color={colors.accent} /></View>

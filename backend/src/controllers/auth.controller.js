@@ -165,8 +165,8 @@ exports.login = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error('Login error:', err.message, err.stack);
-    res.status(500).json({ success: false, message: 'Login failed. Please try again.', _debug: err.message });
+    console.error('Login error:', err.message);
+    res.status(500).json({ success: false, message: 'Login failed. Please try again.' });
   }
 };
 

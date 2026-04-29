@@ -1,3 +1,4 @@
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
@@ -126,7 +127,7 @@ export default function EditProfileScreen({ navigation }) {
       <LinearGradient colors={[colors.background, '#1A000A']} style={StyleSheet.absoluteFill} />
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backIcon}>←</Text>
+          <MaterialCommunityIcons name="chevron-left" size={26} color={colors.accent} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Edit Profile</Text>
       </View>
@@ -204,8 +205,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   flex: { flex: 1 },
   header: { paddingBottom: 16, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center' },
-  backBtn: { padding: 8, marginRight: 8 },
-  backIcon: { fontSize: 24, color: colors.accent },
+  backBtn: { width: 40, height: 40, borderRadius: 20, marginRight: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
   headerTitle: { fontSize: 20, fontWeight: '700', color: colors.text },
   scroll: { padding: 24, paddingBottom: 40 },
 

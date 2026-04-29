@@ -1,13 +1,17 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSelector, useDispatch } from 'react-redux';
+import { useState } from 'react';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useDispatch, useSelector } from 'react-redux';
 import { updateUser } from '../../store/slices/authSlice';
 import colors from '../../theme/colors';
-import { PAYMENT_METHODS, API_BASE_URL } from '../../utils/constants';
+import { API_BASE_URL, PAYMENT_METHODS } from '../../utils/constants';
 
 export default function PaymentScreen({ route, navigation }) {
-  const { plan } = route.params;
+  const { plan: routePlan } = route.params || {};
+  const plan = typeof routePlan === 'string'
+    ? { id: routePlan, name: routePlan === 'boost' ? 'Profile Boost' : routePlan, price: 500, duration: '3 Days' }
+    : routePlan;
   const { token, user } = useSelector((s) => s.auth);
   const dispatch = useDispatch();
 
@@ -15,6 +19,9 @@ export default function PaymentScreen({ route, navigation }) {
   const [loading, setLoading] = useState(false);
 
   const handlePayment = async () => {
+    if (!plan?.id || !plan?.price) {
+      return Alert.alert('Error', 'Invalid payment plan. Please try again.');
+    }
     setLoading(true);
     try {
       // 1. Initiate Payment
@@ -27,7 +34,7 @@ export default function PaymentScreen({ route, navigation }) {
         body: JSON.stringify({ plan: plan.id, paymentMethod: selectedMethod }),
       });
       const data = await res.json();
-      
+
       if (!data.success) {
         return Alert.alert('Error', data.message);
       }
@@ -48,7 +55,7 @@ export default function PaymentScreen({ route, navigation }) {
             }),
           });
           const confirmData = await confirmRes.json();
-          
+
           if (confirmData.success) {
             // Update user in Redux
             const meRes = await fetch(`${API_BASE_URL}/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
@@ -59,7 +66,7 @@ export default function PaymentScreen({ route, navigation }) {
               { text: 'Awesome', onPress: () => navigation.navigate('Home') }
             ]);
           }
-        } catch(e) {} finally {
+        } catch (e) { } finally {
           setLoading(false);
         }
       }, 2000);
@@ -71,10 +78,10 @@ export default function PaymentScreen({ route, navigation }) {
   };
 
   return (
-    <LinearGradient colors={[colors.background, '#FCE4EC']} style={styles.container}>
+    <LinearGradient colors={['#1A000A', '#0D0509', '#0D0D0D']} style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backIcon}>←</Text>
+          <MaterialCommunityIcons name="chevron-left" size={26} color={colors.accent} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Checkout</Text>
       </View>
@@ -88,9 +95,9 @@ export default function PaymentScreen({ route, navigation }) {
             <Text style={styles.planPrice}>PKR {plan.price.toLocaleString()}</Text>
           </View>
           <Text style={styles.duration}>Duration: {plan.duration}</Text>
-          
+
           <View style={styles.divider} />
-          
+
           <View style={styles.row}>
             <Text style={styles.totalText}>Total to pay</Text>
             <Text style={styles.totalPrice}>PKR {plan.price.toLocaleString()}</Text>
@@ -98,7 +105,7 @@ export default function PaymentScreen({ route, navigation }) {
         </View>
 
         <Text style={styles.sectionTitle}>Select Payment Method</Text>
-        
+
         <View style={styles.methodsContainer}>
           {PAYMENT_METHODS.map((method) => (
             <TouchableOpacity
@@ -124,7 +131,7 @@ export default function PaymentScreen({ route, navigation }) {
             )}
           </LinearGradient>
         </TouchableOpacity>
-        
+
         <Text style={styles.secureText}>🔒 Securely processed with 256-bit encryption</Text>
       </ScrollView>
     </LinearGradient>
@@ -134,8 +141,7 @@ export default function PaymentScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { paddingTop: 60, paddingBottom: 16, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center' },
-  backBtn: { padding: 8, marginRight: 8 },
-  backIcon: { fontSize: 24, color: colors.primary },
+  backBtn: { width: 40, height: 40, borderRadius: 20, marginRight: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
   headerTitle: { fontSize: 20, fontWeight: '700', color: colors.text },
   content: { padding: 24 },
   summaryCard: { backgroundColor: '#fff', borderRadius: 20, padding: 24, marginBottom: 32, borderWidth: 1, borderColor: colors.border },

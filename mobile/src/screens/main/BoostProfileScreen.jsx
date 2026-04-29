@@ -66,7 +66,16 @@ export default function BoostProfileScreen({ navigation }) {
                 { text: 'Cancel', style: 'cancel' },
                 {
                     text: 'Proceed to Payment',
-                    onPress: () => navigation.navigate('Payment', { plan: 'boost', paymentMethod: null }),
+                    onPress: () => navigation.navigate('Payment', {
+                        plan: {
+                            id: 'boost',
+                            name: 'Profile Boost',
+                            price: 500,
+                            duration: '3 Days',
+                            features: ['Top placement in Discover', 'More profile views', '3 days active boost'],
+                        },
+                        paymentMethod: null,
+                    }),
                 },
             ]
         );

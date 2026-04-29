@@ -1,15 +1,15 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import colors from '../../theme/colors';
 
 const createPlaceholder = (title) => {
   return function PlaceholderScreen({ navigation }) {
     return (
-      <LinearGradient colors={[colors.background, '#FCE4EC']} style={styles.container}>
+      <LinearGradient colors={['#1A000A', '#0D0509', '#0D0D0D']} style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <Text style={styles.backIcon}>←</Text>
+            <MaterialCommunityIcons name="chevron-left" size={26} color={colors.accent} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{title}</Text>
         </View>
@@ -25,8 +25,7 @@ const createPlaceholder = (title) => {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { paddingTop: 60, paddingBottom: 16, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center' },
-  backBtn: { padding: 8, marginRight: 8 },
-  backIcon: { fontSize: 24, color: colors.primary },
+  backBtn: { width: 40, height: 40, borderRadius: 20, marginRight: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
   headerTitle: { fontSize: 20, fontWeight: '700', color: colors.text },
   content: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   icon: { fontSize: 64, marginBottom: 16 },

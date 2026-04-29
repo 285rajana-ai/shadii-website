@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useState } from 'react';
+import { Alert, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import colors from '../../theme/colors';
 
 export default function CNICUploadScreen({ navigation }) {
@@ -28,10 +29,10 @@ export default function CNICUploadScreen({ navigation }) {
   };
 
   return (
-    <LinearGradient colors={[colors.background, '#FCE4EC']} style={styles.container}>
+    <LinearGradient colors={['#1A000A', '#0D0509', '#0D0D0D']} style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Text style={styles.backIcon}>←</Text>
+          <MaterialCommunityIcons name="chevron-left" size={26} color={colors.accent} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Verification (1/2)</Text>
       </View>
@@ -73,7 +74,7 @@ export default function CNICUploadScreen({ navigation }) {
             <Text style={styles.btnText}>Continue to Live Photo</Text>
           </LinearGradient>
         </TouchableOpacity>
-        
+
         <Text style={styles.securityNote}>🔒 Your data is encrypted and securely stored. It will not be shown on your profile.</Text>
       </View>
     </LinearGradient>
@@ -83,8 +84,7 @@ export default function CNICUploadScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { paddingTop: 60, paddingBottom: 16, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center' },
-  backBtn: { padding: 8, marginRight: 8 },
-  backIcon: { fontSize: 24, color: colors.primary },
+  backBtn: { width: 40, height: 40, borderRadius: 20, marginRight: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
   headerTitle: { fontSize: 20, fontWeight: '700', color: colors.text },
   content: { padding: 24, flex: 1 },
   title: { fontSize: 24, fontWeight: '800', color: colors.text, marginBottom: 8 },

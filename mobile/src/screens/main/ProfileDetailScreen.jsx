@@ -1,3 +1,4 @@
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
@@ -76,7 +77,7 @@ export default function ProfileDetailScreen({ route, navigation }) {
 
           <TouchableOpacity style={[styles.backBtn, { top: insets.top + 10 }]} onPress={() => navigation.goBack()}>
             <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
-            <Text style={styles.backIcon}>←</Text>
+            <MaterialCommunityIcons name="chevron-left" size={28} color="#fff" />
           </TouchableOpacity>
         </View>
 
@@ -172,8 +173,7 @@ const styles = StyleSheet.create({
   photo: { width: '100%', height: '100%', resizeMode: 'cover' },
   photoPlaceholder: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   initials: { fontSize: 80, color: '#fff', fontWeight: 'bold' },
-  backBtn: { position: 'absolute', left: 16, width: 44, height: 44, borderRadius: 22, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
-  backIcon: { color: '#fff', fontSize: 24 },
+  backBtn: { position: 'absolute', left: 16, width: 44, height: 44, borderRadius: 22, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.18)' },
   blurOverlay: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
   lockIcon: { fontSize: 48, marginBottom: 16 },
   blurText: { color: '#fff', fontSize: 16, fontWeight: '700', marginBottom: 24, textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
