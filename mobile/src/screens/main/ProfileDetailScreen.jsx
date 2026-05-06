@@ -2,7 +2,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Dimensions, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Dimensions, Image, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
 import colors from '../../theme/colors';
@@ -16,6 +16,7 @@ export default function ProfileDetailScreen({ route, navigation }) {
   const insets = useSafeAreaInsets();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [liked, setLiked] = useState(false);
 
   useEffect(() => {
     fetchProfile();
@@ -28,11 +29,20 @@ export default function ProfileDetailScreen({ route, navigation }) {
       });
       const data = await res.json();
       if (data.success) setProfile(data.profile);
-    } catch (e) {
-      console.log('Error fetching profile:', e);
+    } catch (_) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleLike = async () => {
+    setLiked((prev) => !prev);
+    try {
+      await fetch(`${API_BASE_URL}/profile/${userId}/like`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    } catch (_) { }
   };
 
   const handleMessage = () => {
@@ -49,6 +59,7 @@ export default function ProfileDetailScreen({ route, navigation }) {
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
         {/* Photo Header */}
         <View style={styles.photoContainer}>
@@ -99,8 +110,13 @@ export default function ProfileDetailScreen({ route, navigation }) {
                 <Text style={styles.msgBtnText}>💬 Send Message</Text>
               </LinearGradient>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.likeBtn}>
-              <Text style={styles.likeIcon}>🤍</Text>
+            <TouchableOpacity
+              style={[styles.likeBtn, liked && styles.likeBtnActive]}
+              onPress={handleLike}
+              activeOpacity={0.8}
+              accessibilityLabel={liked ? 'Unlike profile' : 'Like profile'}
+            >
+              <MaterialCommunityIcons name={liked ? 'heart' : 'heart-outline'} size={22} color={liked ? '#E53935' : colors.textSecondary} />
             </TouchableOpacity>
           </View>
 
@@ -141,7 +157,7 @@ export default function ProfileDetailScreen({ route, navigation }) {
 
           {/* Report/Block */}
           <View style={styles.footerActions}>
-            <TouchableOpacity onPress={() => navigation.navigate('Report', { userId: profile._id })}>
+            <TouchableOpacity onPress={() => navigation.navigate('Report', { user: { _id: profile._id, name: profile.name, photo: profile.photo, age: profile.age, city: profile.city } })}>
               <Text style={styles.reportText}>⚠️ Report {profile.name}</Text>
             </TouchableOpacity>
           </View>
@@ -172,35 +188,36 @@ const styles = StyleSheet.create({
   photoContainer: { width, height: width * 1.1, position: 'relative' },
   photo: { width: '100%', height: '100%', resizeMode: 'cover' },
   photoPlaceholder: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  initials: { fontSize: 80, color: '#fff', fontWeight: 'bold' },
+  initials: { fontSize: 40, color: '#fff', fontWeight: 'bold' },
   backBtn: { position: 'absolute', left: 16, width: 44, height: 44, borderRadius: 22, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.18)' },
   blurOverlay: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
-  lockIcon: { fontSize: 48, marginBottom: 16 },
+  lockIcon: { fontSize: 40, marginBottom: 16 },
   blurText: { color: '#fff', fontSize: 16, fontWeight: '700', marginBottom: 24, textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
   subscribeBtn: { backgroundColor: colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 20 },
   subscribeBtnText: { color: '#fff', fontWeight: '700' },
-  content: { padding: 24, backgroundColor: colors.background, marginTop: -30, borderTopLeftRadius: 30, borderTopRightRadius: 30 },
+  content: { padding: 24, backgroundColor: colors.background, marginTop: -24, borderTopLeftRadius: 24, borderTopRightRadius: 24 },
   nameRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
-  name: { fontSize: 28, fontWeight: '800', color: colors.text },
-  verifiedBadge: { backgroundColor: 'rgba(29, 161, 242, 0.1)', color: '#1DA1F2', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, fontSize: 12, fontWeight: '700', overflow: 'hidden' },
-  basicInfo: { fontSize: 15, color: colors.textSecondary, marginBottom: 24 },
+  name: { fontSize: 24, fontWeight: '800', color: colors.text },
+  verifiedBadge: { backgroundColor: 'rgba(212,175,55,0.12)', color: colors.accent, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, fontSize: 12, fontWeight: '700', overflow: 'hidden' },
+  basicInfo: { fontSize: 14, color: colors.textSecondary, marginBottom: 24 },
   actionRow: { flexDirection: 'row', gap: 12, marginBottom: 32 },
   msgBtn: { flex: 1, borderRadius: 16, overflow: 'hidden' },
   btnGradient: { paddingVertical: 16, alignItems: 'center', justifyContent: 'center' },
   msgBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
   likeBtn: { width: 56, height: 56, borderRadius: 16, backgroundColor: colors.glassMedium, borderWidth: 1, borderColor: colors.glassBorderLight, alignItems: 'center', justifyContent: 'center' },
+  likeBtnActive: { backgroundColor: 'rgba(229,57,53,0.15)', borderColor: 'rgba(229,57,53,0.4)' },
   likeIcon: { fontSize: 24 },
   section: { marginBottom: 32 },
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: 16 },
-  aboutText: { fontSize: 15, color: colors.textSecondary, lineHeight: 24 },
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 16 },
+  aboutText: { fontSize: 14, color: colors.textSecondary, lineHeight: 24 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
   detailItem: { width: '47%', flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.surface, padding: 12, borderRadius: 16, borderWidth: 1, borderColor: colors.glassBorder },
   detailIcon: { fontSize: 20 },
   detailLabel: { fontSize: 11, color: colors.textMuted, marginBottom: 2 },
-  detailValue: { fontSize: 13, fontWeight: '600', color: colors.text },
+  detailValue: { fontSize: 12, fontWeight: '600', color: colors.text },
   tagsContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   tag: { backgroundColor: colors.glassMedium, borderWidth: 1, borderColor: colors.glassBorderLight, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 },
-  tagText: { color: colors.textSecondary, fontSize: 13, fontWeight: '500' },
+  tagText: { color: colors.textSecondary, fontSize: 12, fontWeight: '500' },
   footerActions: { alignItems: 'center', marginTop: 16, borderTopWidth: 1, borderTopColor: colors.glassBorderLight, paddingTop: 24 },
   reportText: { color: colors.error, fontSize: 14, fontWeight: '600' },
 });

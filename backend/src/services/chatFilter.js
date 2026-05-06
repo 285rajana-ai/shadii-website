@@ -28,8 +28,8 @@ const CONTACT_PATTERNS = [
   { pattern: /telegram|t\.me\/[a-zA-Z0-9_]+/gi, type: 'social_media', label: 'Telegram' },
   // Twitter/X
   { pattern: /twitter|@[a-zA-Z0-9_]{4,15}\b/g, type: 'social_media', label: 'Twitter/X' },
-  // Coded attempts (digit words, etc.)
-  { pattern: /\b(zero|one|two|three|four|five|six|seven|eight|nine|sifar|aik|do|teen|chaar|paanch|chhe|saat|aath|nau)\b/gi, type: 'coded_numbers', label: 'Coded Phone Number' },
+  // Coded attempts: require 3+ consecutive digit-words to reduce false positives on normal Urdu text
+  { pattern: /\b(zero|one|two|three|four|five|six|seven|eight|nine|sifar|aik|do|teen|chaar|paanch|chhe|saat|aath|nau)\b[\s,\-]*\b(zero|one|two|three|four|five|six|seven|eight|nine|sifar|aik|do|teen|chaar|paanch|chhe|saat|aath|nau)\b[\s,\-]*\b(zero|one|two|three|four|five|six|seven|eight|nine|sifar|aik|do|teen|chaar|paanch|chhe|saat|aath|nau)\b/gi, type: 'coded_numbers', label: 'Coded Phone Number' },
 ];
 
 /**
@@ -69,8 +69,16 @@ const handleViolation = async (userId, violationType) => {
     // First offense: issue warning
     user.warningIssued = true;
     await user.save();
-    await sendEmail(user.email, 'suspension', { name: user.name, hours: 0, reason: `Attempting to share ${violationType}` });
-    return { action: 'warning', message: 'Warning issued — first offense' };
+    const emailResult = await sendEmail(user.email, 'suspension', {
+      name: user.name,
+      hours: 0,
+      reason: `Attempting to share ${violationType}`,
+    });
+    return {
+      action: 'warning',
+      message: 'Warning issued — first offense',
+      emailNotified: emailResult?.success === true,
+    };
   } else {
     // Second+ offense: suspend for 24 hours
     const suspendedUntil = new Date(Date.now() + 24 * 60 * 60 * 1000);
@@ -78,8 +86,17 @@ const handleViolation = async (userId, violationType) => {
     user.suspendedUntil = suspendedUntil;
     user.suspensionReason = `Contact info sharing: ${violationType}`;
     await user.save();
-    await sendEmail(user.email, 'suspension', { name: user.name, hours: 24, reason: `Sharing ${violationType}` });
-    return { action: 'suspended_24h', message: 'Account suspended for 24 hours', suspendedUntil };
+    const emailResult = await sendEmail(user.email, 'suspension', {
+      name: user.name,
+      hours: 24,
+      reason: `Sharing ${violationType}`,
+    });
+    return {
+      action: 'suspended_24h',
+      message: 'Account suspended for 24 hours',
+      suspendedUntil,
+      emailNotified: emailResult?.success === true,
+    };
   }
 };
 

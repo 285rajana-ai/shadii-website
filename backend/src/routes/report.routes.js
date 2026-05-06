@@ -31,7 +31,7 @@ router.post('/', protect, upload.array('screenshots', 5), async (req, res) => {
 });
 
 // GET /api/reports — admin only: get all reports
-router.get('/', protect, async (req, res) => {
+router.get('/', protect, isAdmin, async (req, res) => {
   try {
     const { status, page = 1, limit = 20 } = req.query;
     const filter = status ? { status } : {};
@@ -51,7 +51,7 @@ router.get('/', protect, async (req, res) => {
 });
 
 // POST /api/reports/:id/action — admin action on report
-router.post('/:id/action', protect, async (req, res) => {
+router.post('/:id/action', protect, isAdmin, async (req, res) => {
   try {
     const { action, adminNote } = req.body;
     const report = await Report.findById(req.params.id).populate('reported');

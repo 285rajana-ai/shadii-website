@@ -2,7 +2,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useRef } from 'react';
+import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ChatListScreen from '../screens/main/ChatListScreen';
 import DiscoverScreen from '../screens/main/DiscoverScreen';
@@ -22,6 +23,7 @@ const TABS = [
 function CustomTabBar({ state, descriptors, navigation }) {
   const insets = useSafeAreaInsets();
   const bottomPad = Math.max(insets.bottom, 8);
+  const scaleAnims = useRef(TABS.map(() => new Animated.Value(1))).current;
 
   return (
     <View style={[styles.tabBarContainer, { height: 60 + bottomPad, paddingBottom: bottomPad }]}>
@@ -36,6 +38,10 @@ function CustomTabBar({ state, descriptors, navigation }) {
           const tab = TABS[index];
 
           const onPress = () => {
+            Animated.sequence([
+              Animated.timing(scaleAnims[index], { toValue: 0.8, duration: 80, useNativeDriver: true }),
+              Animated.spring(scaleAnims[index], { toValue: 1, friction: 4, tension: 180, useNativeDriver: true }),
+            ]).start();
             const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
             if (!isFocused && !event.defaultPrevented) navigation.navigate(route.name);
           };
@@ -54,13 +60,13 @@ function CustomTabBar({ state, descriptors, navigation }) {
                   start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }}
                 />
               )}
-              <View style={styles.iconContainer}>
+              <Animated.View style={[styles.iconContainer, { transform: [{ scale: scaleAnims[index] }] }]}>
                 <MaterialCommunityIcons
                   name={isFocused ? tab.iconActive : tab.icon}
                   size={24}
                   color={isFocused ? colors.accent : 'rgba(255,255,255,0.35)'}
                 />
-              </View>
+              </Animated.View>
               <Text style={[styles.tabLabel, { color: isFocused ? colors.accent : 'rgba(255,255,255,0.35)' }]}>
                 {tab.label}
               </Text>
@@ -116,7 +122,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent,
   },
   tabLabel: {
-    fontSize: 10, fontWeight: '600',
-    marginTop: 3, letterSpacing: 0.4,
+    fontSize: 12, fontWeight: '600',
+    marginTop: 3, letterSpacing: 0.2,
   },
 });

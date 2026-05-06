@@ -222,10 +222,10 @@ const styles = StyleSheet.create({
         shadowColor: '#FF6B35', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.5, shadowRadius: 20,
         elevation: 20,
     },
-    heroTitle: { fontSize: 26, fontWeight: '800', color: colors.text, marginTop: 24, textAlign: 'center', letterSpacing: 0.3 },
-    heroSubtitle: { fontSize: 15, color: colors.textSecondary, marginTop: 8, textAlign: 'center', lineHeight: 22, paddingHorizontal: 16 },
+    heroTitle: { fontSize: 24, fontWeight: '800', color: colors.text, marginTop: 24, textAlign: 'center', letterSpacing: 0.3 },
+    heroSubtitle: { fontSize: 14, color: colors.textSecondary, marginTop: 8, textAlign: 'center', lineHeight: 22, paddingHorizontal: 16 },
 
-    statsRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },
+    statsRow: { flexDirection: 'row', gap: 8, marginBottom: 20 },
     statCard: { flex: 1, alignItems: 'center', paddingVertical: 16, gap: 4 },
     statValue: { fontSize: 20, fontWeight: '800', color: colors.boost },
     statLabel: { fontSize: 11, color: colors.textMuted, textAlign: 'center' },
@@ -235,32 +235,32 @@ const styles = StyleSheet.create({
         borderWidth: 1, borderColor: 'rgba(255,107,53,0.4)', marginBottom: 20, overflow: 'hidden',
     },
     activeBannerTitle: { fontSize: 16, fontWeight: '700', color: colors.boost },
-    activeBannerSub: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
+    activeBannerSub: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
 
     packageCard: { padding: 20, marginBottom: 20, borderColor: 'rgba(255,107,53,0.4)' },
     packageHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
     packageIconBg: {
-        width: 42, height: 42, borderRadius: 12, backgroundColor: 'rgba(255,107,53,0.15)',
+        width: 44, height: 44, borderRadius: 12, backgroundColor: 'rgba(255,107,53,0.15)',
         alignItems: 'center', justifyContent: 'center',
     },
-    packageName: { fontSize: 18, fontWeight: '700', color: colors.text },
-    packageDuration: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
+    packageName: { fontSize: 16, fontWeight: '700', color: colors.text },
+    packageDuration: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
     packagePrice: { alignItems: 'flex-end' },
-    priceAmount: { fontSize: 22, fontWeight: '800', color: colors.boost },
+    priceAmount: { fontSize: 20, fontWeight: '800', color: colors.boost },
 
     divider: { height: 1, backgroundColor: colors.glassBorderLight, marginBottom: 16 },
 
-    featureRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
+    featureRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
     featureText: { fontSize: 14, color: colors.textSecondary, flex: 1 },
 
     boostButton: {
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
-        paddingVertical: 18, borderRadius: 20, overflow: 'hidden', marginBottom: 16,
+        flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+        paddingVertical: 16, borderRadius: 20, overflow: 'hidden', marginBottom: 16,
         shadowColor: '#FF6B35', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.4, shadowRadius: 16,
         elevation: 12,
     },
     disabledButton: { shadowOpacity: 0 },
-    boostButtonText: { fontSize: 17, fontWeight: '800', color: '#FFF', letterSpacing: 0.5 },
+    boostButtonText: { fontSize: 16, fontWeight: '800', color: '#FFF', letterSpacing: 0.5 },
 
     infoNote: { fontSize: 12, color: colors.textMuted, textAlign: 'center', lineHeight: 18, paddingHorizontal: 8 },
 });

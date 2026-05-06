@@ -2,8 +2,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
+  Animated,
   FlatList,
   KeyboardAvoidingView, Platform,
   StyleSheet,
@@ -106,8 +106,7 @@ export default function ChatDetailScreen({ route, navigation }) {
       if (data.success) {
         setMessages(data.messages);
       }
-    } catch (e) {
-      console.log('Fetch msgs error:', e);
+    } catch (_) {
     } finally {
       setLoading(false);
     }
@@ -190,7 +189,7 @@ export default function ChatDetailScreen({ route, navigation }) {
               {typing ? (
                 <Text style={styles.typingText}>typing...</Text>
               ) : (
-                <Text style={styles.onlineText}>● Online</Text>
+                <Text style={styles.onlineText}>● Active</Text>
               )}
             </View>
           </TouchableOpacity>
@@ -206,11 +205,11 @@ export default function ChatDetailScreen({ route, navigation }) {
       {/* KAV only wraps messages + input */}
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? headerHeight : 0}
       >
         {loading ? (
-          <View style={styles.center}><ActivityIndicator color={colors.accent} /></View>
+          <MessageSkeleton />
         ) : (
           <FlatList
             ref={flatListRef}
@@ -255,7 +254,7 @@ export default function ChatDetailScreen({ route, navigation }) {
               </LinearGradient>
             </TouchableOpacity>
           </View>
-          <Text style={styles.safetyNote}>🔒 Contact sharing is monitored</Text>
+          <Text style={styles.safetyNote}>Contact sharing is monitored</Text>
         </View>
       </KeyboardAvoidingView>
     </View>
@@ -270,7 +269,7 @@ const styles = StyleSheet.create({
     zIndex: 10, overflow: 'hidden',
   },
   headerInner: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, flex: 1 },
-  backBtn: { padding: 10, marginRight: 4 },
+  backBtn: { padding: 8, marginRight: 4 },
   headerProfile: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 },
   headerAvatarWrap: { position: 'relative' },
   headerAvatar: {
@@ -286,17 +285,17 @@ const styles = StyleSheet.create({
     backgroundColor: colors.online, borderWidth: 2, borderColor: colors.background,
   },
   headerInfo: { flex: 1 },
-  headerName: { fontSize: 17, fontWeight: '800', color: colors.text, letterSpacing: -0.3 },
+  headerName: { fontSize: 16, fontWeight: '800', color: colors.text, letterSpacing: -0.3 },
   onlineText: { fontSize: 11, color: colors.online, fontWeight: '600', marginTop: 1 },
   typingText: { fontSize: 11, color: colors.accent, fontStyle: 'italic', marginTop: 1 },
-  headerActionBtn: { padding: 10 },
+  headerActionBtn: { padding: 8 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  list: { paddingHorizontal: 14, paddingVertical: 16 },
+  list: { paddingHorizontal: 12, paddingVertical: 16 },
 
-  msgWrapper: { marginBottom: 10, maxWidth: '78%' },
+  msgWrapper: { marginBottom: 8, maxWidth: '78%' },
   msgMine: { alignSelf: 'flex-end', alignItems: 'flex-end' },
   msgTheirs: { alignSelf: 'flex-start', alignItems: 'flex-start' },
-  bubble: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 18 },
+  bubble: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 18 },
   bubbleMine: {
     backgroundColor: colors.maroon,
     borderBottomRightRadius: 4,
@@ -307,29 +306,63 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 4,
     borderWidth: 0.5, borderColor: 'rgba(255,255,255,0.1)',
   },
-  msgContent: { fontSize: 15, lineHeight: 22 },
+  msgContent: { fontSize: 14, lineHeight: 22 },
   msgContentMine: { color: '#fff' },
   msgContentTheirs: { color: colors.text },
   statusRow: { flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 4 },
-  timeText: { fontSize: 10, color: 'rgba(255,255,255,0.4)' },
+  timeText: { fontSize: 11, color: 'rgba(255,255,255,0.4)' },
   readReceipt: { fontSize: 11, color: 'rgba(255,255,255,0.4)' },
   readReceiptSeen: { color: colors.accent },
-  freeDelayNote: { fontSize: 10, color: colors.textMuted, fontStyle: 'italic' },
-  flagWarning: { fontSize: 10, color: colors.error, marginBottom: 4, alignSelf: 'flex-end' },
+  freeDelayNote: { fontSize: 11, color: colors.textMuted, fontStyle: 'italic' },
+  flagWarning: { fontSize: 11, color: colors.error, marginBottom: 4, alignSelf: 'flex-end' },
 
   inputArea: {
     borderTopWidth: 0.5, borderTopColor: 'rgba(212,175,55,0.15)',
-    paddingHorizontal: 14, paddingTop: 10,
+    paddingHorizontal: 12, paddingTop: 8,
     backgroundColor: 'rgba(13,5,9,0.97)',
   },
-  inputRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 10 },
+  inputRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
   input: {
     flex: 1, backgroundColor: 'rgba(255,255,255,0.06)',
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 22, paddingHorizontal: 16, paddingVertical: 11,
-    maxHeight: 110, fontSize: 15, color: '#fff',
+    borderRadius: 22, paddingHorizontal: 16, paddingVertical: 12,
+    maxHeight: 110, fontSize: 14, color: '#fff',
   },
   sendBtnWrap: { marginBottom: 2 },
   sendBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
-  safetyNote: { fontSize: 10, color: colors.textMuted, textAlign: 'center', marginTop: 7, letterSpacing: 0.2 },
+  safetyNote: { fontSize: 11, color: colors.textMuted, textAlign: 'center', marginTop: 8, letterSpacing: 0.2 },
 });
+
+function MessageSkeleton() {
+  const shimmer = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmer, { toValue: 1, duration: 900, useNativeDriver: true }),
+        Animated.timing(shimmer, { toValue: 0, duration: 900, useNativeDriver: true }),
+      ])
+    ).start();
+    return () => shimmer.stopAnimation();
+  }, []);
+  const opacity = shimmer.interpolate({ inputRange: [0, 1], outputRange: [0.35, 0.75] });
+  const rows = [
+    { mine: false, w: '60%' }, { mine: true, w: '45%' },
+    { mine: false, w: '70%' }, { mine: true, w: '55%' },
+    { mine: false, w: '50%' }, { mine: true, w: '65%' },
+  ];
+  return (
+    <View style={{ flex: 1, padding: 12, gap: 12 }}>
+      {rows.map((r, i) => (
+        <Animated.View
+          key={i}
+          style={[{
+            alignSelf: r.mine ? 'flex-end' : 'flex-start',
+            height: 44, width: r.w, borderRadius: 18,
+            backgroundColor: r.mine ? 'rgba(92,15,49,0.35)' : 'rgba(255,255,255,0.07)',
+            opacity,
+          }]}
+        />
+      ))}
+    </View>
+  );
+}

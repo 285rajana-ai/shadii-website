@@ -12,7 +12,9 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
+import ScreenHeader from '../../components/ui/ScreenHeader';
 import colors from '../../theme/colors';
 import { glassStyles } from '../../theme/glassmorphism';
 import { API_BASE_URL } from '../../utils/constants';
@@ -28,6 +30,7 @@ const REPORT_REASONS = [
 
 export default function ReportUserScreen({ navigation, route }) {
     const { token } = useSelector((s) => s.auth);
+    const insets = useSafeAreaInsets();
     const reportedUser = route?.params?.user;
     const [selectedReason, setSelectedReason] = useState(null);
     const [details, setDetails] = useState('');
@@ -62,7 +65,7 @@ export default function ReportUserScreen({ navigation, route }) {
                 body: JSON.stringify({
                     reportedUserId: reportedUser?._id,
                     reason: selectedReason,
-                    details: details.trim(),
+                    description: details.trim(),
                 }),
             });
             const data = await res.json();
@@ -110,14 +113,7 @@ export default function ReportUserScreen({ navigation, route }) {
             <StatusBar barStyle="light-content" />
             <LinearGradient colors={['#1A000A', '#0D0D0D']} style={StyleSheet.absoluteFill} />
 
-            {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-                    <MaterialCommunityIcons name="arrow-left" size={24} color={colors.text} />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Report Profile</Text>
-                <View style={{ width: 40 }} />
-            </View>
+            <ScreenHeader title="Report Profile" onBack={() => navigation.goBack()} insetsTop={insets.top} />
 
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
                 <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
@@ -134,7 +130,7 @@ export default function ReportUserScreen({ navigation, route }) {
                                     </LinearGradient>
                                 )}
                             </View>
-                            <View style={{ flex: 1, marginLeft: 14 }}>
+                            <View style={{ flex: 1, marginLeft: 12 }}>
                                 <Text style={styles.reportedName}>{reportedUser.name}</Text>
                                 <Text style={styles.reportedDetails}>
                                     {[reportedUser.age && `${reportedUser.age} yrs`, reportedUser.city].filter(Boolean).join(' · ')}
@@ -174,7 +170,7 @@ export default function ReportUserScreen({ navigation, route }) {
                                     color={selectedReason === reason.id ? colors.error : colors.textSecondary}
                                 />
                             </View>
-                            <View style={{ flex: 1, marginLeft: 14 }}>
+                            <View style={{ flex: 1, marginLeft: 12 }}>
                                 <Text style={[styles.reasonLabel, selectedReason === reason.id && { color: colors.error }]}>
                                     {reason.label}
                                 </Text>
@@ -248,34 +244,28 @@ export default function ReportUserScreen({ navigation, route }) {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
-    header: {
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-        paddingTop: 56, paddingBottom: 16, paddingHorizontal: 20,
-    },
-    backBtn: { padding: 8, backgroundColor: colors.glass, borderRadius: 12, borderWidth: 1, borderColor: colors.glassBorderLight },
-    headerTitle: { fontSize: 20, fontWeight: '700', color: colors.text },
     scroll: { paddingHorizontal: 20, paddingBottom: 40 },
 
-    reportedCard: { flexDirection: 'row', alignItems: 'center', padding: 14, marginBottom: 16 },
-    reportedAvatar: { width: 50, height: 50, borderRadius: 25, overflow: 'hidden' },
-    avatarImg: { width: 50, height: 50, borderRadius: 25 },
+    reportedCard: { flexDirection: 'row', alignItems: 'center', padding: 12, marginBottom: 16 },
+    reportedAvatar: { width: 48, height: 48, borderRadius: 24, overflow: 'hidden' },
+    avatarImg: { width: 48, height: 48, borderRadius: 24 },
     avatarInitial: { fontSize: 20, fontWeight: '800', color: '#FFF' },
     reportedName: { fontSize: 16, fontWeight: '700', color: colors.text },
-    reportedDetails: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
+    reportedDetails: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
     reportingBadge: {
         flexDirection: 'row', alignItems: 'center', gap: 4,
-        paddingHorizontal: 8, paddingVertical: 5, borderRadius: 8,
+        paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8,
         backgroundColor: 'rgba(231,76,60,0.15)', borderWidth: 1, borderColor: 'rgba(231,76,60,0.3)',
     },
     reportingText: { fontSize: 11, color: colors.error, fontWeight: '600' },
 
     warningBox: {
-        flexDirection: 'row', alignItems: 'flex-start', gap: 10,
-        padding: 14, backgroundColor: 'rgba(46,204,113,0.08)',
+        flexDirection: 'row', alignItems: 'flex-start', gap: 8,
+        padding: 12, backgroundColor: 'rgba(46,204,113,0.08)',
         borderRadius: 14, borderWidth: 1, borderColor: 'rgba(46,204,113,0.2)',
         marginBottom: 20,
     },
-    warningText: { fontSize: 13, color: colors.textSecondary, flex: 1, lineHeight: 18 },
+    warningText: { fontSize: 12, color: colors.textSecondary, flex: 1, lineHeight: 18 },
 
     sectionLabel: { fontSize: 14, fontWeight: '700', color: colors.accent, marginBottom: 12, textTransform: 'uppercase', letterSpacing: 0.8 },
 
@@ -283,11 +273,11 @@ const styles = StyleSheet.create({
         flexDirection: 'row', alignItems: 'center', padding: 16,
         backgroundColor: colors.glassMedium, borderRadius: 16,
         borderWidth: 1, borderColor: colors.glassBorderLight,
-        marginBottom: 10, overflow: 'hidden',
+        marginBottom: 8, overflow: 'hidden',
     },
     reasonCardSelected: { borderColor: 'rgba(231,76,60,0.5)' },
     reasonIcon: { width: 44, height: 44, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.06)', alignItems: 'center', justifyContent: 'center' },
-    reasonLabel: { fontSize: 15, fontWeight: '600', color: colors.text },
+    reasonLabel: { fontSize: 14, fontWeight: '600', color: colors.text },
     reasonDesc: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
     radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: colors.textMuted, alignItems: 'center', justifyContent: 'center' },
     radioSelected: { borderColor: colors.error },
@@ -295,29 +285,29 @@ const styles = StyleSheet.create({
 
     detailsInput: {
         backgroundColor: colors.surfaceLight, borderRadius: 14,
-        padding: 14, fontSize: 15, color: colors.text,
+        padding: 12, fontSize: 14, color: colors.text,
         borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
-        minHeight: 110, marginBottom: 6,
+        minHeight: 110, marginBottom: 4,
     },
     charCount: { fontSize: 12, color: colors.textMuted, textAlign: 'right', marginBottom: 16 },
 
     blockAlsoCard: { flexDirection: 'row', alignItems: 'center', padding: 16, marginBottom: 20 },
-    blockAlsoTitle: { fontSize: 15, fontWeight: '600', color: colors.text },
+    blockAlsoTitle: { fontSize: 14, fontWeight: '600', color: colors.text },
     blockAlsoSub: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
     blockBtn: {
         paddingHorizontal: 16, paddingVertical: 8, borderRadius: 10,
         borderWidth: 1.5, borderColor: colors.error,
     },
-    blockBtnText: { fontSize: 13, fontWeight: '700', color: colors.error },
+    blockBtnText: { fontSize: 12, fontWeight: '700', color: colors.error },
 
     submitBtn: {
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
-        paddingVertical: 18, borderRadius: 20, overflow: 'hidden',
+        flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+        paddingVertical: 16, borderRadius: 20, overflow: 'hidden',
         shadowColor: colors.error, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.3, shadowRadius: 16,
         elevation: 10,
     },
     submitBtnDisabled: { shadowOpacity: 0 },
-    submitBtnText: { fontSize: 17, fontWeight: '800', color: '#FFF' },
+    submitBtnText: { fontSize: 16, fontWeight: '800', color: '#FFF' },
 
     successState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40 },
     successGlow: { position: 'absolute', width: 300, height: 300, borderRadius: 150, top: '30%' },
@@ -326,11 +316,11 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(46,204,113,0.1)', alignItems: 'center', justifyContent: 'center',
         borderWidth: 2, borderColor: 'rgba(46,204,113,0.3)', marginBottom: 24,
     },
-    successTitle: { fontSize: 28, fontWeight: '800', color: colors.text, marginBottom: 14 },
-    successSub: { fontSize: 15, color: colors.textSecondary, textAlign: 'center', lineHeight: 24, marginBottom: 32 },
+    successTitle: { fontSize: 24, fontWeight: '800', color: colors.text, marginBottom: 12 },
+    successSub: { fontSize: 14, color: colors.textSecondary, textAlign: 'center', lineHeight: 24, marginBottom: 32 },
     doneBtn: {
         paddingVertical: 16, paddingHorizontal: 48, borderRadius: 20, overflow: 'hidden',
         shadowColor: colors.success, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.3, shadowRadius: 16,
     },
-    doneBtnText: { fontSize: 17, fontWeight: '800', color: '#FFF' },
+    doneBtnText: { fontSize: 16, fontWeight: '800', color: '#FFF' },
 });

@@ -5,8 +5,10 @@ import { useState } from 'react';
 import { Alert, Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
+import PrimaryButton from '../../components/ui/PrimaryButton';
 import { updateUser } from '../../store/slices/authSlice';
 import colors from '../../theme/colors';
+import { radius } from '../../theme/spacing';
 import { API_BASE_URL, INTERESTS } from '../../utils/constants';
 
 export default function EditProfileScreen({ navigation }) {
@@ -151,15 +153,15 @@ export default function EditProfileScreen({ navigation }) {
 
           {/* Form Fields */}
           <View style={styles.form}>
-            <InputField label="Full Name" value={formData.name} onChange={(v) => updateForm('name', v)} />
+            <InputField label="Full Name" value={formData.name} onChangeText={(v) => updateForm('name', v)} />
             <View style={styles.row}>
-              <InputField label="Age" value={formData.age} onChange={(v) => updateForm('age', v)} keyboardType="numeric" style={{ flex: 1, marginRight: 8 }} />
-              <InputField label="Height" value={formData.height} onChange={(v) => updateForm('height', v)} style={{ flex: 1, marginLeft: 8 }} placeholder="5'6" />
+              <InputField label="Age" value={formData.age} onChangeText={(v) => updateForm('age', v)} keyboardType="numeric" style={{ flex: 1, marginRight: 8 }} />
+              <InputField label="Height" value={formData.height} onChangeText={(v) => updateForm('height', v)} style={{ flex: 1, marginLeft: 8 }} placeholder="5'6" />
             </View>
-            <InputField label="City" value={formData.city} onChange={(v) => updateForm('city', v)} />
-            <InputField label="Education" value={formData.education} onChange={(v) => updateForm('education', v)} />
-            <InputField label="Cast / Community" value={formData.cast} onChange={(v) => updateForm('cast', v)} />
-            <InputField label="About Me" value={formData.about} onChange={(v) => updateForm('about', v)} multiline />
+            <InputField label="City" value={formData.city} onChangeText={(v) => updateForm('city', v)} />
+            <InputField label="Education" value={formData.education} onChangeText={(v) => updateForm('education', v)} />
+            <InputField label="Cast / Community" value={formData.cast} onChangeText={(v) => updateForm('cast', v)} />
+            <InputField label="About Me" value={formData.about} onChangeText={(v) => updateForm('about', v)} multiline />
           </View>
 
           {/* Interests */}
@@ -182,11 +184,12 @@ export default function EditProfileScreen({ navigation }) {
           </View>
 
           {/* Save Button */}
-          <TouchableOpacity style={styles.btnWrap} onPress={handleUpdate} disabled={loading}>
-            <LinearGradient colors={colors.gradients.primary} style={styles.btn}>
-              <Text style={styles.btnText}>{loading ? 'Saving...' : 'Save Changes'}</Text>
-            </LinearGradient>
-          </TouchableOpacity>
+          <PrimaryButton
+            label="Save Changes"
+            onPress={handleUpdate}
+            loading={loading}
+            disabled={loading}
+          />
 
         </ScrollView>
       </KeyboardAvoidingView>
@@ -194,18 +197,32 @@ export default function EditProfileScreen({ navigation }) {
   );
 }
 
-const InputField = ({ label, style, multiline, ...props }) => (
-  <View style={[styles.inputGroup, style]}>
-    <Text style={styles.label}>{label}</Text>
-    <TextInput style={[styles.input, multiline && { height: 100, paddingTop: 14 }]} placeholderTextColor={colors.textMuted} multiline={multiline} {...props} />
-  </View>
-);
+const InputField = ({ label, style, multiline, ...props }) => {
+  const [focused, setFocused] = useState(false);
+  return (
+    <View style={[styles.inputGroup, style]}>
+      <Text style={styles.label}>{label}</Text>
+      <TextInput
+        style={[
+          styles.input,
+          focused && styles.inputFocused,
+          multiline && { height: 100, paddingTop: 12 },
+        ]}
+        placeholderTextColor={colors.textMuted}
+        multiline={multiline}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        {...props}
+      />
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
   flex: { flex: 1 },
   header: { paddingBottom: 16, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center' },
-  backBtn: { width: 40, height: 40, borderRadius: 20, marginRight: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  backBtn: { width: 44, height: 44, borderRadius: 22, marginRight: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
   headerTitle: { fontSize: 20, fontWeight: '700', color: colors.text },
   scroll: { padding: 24, paddingBottom: 40 },
 
@@ -215,23 +232,20 @@ const styles = StyleSheet.create({
   placeholder: { width: '100%', height: '100%', backgroundColor: 'rgba(212,175,55,0.2)', alignItems: 'center', justifyContent: 'center' },
   initials: { fontSize: 40, color: colors.accent, fontWeight: 'bold' },
   changePhotoBtn: { backgroundColor: 'rgba(212,175,55,0.15)', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(212,175,55,0.3)' },
-  changePhotoText: { color: colors.accent, fontWeight: '600', fontSize: 13 },
+  changePhotoText: { color: colors.accent, fontWeight: '600', fontSize: 12 },
 
   form: { marginBottom: 24 },
   row: { flexDirection: 'row' },
   inputGroup: { marginBottom: 16 },
-  label: { fontSize: 13, fontWeight: '600', color: colors.textSecondary, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
-  input: { backgroundColor: 'rgba(255,255,255,0.07)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, color: colors.text, fontSize: 15 },
+  label: { fontSize: 12, fontWeight: '600', color: colors.textSecondary, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
+  input: { backgroundColor: 'rgba(255,255,255,0.07)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)', borderRadius: radius.md, paddingHorizontal: 16, paddingVertical: 16, color: colors.text, fontSize: 14 },
+  inputFocused: { borderColor: 'rgba(212,175,55,0.6)', backgroundColor: 'rgba(212,175,55,0.04)' },
 
   section: { marginBottom: 32 },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 12 },
   tagsContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   tag: { backgroundColor: 'rgba(255,255,255,0.07)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 },
   tagSelected: { backgroundColor: 'rgba(212,175,55,0.2)', borderColor: colors.accent },
-  tagText: { color: colors.textSecondary, fontSize: 13, fontWeight: '500' },
+  tagText: { color: colors.textSecondary, fontSize: 12, fontWeight: '500' },
   tagTextSelected: { color: colors.accent, fontWeight: '700' },
-
-  btnWrap: { borderRadius: 16, overflow: 'hidden' },
-  btn: { paddingVertical: 18, alignItems: 'center' },
-  btnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
 });

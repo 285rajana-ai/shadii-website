@@ -68,6 +68,48 @@ const emailTemplates = {
     `,
   }),
 
+  passwordReset: (name, otp) => ({
+    subject: `${otp} — Shadii.pk Password Reset Code`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #FDF6F0; padding: 40px; border-radius: 20px;">
+        <h1 style="color: #8B1A4A; text-align: center;">🌸 Shadii.pk</h1>
+        <h2 style="color: #3D1A2A;">Password Reset Request</h2>
+        <p style="color: #5A3040;">Hi <strong>${name}</strong>,</p>
+        <p style="color: #5A3040;">We received a request to reset your password. Use the code below to complete the reset:</p>
+        <div style="background: linear-gradient(135deg, #8B1A4A, #D4AF37); color: white; font-size: 36px; font-weight: bold; text-align: center; padding: 20px; border-radius: 12px; letter-spacing: 8px; margin: 20px 0;">${otp}</div>
+        <p style="color: #9B7B8A; font-size: 13px;">This code expires in <strong>15 minutes</strong>. Do not share it with anyone.</p>
+        <p style="color: #9B7B8A; font-size: 13px;">If you didn't request this, please ignore this email — your account is safe.</p>
+      </div>
+    `,
+  }),
+
+  matchReady: (name, matchCount) => ({
+    subject: `💫 ${matchCount} New Matches Ready — Shadii.pk`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #FDF6F0, #FCE4EC); padding: 40px; border-radius: 20px;">
+        <h1 style="color: #8B1A4A; text-align: center;">🌸 Shadii.pk</h1>
+        <h2 style="color: #3D1A2A;">Your Daily Matches Are Ready! 💫</h2>
+        <p style="color: #5A3040;">Hi <strong>${name}</strong>,</p>
+        <p style="color: #5A3040;">Our algorithm has found <strong>${matchCount} new compatible profiles</strong> for you today. Don't let them slip away!</p>
+        <a href="https://shadii.pk/app" style="display: inline-block; background: linear-gradient(135deg, #8B1A4A, #E8A4B8); color: white; padding: 14px 32px; border-radius: 50px; text-decoration: none; font-weight: bold; margin: 20px 0;">View My Matches 💕</a>
+        <p style="color: #9B7B8A; font-size: 12px;">New matches are generated every morning at 8 AM. Log in before midnight!</p>
+      </div>
+    `,
+  }),
+
+  subscriptionExpiring: (name, daysLeft, plan) => ({
+    subject: `⚠️ Your ${plan} Plan Expires in ${daysLeft} Days — Shadii.pk`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #FDF6F0; padding: 40px; border-radius: 20px;">
+        <h1 style="color: #8B1A4A; text-align: center;">🌸 Shadii.pk</h1>
+        <h2 style="color: #E67E22;">Subscription Expiring Soon ⚠️</h2>
+        <p style="color: #5A3040;">Hi <strong>${name}</strong>,</p>
+        <p style="color: #5A3040;">Your <strong>${plan}</strong> plan expires in <strong>${daysLeft} day${daysLeft === 1 ? '' : 's'}</strong>. Renew now to continue accessing all premium features without interruption.</p>
+        <a href="https://shadii.pk/app" style="display: inline-block; background: linear-gradient(135deg, #8B1A4A, #D4AF37); color: white; padding: 14px 32px; border-radius: 50px; text-decoration: none; font-weight: bold; margin: 20px 0;">Renew Now 👑</a>
+      </div>
+    `,
+  }),
+
   subscriptionConfirm: (name, plan, amount) => ({
     subject: `🎉 Subscription Confirmed — Shadii.pk Premium`,
     html: `
@@ -85,9 +127,16 @@ const emailTemplates = {
   }),
 };
 
-const sendEmail = async (to, templateName, templateData) => {
+const sendEmail = async (to, templateName, templateData, options = {}) => {
+  const { throwOnError = false } = options;
+
   try {
-    const template = emailTemplates[templateName](...Object.values(templateData));
+    const templateFactory = emailTemplates[templateName];
+    if (!templateFactory) {
+      throw new Error(`Unknown email template: ${templateName}`);
+    }
+
+    const template = templateFactory(...Object.values(templateData));
     await transporter.sendMail({
       from: `"Shadii.pk" <${process.env.SMTP_USER}>`,
       to,
@@ -95,8 +144,14 @@ const sendEmail = async (to, templateName, templateData) => {
       html: template.html,
     });
     console.log(`📧 Email sent to ${to}: ${templateName}`);
+    return { success: true };
   } catch (error) {
     console.error(`❌ Email failed: ${error.message}`);
+    if (throwOnError) {
+      throw error;
+    }
+
+    return { success: false, error: error.message };
   }
 };
 

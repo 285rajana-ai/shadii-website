@@ -2,7 +2,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
-import { Alert, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
 import colors from '../../theme/colors';
 import { API_BASE_URL } from '../../utils/constants';
@@ -10,6 +11,7 @@ import { API_BASE_URL } from '../../utils/constants';
 export default function LivePhotoScreen({ route, navigation }) {
   const { cnicFront, cnicBack } = route.params;
   const { token } = useSelector((s) => s.auth);
+  const insets = useSafeAreaInsets();
 
   const [livePhoto, setLivePhoto] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -71,7 +73,8 @@ export default function LivePhotoScreen({ route, navigation }) {
 
   return (
     <LinearGradient colors={['#1A000A', '#0D0509', '#0D0D0D']} style={styles.container}>
-      <View style={styles.header}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <MaterialCommunityIcons name="chevron-left" size={26} color={colors.accent} />
         </TouchableOpacity>
@@ -109,7 +112,7 @@ export default function LivePhotoScreen({ route, navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { paddingTop: 60, paddingBottom: 16, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center' },
+  header: { paddingBottom: 16, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center' },
   backBtn: { width: 40, height: 40, borderRadius: 20, marginRight: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
   headerTitle: { fontSize: 20, fontWeight: '700', color: colors.text },
   content: { padding: 24, flex: 1 },
@@ -126,6 +129,6 @@ const styles = StyleSheet.create({
   cameraIcon: { fontSize: 40 },
   cameraText: { fontSize: 16, color: colors.primary, fontWeight: '700' },
   btnWrap: { borderRadius: 16, overflow: 'hidden', marginTop: 'auto', marginBottom: 16 },
-  btn: { paddingVertical: 18, alignItems: 'center' },
+  btn: { paddingVertical: 16, alignItems: 'center' },
   btnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
 });

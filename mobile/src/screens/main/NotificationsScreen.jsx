@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
+import ScreenHeader from '../../components/ui/ScreenHeader';
 import colors from '../../theme/colors';
 import { API_BASE_URL } from '../../utils/constants';
 
@@ -106,7 +107,7 @@ export default function NotificationsScreen({ navigation }) {
                 <View style={[styles.iconCircle, { backgroundColor: color + '20' }]}>
                     <MaterialCommunityIcons name={icon} size={22} color={color} />
                 </View>
-                <View style={{ flex: 1, marginLeft: 14 }}>
+                <View style={{ flex: 1, marginLeft: 12 }}>
                     <Text style={styles.notifTitle}>{item.title}</Text>
                     <Text style={styles.notifBody} numberOfLines={2}>{item.body}</Text>
                     <Text style={styles.notifTime}>{timeAgo(item.createdAt)}</Text>
@@ -121,23 +122,25 @@ export default function NotificationsScreen({ navigation }) {
             <StatusBar barStyle="light-content" />
             <LinearGradient colors={['#1A000A', '#0D0D0D']} style={StyleSheet.absoluteFill} />
 
-            {/* Header */}
-            <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-                    <MaterialCommunityIcons name="arrow-left" size={24} color={colors.text} />
-                </TouchableOpacity>
-                <View>
-                    <Text style={styles.headerTitle}>Notifications</Text>
-                    {unreadCount > 0 && <Text style={styles.headerSub}>{unreadCount} unread</Text>}
+            <ScreenHeader
+                title="Notifications"
+                onBack={() => navigation.goBack()}
+                insetsTop={insets.top}
+                rightWidth={96}
+                right={
+                    unreadCount > 0 ? (
+                        <TouchableOpacity style={styles.markAllBtn} onPress={markAllRead} activeOpacity={0.8}>
+                            <Text style={styles.markAllText}>Mark all read</Text>
+                        </TouchableOpacity>
+                    ) : null
+                }
+            />
+
+            {unreadCount > 0 && (
+                <View style={styles.unreadMetaRow}>
+                    <Text style={styles.headerSub}>{unreadCount} unread</Text>
                 </View>
-                {unreadCount > 0 ? (
-                    <TouchableOpacity style={styles.markAllBtn} onPress={markAllRead}>
-                        <Text style={styles.markAllText}>Mark all read</Text>
-                    </TouchableOpacity>
-                ) : (
-                    <View style={{ width: 80 }} />
-                )}
-            </View>
+            )}
 
             {/* Filter Pills */}
             <View style={styles.filterRow}>
@@ -188,41 +191,40 @@ export default function NotificationsScreen({ navigation }) {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
-    header: {
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-        paddingBottom: 12, paddingHorizontal: 20,
+    unreadMetaRow: {
+        paddingHorizontal: 20,
+        marginTop: -8,
+        paddingBottom: 8,
     },
-    backBtn: { padding: 8, backgroundColor: colors.glass, borderRadius: 12, borderWidth: 1, borderColor: colors.glassBorderLight },
-    headerTitle: { fontSize: 20, fontWeight: '700', color: colors.text },
     headerSub: { fontSize: 12, color: colors.accent, marginTop: 2 },
-    markAllBtn: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 },
-    markAllText: { fontSize: 13, color: colors.accent, fontWeight: '600' },
+    markAllBtn: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
+    markAllText: { fontSize: 12, color: colors.accent, fontWeight: '600' },
 
-    filterRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 20, paddingBottom: 14 },
+    filterRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 20, paddingBottom: 12 },
     filterPill: {
-        paddingHorizontal: 18, paddingVertical: 8, borderRadius: 20,
+        paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20,
         backgroundColor: colors.glass, borderWidth: 1, borderColor: colors.glassBorderLight,
     },
     filterPillActive: { backgroundColor: 'rgba(212,175,55,0.15)', borderColor: 'rgba(212,175,55,0.4)' },
-    filterPillText: { fontSize: 13, fontWeight: '600', color: colors.textSecondary },
+    filterPillText: { fontSize: 12, fontWeight: '600', color: colors.textSecondary },
     filterPillTextActive: { color: colors.accent },
 
     list: { paddingHorizontal: 20, paddingBottom: 40 },
 
     notifCard: {
-        flexDirection: 'row', alignItems: 'flex-start', padding: 14,
+        flexDirection: 'row', alignItems: 'flex-start', padding: 12,
         backgroundColor: colors.glassMedium, borderRadius: 18,
         borderWidth: 1, borderColor: colors.glassBorderLight, overflow: 'hidden',
         position: 'relative',
     },
     notifCardUnread: { borderColor: 'rgba(212,175,55,0.25)' },
-    iconCircle: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', marginTop: 2 },
-    notifTitle: { fontSize: 15, fontWeight: '700', color: colors.text, marginBottom: 4, lineHeight: 20 },
-    notifBody: { fontSize: 13, color: colors.textSecondary, lineHeight: 18 },
-    notifTime: { fontSize: 11, color: colors.textMuted, marginTop: 6 },
-    unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.accent, marginTop: 6 },
+    iconCircle: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginTop: 2 },
+    notifTitle: { fontSize: 14, fontWeight: '700', color: colors.text, marginBottom: 4, lineHeight: 20 },
+    notifBody: { fontSize: 12, color: colors.textSecondary, lineHeight: 18 },
+    notifTime: { fontSize: 11, color: colors.textMuted, marginTop: 4 },
+    unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.accent, marginTop: 4 },
 
     emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40 },
-    emptyTitle: { fontSize: 22, fontWeight: '700', color: colors.text, marginTop: 20 },
-    emptySub: { fontSize: 15, color: colors.textSecondary, marginTop: 10, textAlign: 'center', lineHeight: 22 },
+    emptyTitle: { fontSize: 20, fontWeight: '700', color: colors.text, marginTop: 20 },
+    emptySub: { fontSize: 14, color: colors.textSecondary, marginTop: 8, textAlign: 'center', lineHeight: 22 },
 });

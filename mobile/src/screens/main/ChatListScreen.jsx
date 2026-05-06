@@ -6,7 +6,7 @@ import { ActivityIndicator, Animated, FlatList, Image, RefreshControl, StatusBar
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
 import colors from '../../theme/colors';
-import { spacing } from '../../theme/glassmorphism';
+import { spacing } from '../../theme/spacing';
 import { API_BASE_URL } from '../../utils/constants';
 
 const relativeTime = (dateStr) => {
@@ -38,8 +38,7 @@ export default function ChatListScreen({ navigation }) {
       if (data.success) {
         setConversations(data.conversations || []);
       }
-    } catch (e) {
-      console.log('Chat list fetch error, using mocks:', e.message);
+    } catch (_) {
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -131,7 +130,7 @@ function ConversationCard({ user, preview, mine, unreadCount, time, index, onPre
         <View style={styles.avatarWrapper}>
           {user?.isOnline && <View style={styles.onlineRing} />}
           <Image
-            source={{ uri: user?.photo || user?.photos?.[0] || 'https://via.placeholder.com/150' }}
+            source={user?.photo || user?.photos?.[0] ? { uri: user.photo || user.photos[0] } : null}
             style={styles.avatar}
           />
           {user?.isOnline && <View style={styles.onlineDot} />}
@@ -166,22 +165,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end',
   },
   headerSub: { color: colors.textSecondary, fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1.5 },
-  headerTitle: { fontSize: 30, fontWeight: '900', color: colors.text, letterSpacing: -0.5 },
+  headerTitle: { fontSize: 32, fontWeight: '900', color: colors.text, letterSpacing: -0.5 },
   iconButton: {
     width: 44, height: 44, borderRadius: 14,
     backgroundColor: 'rgba(255,255,255,0.07)',
     alignItems: 'center', justifyContent: 'center',
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
   },
-  listContent: { paddingHorizontal: spacing.lg, paddingBottom: 110, gap: 4 },
+  listContent: { paddingHorizontal: spacing.lg, paddingBottom: 112, gap: 4 },
   chatCard: {
     flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 16, paddingVertical: 14,
-    borderRadius: 20, marginBottom: 4,
+    paddingHorizontal: 16, paddingVertical: 12,
+    borderRadius: 20,
     backgroundColor: 'rgba(255,255,255,0.03)',
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)',
   },
-  avatarWrapper: { position: 'relative', marginRight: 14 },
+  avatarWrapper: { position: 'relative', marginRight: 12 },
   onlineRing: {
     position: 'absolute', inset: -3,
     borderRadius: 35, borderWidth: 2, borderColor: colors.online, zIndex: 1,
@@ -194,16 +193,16 @@ const styles = StyleSheet.create({
     backgroundColor: colors.online, borderWidth: 2.5, borderColor: colors.background, zIndex: 2,
   },
   chatInfo: { flex: 1 },
-  chatRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 5, gap: 4 },
+  chatRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 4, gap: 4 },
   userName: { fontSize: 16, fontWeight: '700', color: colors.text, flex: 1 },
   timeText: { fontSize: 11, color: colors.textMuted, fontWeight: '500' },
   previewRow: { flexDirection: 'row', alignItems: 'center' },
-  previewText: { flex: 1, fontSize: 13, color: colors.textSecondary, lineHeight: 18 },
+  previewText: { flex: 1, fontSize: 12, color: colors.textSecondary, lineHeight: 18 },
   previewUnread: { color: colors.text, fontWeight: '600' },
   badge: {
     minWidth: 22, height: 22, borderRadius: 11,
     alignItems: 'center', justifyContent: 'center',
-    paddingHorizontal: 6, marginLeft: 8,
+    paddingHorizontal: 4, marginLeft: 8,
   },
   badgeText: { color: '#fff', fontSize: 11, fontWeight: '800' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },

@@ -1,9 +1,16 @@
-import React, { useRef, useState } from 'react';
-import {
-  View, Text, StyleSheet, FlatList, Dimensions,
-  TouchableOpacity, Animated, StatusBar,
-} from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRef, useState } from 'react';
+import {
+  Animated,
+  Dimensions,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import colors from '../../theme/colors';
 
 const { width, height } = Dimensions.get('window');
@@ -47,6 +54,7 @@ export default function OnboardingScreen({ navigation }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef(null);
   const scrollX = useRef(new Animated.Value(0)).current;
+  const insets = useSafeAreaInsets();
 
   const handleNext = () => {
     if (currentIndex < slides.length - 1) {
@@ -94,7 +102,7 @@ export default function OnboardingScreen({ navigation }) {
       />
 
       {/* Controls overlay */}
-      <View style={styles.controls}>
+      <View style={[styles.controls, { paddingBottom: Math.max(insets.bottom, 20) + 12 }]}>
         {/* Dots */}
         <View style={styles.dots}>
           {slides.map((_, i) => {
@@ -112,18 +120,23 @@ export default function OnboardingScreen({ navigation }) {
         </View>
 
         <View style={styles.buttons}>
-          <TouchableOpacity onPress={handleSkip} style={styles.skipBtn}>
+          <TouchableOpacity onPress={handleSkip} style={styles.skipBtn} activeOpacity={0.7}>
             <Text style={styles.skipText}>Skip</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={handleNext} style={styles.nextBtn}>
+          <TouchableOpacity onPress={handleNext} style={styles.nextBtn} activeOpacity={0.8}>
             <LinearGradient
-              colors={['rgba(255,255,255,0.3)', 'rgba(255,255,255,0.15)']}
+              colors={['rgba(255,255,255,0.28)', 'rgba(255,255,255,0.12)']}
               style={styles.nextBtnInner}
             >
               <Text style={styles.nextText}>
-                {currentIndex === slides.length - 1 ? "Let's Start 🌸" : 'Next →'}
+                {currentIndex === slides.length - 1 ? 'Get Started' : 'Next'}
               </Text>
+              <MaterialCommunityIcons
+                name={currentIndex === slides.length - 1 ? 'heart' : 'arrow-right'}
+                size={16}
+                color="#FFFFFF"
+              />
             </LinearGradient>
           </TouchableOpacity>
         </View>
@@ -156,34 +169,35 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     marginBottom: 32,
   },
-  emoji: { fontSize: 56 },
+  emoji: { fontSize: 40 },
   titleUrdu: {
-    fontSize: 22, fontWeight: '700', color: 'rgba(255,255,255,0.85)',
+    fontSize: 20, fontWeight: '700', color: 'rgba(255,255,255,0.85)',
     textAlign: 'center', marginBottom: 8, writingDirection: 'rtl',
   },
   title: {
-    fontSize: 28, fontWeight: '800', color: '#FFFFFF',
+    fontSize: 24, fontWeight: '800', color: '#FFFFFF',
     textAlign: 'center', marginBottom: 16, letterSpacing: -0.5,
   },
   desc: {
-    fontSize: 15, color: 'rgba(255,255,255,0.75)',
+    fontSize: 14, color: 'rgba(255,255,255,0.75)',
     textAlign: 'center', lineHeight: 22,
   },
   controls: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
-    paddingHorizontal: 24, paddingBottom: 48,
+    paddingHorizontal: 24,
     backgroundColor: 'rgba(0,0,0,0.1)',
   },
-  dots: { flexDirection: 'row', justifyContent: 'center', gap: 6, marginBottom: 24 },
+  dots: { flexDirection: 'row', justifyContent: 'center', gap: 4, marginBottom: 24 },
   dot: { height: 8, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.85)' },
   buttons: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   skipBtn: { paddingHorizontal: 16, paddingVertical: 12 },
-  skipText: { color: 'rgba(255,255,255,0.7)', fontSize: 15, fontWeight: '500' },
+  skipText: { color: 'rgba(255,255,255,0.7)', fontSize: 14, fontWeight: '500' },
   nextBtn: { borderRadius: 14, overflow: 'hidden' },
   nextBtnInner: {
-    paddingHorizontal: 32, paddingVertical: 14,
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingHorizontal: 24, paddingVertical: 12,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.35)',
     borderRadius: 14,
   },
-  nextText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
+  nextText: { color: '#FFFFFF', fontSize: 14, fontWeight: '700' },
 });

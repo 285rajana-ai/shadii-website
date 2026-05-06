@@ -23,7 +23,6 @@ module.exports = (io) => {
   });
 
   io.on('connection', async (socket) => {
-    console.log(`🔌 User connected: ${socket.userId}`);
     onlineUsers.set(socket.userId, socket.id);
 
     // Update online status
@@ -80,12 +79,23 @@ module.exports = (io) => {
           seenDelayUntil,
         });
 
-        // Send to receiver if online
+        // Send to receiver if online, else send push notification
         const receiverSocketId = onlineUsers.get(receiverId);
         if (receiverSocketId) {
           io.to(receiverSocketId).emit('message:receive', message);
-          // Mark as delivered
           await Message.findByIdAndUpdate(message._id, { status: 'delivered' });
+        } else {
+          // Receiver is offline — send push notification
+          try {
+            const { notifyNewMessage } = require('../services/pushNotification');
+            const receiver = await User.findById(receiverId).select('fcmToken name settings');
+            if (receiver?.fcmToken) {
+              const preview = isFreeMessage ? 'Tap to read' : content.trim().substring(0, 80);
+              await notifyNewMessage(receiver, socket.user.name, preview);
+            }
+          } catch (pushErr) {
+            console.error('Push notification error:', pushErr.message);
+          }
         }
 
         // Confirm to sender

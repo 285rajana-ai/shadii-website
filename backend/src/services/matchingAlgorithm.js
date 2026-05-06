@@ -154,20 +154,48 @@ const generateDailyMatches = async (userId) => {
 
 /**
  * Cron job: Run for all active users at 8 AM daily
+ * Also sends push notifications and emails to notify users
  */
 const generateMatchesForAllUsers = async () => {
   console.log('🤖 Running daily match algorithm...');
-  const users = await User.find({ status: 'active' }).select('_id');
+
+  const { notifyDailyMatches } = require('./pushNotification');
+  const { sendEmail } = require('../config/mailer');
+
+  // Fetch active users with notification settings and FCM tokens
+  const users = await User.find({ status: 'active' })
+    .select('_id name email fcmToken settings subscription');
+
   let generated = 0;
+  let notified = 0;
+
   for (const user of users) {
     try {
-      await generateDailyMatches(user._id);
+      const matchDoc = await generateDailyMatches(user._id);
       generated++;
+
+      const matchCount = matchDoc?.matches?.length || 0;
+      if (matchCount === 0) continue;
+
+      // Push notification (respects user notification settings)
+      if (user.settings?.notifications?.matches !== false) {
+        const pushResult = await notifyDailyMatches(user, matchCount);
+        if (pushResult?.success) notified++;
+      }
+
+      // Email notification (only if user has an email and opted in)
+      if (user.email && user.settings?.notifications?.matches !== false) {
+        await sendEmail(user.email, 'matchReady', {
+          name: user.name,
+          matchCount,
+        }).catch(() => {}); // Non-blocking
+      }
     } catch (e) {
       console.error(`Match gen failed for ${user._id}: ${e.message}`);
     }
   }
-  console.log(`✅ Daily matches generated for ${generated} users`);
+
+  console.log(`✅ Daily matches generated for ${generated} users, ${notified} push notifications sent`);
 };
 
 module.exports = { generateDailyMatches, generateMatchesForAllUsers, calculateScore };

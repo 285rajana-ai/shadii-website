@@ -107,18 +107,7 @@ router.get('/', protect, async (req, res) => {
     }
 });
 
-// POST /api/notifications/:id/read
-router.post('/:id/read', protect, async (req, res) => {
-    // Mark message notifications as seen if applicable
-    const notifId = req.params.id;
-    if (notifId.startsWith('msg_')) {
-        const msgId = notifId.replace('msg_', '');
-        await Message.findByIdAndUpdate(msgId, { status: 'seen' }).catch(() => { });
-    }
-    res.json({ success: true });
-});
-
-// POST /api/notifications/read-all
+// POST /api/notifications/read-all  ← MUST be before /:id/read to avoid Express matching "read-all" as an id
 router.post('/read-all', protect, async (req, res) => {
     try {
         await Message.updateMany(
@@ -129,6 +118,16 @@ router.post('/read-all', protect, async (req, res) => {
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
+});
+
+// POST /api/notifications/:id/read
+router.post('/:id/read', protect, async (req, res) => {
+    const notifId = req.params.id;
+    if (notifId.startsWith('msg_')) {
+        const msgId = notifId.replace('msg_', '');
+        await Message.findByIdAndUpdate(msgId, { status: 'seen' }).catch(() => { });
+    }
+    res.json({ success: true });
 });
 
 module.exports = router;

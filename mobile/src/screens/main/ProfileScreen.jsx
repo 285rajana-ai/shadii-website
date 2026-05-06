@@ -6,7 +6,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout, updateUser } from '../../store/slices/authSlice';
 import colors from '../../theme/colors';
-import { glassStyles, spacing } from '../../theme/glassmorphism';
+import { glassStyles } from '../../theme/glassmorphism';
+import { spacing } from '../../theme/spacing';
 import { API_BASE_URL } from '../../utils/constants';
 
 export default function ProfileScreen({ navigation }) {
@@ -201,14 +202,14 @@ function MenuAction({ icon, label, onPress, color, last }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  scroll: { paddingHorizontal: spacing.lg },
+  scroll: { paddingHorizontal: spacing.lg, paddingBottom: 112 },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 24
   },
-  headerTitle: { fontSize: 28, fontWeight: '900', color: colors.text },
+  headerTitle: { fontSize: 24, fontWeight: '900', color: colors.text },
   settingsBtn: {
     width: 44, height: 44, borderRadius: 12,
     backgroundColor: colors.surfaceLight, alignItems: 'center', justifyContent: 'center'
@@ -228,22 +229,22 @@ const styles = StyleSheet.create({
     position: 'absolute', bottom: 0, right: 0,
     backgroundColor: colors.surface, borderRadius: 15, padding: 2
   },
-  userName: { fontSize: 22, fontWeight: '800', color: colors.text },
+  userName: { fontSize: 20, fontWeight: '800', color: colors.text },
   userEmail: { color: colors.textSecondary, fontSize: 14, marginTop: 4 },
   editBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
+    flexDirection: 'row', alignItems: 'center', gap: 4,
     marginTop: 16, backgroundColor: 'rgba(212, 175, 55, 0.1)',
     paddingHorizontal: 16, paddingVertical: 8, borderRadius: 12,
     borderWidth: 0.5, borderColor: colors.accent
   },
-  editBtnText: { color: colors.accent, fontSize: 13, fontWeight: '700' },
+  editBtnText: { color: colors.accent, fontSize: 12, fontWeight: '700' },
 
   statsContainer: {
     flexDirection: 'row', width: '100%',
     paddingTop: 24, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)'
   },
   statItem: { flex: 1, alignItems: 'center' },
-  statValue: { color: colors.text, fontSize: 18, fontWeight: '800', marginTop: 4 },
+  statValue: { color: colors.text, fontSize: 16, fontWeight: '800', marginTop: 4 },
   statLabel: { color: colors.textSecondary, fontSize: 11, marginTop: 2, textTransform: 'uppercase', letterSpacing: 0.5 },
   statDivider: { width: 1, height: 30, backgroundColor: 'rgba(255,255,255,0.1)', alignSelf: 'center' },
 
@@ -256,12 +257,12 @@ const styles = StyleSheet.create({
     width: 48, height: 48, borderRadius: 12,
     backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center'
   },
-  membershipTitle: { color: '#FFF', fontSize: 17, fontWeight: '800' },
+  membershipTitle: { color: '#FFF', fontSize: 16, fontWeight: '800' },
   membershipSub: { color: 'rgba(255,255,255,0.8)', fontSize: 12, marginTop: 2 },
 
   menuSection: { marginBottom: 32 },
   menuSectionTitle: {
-    color: colors.textSecondary, fontSize: 13,
+    color: colors.textSecondary, fontSize: 12,
     fontWeight: '700', textTransform: 'uppercase',
     letterSpacing: 1, marginBottom: 12, marginLeft: 4
   },
@@ -271,13 +272,13 @@ const styles = StyleSheet.create({
     padding: 16, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.03)'
   },
   menuIconBg: {
-    width: 36, height: 36, borderRadius: 10,
+    width: 44, height: 44, borderRadius: 10,
     backgroundColor: colors.surfaceLight, alignItems: 'center', justifyContent: 'center'
   },
   menuLabel: { flex: 1, color: colors.text, fontSize: 16, fontWeight: '500', marginLeft: 16 },
 
   versionText: {
     textAlign: 'center', color: colors.textMuted,
-    fontSize: 12, marginTop: 10, marginBottom: 40
+    fontSize: 12, marginTop: 8, marginBottom: 40
   }
 });

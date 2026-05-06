@@ -8,11 +8,13 @@ const fs = require('fs');
 const path = require('path');
 const upload = multer({ dest: '/tmp/', limits: { fileSize: 5 * 1024 * 1024 } });
 
-// GET /api/profile/discover — browse profiles with filters
+// GET /api/profile/discover — browse profiles with full filter support
 router.get('/discover', protect, async (req, res) => {
   try {
     const {
       gender, ageMin, ageMax, city, country, education, cast,
+      maritalStatus, sect, motherTongue,
+      verifiedOnly, withPhotoOnly,
       sort = 'newest', page = 1, limit = 20,
     } = req.query;
 
@@ -20,35 +22,62 @@ router.get('/discover', protect, async (req, res) => {
     const targetGender = gender || (me.gender === 'male' ? 'female' : 'male');
 
     const filter = {
-      _id: { $ne: me._id, $nin: me.blockedUsers },
+      _id: { $ne: me._id, $nin: me.blockedUsers || [] },
       gender: targetGender,
       status: 'active',
     };
 
+    // ── Age range ──────────────────────────────────────────────────────────
     if (ageMin || ageMax) {
       filter.age = {};
       if (ageMin) filter.age.$gte = Number(ageMin);
       if (ageMax) filter.age.$lte = Number(ageMax);
     }
+
+    // ── Location ──────────────────────────────────────────────────────────
     if (city) filter.city = new RegExp(city, 'i');
     if (country) filter.country = new RegExp(country, 'i');
+
+    // ── Education ─────────────────────────────────────────────────────────
     if (education) filter.education = education;
+
+    // ── Cast / Community ──────────────────────────────────────────────────
     if (cast) filter.cast = new RegExp(cast, 'i');
 
-    let sortObj = { createdAt: -1 };
-    if (sort === 'active') sortObj = { lastActive: -1 };
-    if (sort === 'premium') sortObj = { 'subscription.isActive': -1, createdAt: -1 };
-    if (sort === 'nearby') sortObj = { city: 1, createdAt: -1 };
-    if (sort === 'boosted') sortObj = { 'boost.isActive': -1, createdAt: -1 };
+    // ── Marital Status (NEW) ──────────────────────────────────────────────
+    if (maritalStatus) filter.maritalStatus = maritalStatus;
 
-    const users = await User.find(filter)
-      .select('name age city country education cast interests hobbies photos isVerified isOnline lastActive subscription boost gender')
-      .sort(sortObj)
-      .skip((page - 1) * limit)
-      .limit(Number(limit));
+    // ── Sect (NEW) ────────────────────────────────────────────────────────
+    if (sect) filter.sect = new RegExp(sect, 'i');
+
+    // ── Mother Tongue (NEW) ───────────────────────────────────────────────
+    if (motherTongue) filter.motherTongue = new RegExp(motherTongue, 'i');
+
+    // ── Verified Only (NEW) ───────────────────────────────────────────────
+    if (verifiedOnly === 'true') filter.isVerified = true;
+
+    // ── With Photo Only (NEW) ─────────────────────────────────────────────
+    if (withPhotoOnly === 'true') filter['photos.0'] = { $exists: true };
+
+    // ── Sort ──────────────────────────────────────────────────────────────
+    let sortObj = { createdAt: -1 };
+    if (sort === 'active')   sortObj = { lastActive: -1 };
+    if (sort === 'premium')  sortObj = { 'subscription.isActive': -1, createdAt: -1 };
+    if (sort === 'nearby')   sortObj = { city: 1, createdAt: -1 };
+    if (sort === 'boosted')  sortObj = { 'boost.isActive': -1, 'boost.endDate': -1, createdAt: -1 };
+    if (sort === 'verified') sortObj = { isVerified: -1, createdAt: -1 };
+
+    const skip = (Number(page) - 1) * Number(limit);
+    const [users, total] = await Promise.all([
+      User.find(filter)
+        .select('name age city country education cast maritalStatus motherTongue sect interests hobbies photos isVerified isOnline lastActive subscription boost gender')
+        .sort(sortObj)
+        .skip(skip)
+        .limit(Number(limit)),
+      User.countDocuments(filter),
+    ]);
 
     const viewerSubscribed = me.hasActiveSubscription();
-    const total = await User.countDocuments(filter);
 
     const profiles = users.map((u) => ({
       id: u._id,
@@ -58,21 +87,31 @@ router.get('/discover', protect, async (req, res) => {
       country: u.country,
       education: u.education,
       cast: u.cast,
+      maritalStatus: u.maritalStatus,
+      motherTongue: u.motherTongue,
+      sect: u.sect,
       isVerified: u.isVerified,
       isOnline: u.isOnline,
       lastActive: u.lastActive,
       isBoosted: u.hasActiveBoost?.() || false,
-      isPremium: u.subscription?.plan === 'premium',
+      isPremium: u.subscription?.plan === 'premium' && u.subscription?.isActive,
       photo: u.getProfilePhoto(viewerSubscribed),
       isPhotoBlurred: u.gender === 'female' && u.isVerified && !viewerSubscribed,
       interests: u.interests?.slice(0, 3),
     }));
 
-    res.json({ success: true, profiles, total, page: Number(page), hasMore: page * limit < total });
+    res.json({
+      success: true,
+      profiles,
+      total,
+      page: Number(page),
+      hasMore: skip + users.length < total,
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 });
+
 
 // GET /api/profile/blocked — list blocked users (MUST be before /:id)
 router.get('/blocked', protect, async (req, res) => {
@@ -254,6 +293,24 @@ router.post('/unblock/:userId', protect, async (req, res) => {
   try {
     await User.findByIdAndUpdate(req.user.id, { $pull: { blockedUsers: req.params.userId } });
     res.json({ success: true, message: 'User unblocked' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// POST /api/profile/:id/like — toggle like on a profile
+router.post('/:id/like', protect, async (req, res) => {
+  try {
+    const targetId = req.params.id;
+    if (targetId === req.user.id) {
+      return res.status(400).json({ success: false, message: 'You cannot like your own profile' });
+    }
+    const target = await User.findById(targetId);
+    if (!target) return res.status(404).json({ success: false, message: 'User not found' });
+
+    // Increment like count on the target user
+    await User.findByIdAndUpdate(targetId, { $inc: { likeCount: 1 } });
+    res.json({ success: true, message: 'Liked' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

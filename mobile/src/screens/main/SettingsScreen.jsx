@@ -4,19 +4,24 @@ import { useEffect, useRef, useState } from 'react';
 import {
     Alert,
     Animated, Easing, Linking,
+    Modal,
     ScrollView,
     StatusBar,
     StyleSheet,
     Switch,
     Text,
+    TextInput,
     TouchableOpacity,
     View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
+import PrimaryButton from '../../components/ui/PrimaryButton';
+import ScreenHeader from '../../components/ui/ScreenHeader';
 import { logout } from '../../store/slices/authSlice';
 import colors from '../../theme/colors';
 import { glassStyles } from '../../theme/glassmorphism';
+import { radius, spacing } from '../../theme/spacing';
 import { API_BASE_URL } from '../../utils/constants';
 
 const CONTACT_EMAILS = {
@@ -43,6 +48,12 @@ export default function SettingsScreen({ navigation }) {
         showOnlineStatus: user?.settings?.privacy?.showOnlineStatus ?? true,
         showLastSeen: user?.settings?.privacy?.showLastSeen ?? true,
     });
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
+    const [currentPassword, setCurrentPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [passwordLoading, setPasswordLoading] = useState(false);
+    const [passwordError, setPasswordError] = useState('');
 
     useEffect(() => {
         Animated.parallel([
@@ -86,26 +97,85 @@ export default function SettingsScreen({ navigation }) {
             'This will permanently delete your profile and all data. This action cannot be undone.',
             [
                 { text: 'Cancel', style: 'cancel' },
-                { text: 'Delete', style: 'destructive', onPress: () => Alert.alert('Request Sent', 'Your account deletion request has been sent to support@shadii.pk') },
+                {
+                    text: 'Delete', style: 'destructive', onPress: async () => {
+                        try {
+                            const res = await fetch(`${API_BASE_URL}/auth/delete-account`, {
+                                method: 'DELETE',
+                                headers: { Authorization: `Bearer ${token}` },
+                            });
+                            const data = await res.json();
+                            if (data.success) {
+                                Alert.alert('Account Deleted', 'Your account has been deleted.');
+                                dispatch(logout());
+                            } else {
+                                Alert.alert('Error', data.message || 'Failed to delete account.');
+                            }
+                        } catch (_) {
+                            Alert.alert('Error', 'Could not connect to server. Please try again.');
+                        }
+                    }
+                },
             ]
         );
     };
 
     const openEmail = (email) => Linking.openURL(`mailto:${email}`);
 
+    const resetPasswordModal = () => {
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+        setPasswordError('');
+        setPasswordLoading(false);
+    };
+
+    const handleChangePassword = async () => {
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            setPasswordError('All password fields are required.');
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            setPasswordError('New password and confirm password do not match.');
+            return;
+        }
+
+        if (newPassword.length < 8) {
+            setPasswordError('New password must be at least 8 characters.');
+            return;
+        }
+
+        setPasswordError('');
+        setPasswordLoading(true);
+        try {
+            const res = await fetch(`${API_BASE_URL}/auth/change-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ currentPassword, newPassword }),
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                Alert.alert('Success', data.message || 'Password updated successfully.');
+                setShowPasswordModal(false);
+                resetPasswordModal();
+            } else {
+                setPasswordError(data.message || 'Failed to change password.');
+            }
+        } catch (_) {
+            setPasswordError('Could not connect to server. Please try again.');
+        } finally {
+            setPasswordLoading(false);
+        }
+    };
+
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" />
             <LinearGradient colors={['#1A000A', '#0D0D0D']} style={StyleSheet.absoluteFill} />
 
-            {/* Header */}
-            <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-                    <MaterialCommunityIcons name="arrow-left" size={24} color={colors.text} />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Settings</Text>
-                <View style={{ width: 40 }} />
-            </View>
+            <ScreenHeader title="Settings" onBack={() => navigation.goBack()} insetsTop={insets.top} />
 
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
                 <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
@@ -122,7 +192,7 @@ export default function SettingsScreen({ navigation }) {
                                 </View>
                             )}
                         </View>
-                        <View style={{ flex: 1, marginLeft: 14 }}>
+                        <View style={{ flex: 1, marginLeft: 12 }}>
                             <Text style={styles.accountName}>{user?.name || 'User'}</Text>
                             <Text style={styles.accountEmail}>{user?.email || 'user@shadii.pk'}</Text>
                             <View style={styles.planBadge}>
@@ -194,7 +264,7 @@ export default function SettingsScreen({ navigation }) {
                         <View style={styles.rowDivider} />
                         <MenuItem icon="cancel" label="Blocked Users" onPress={() => navigation.navigate('BlockedUsers')} />
                         <View style={styles.rowDivider} />
-                        <MenuItem icon="lock-reset" label="Change Password" onPress={() => Alert.alert('Change Password', 'A password reset link will be sent to ' + (user?.email || 'your email'))} />
+                        <MenuItem icon="lock-reset" label="Change Password" onPress={() => setShowPasswordModal(true)} />
                     </View>
 
                     {/* Support */}
@@ -231,6 +301,69 @@ export default function SettingsScreen({ navigation }) {
                     <Text style={styles.version}>Shadii.pk v1.0.0 — © 2026 Shadii Technologies{'\n'}Contact: {CONTACT_EMAILS.general}</Text>
                 </Animated.View>
             </ScrollView>
+
+            <Modal
+                visible={showPasswordModal}
+                transparent
+                animationType="fade"
+                onRequestClose={() => {
+                    setShowPasswordModal(false);
+                    resetPasswordModal();
+                }}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalCard}>
+                        <Text style={styles.modalTitle}>Change Password</Text>
+                        <Text style={styles.modalSub}>Use at least 8 characters with upper/lowercase and a number.</Text>
+
+                        <TextInput
+                            style={styles.modalInput}
+                            value={currentPassword}
+                            onChangeText={setCurrentPassword}
+                            placeholder="Current password"
+                            placeholderTextColor={colors.textPlaceholder}
+                            secureTextEntry
+                        />
+                        <TextInput
+                            style={styles.modalInput}
+                            value={newPassword}
+                            onChangeText={setNewPassword}
+                            placeholder="New password"
+                            placeholderTextColor={colors.textPlaceholder}
+                            secureTextEntry
+                        />
+                        <TextInput
+                            style={styles.modalInput}
+                            value={confirmPassword}
+                            onChangeText={setConfirmPassword}
+                            placeholder="Confirm new password"
+                            placeholderTextColor={colors.textPlaceholder}
+                            secureTextEntry
+                        />
+
+                        {!!passwordError && <Text style={styles.modalError}>{passwordError}</Text>}
+
+                        <View style={styles.modalActions}>
+                            <TouchableOpacity
+                                style={styles.modalCancel}
+                                onPress={() => {
+                                    setShowPasswordModal(false);
+                                    resetPasswordModal();
+                                }}
+                                activeOpacity={0.8}
+                            >
+                                <Text style={styles.modalCancelText}>Cancel</Text>
+                            </TouchableOpacity>
+                            <PrimaryButton
+                                label="Update"
+                                onPress={handleChangePassword}
+                                loading={passwordLoading}
+                                style={styles.modalPrimaryBtn}
+                            />
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 }
@@ -261,47 +394,108 @@ function MenuItem({ icon, label, sub, onPress }) {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
-    header: {
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-        paddingBottom: 16, paddingHorizontal: 20,
-    },
-    backBtn: { padding: 8, backgroundColor: colors.glass, borderRadius: 12, borderWidth: 1, borderColor: colors.glassBorderLight },
-    headerTitle: { fontSize: 20, fontWeight: '700', color: colors.text, letterSpacing: 0.5 },
     scroll: { paddingHorizontal: 20, paddingBottom: 40 },
 
     accountCard: { flexDirection: 'row', alignItems: 'center', padding: 16, marginBottom: 8 },
     accountAvatar: { position: 'relative' },
     avatarGrad: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center' },
-    avatarInitial: { fontSize: 22, fontWeight: '800', color: '#FFF' },
+    avatarInitial: { fontSize: 20, fontWeight: '800', color: '#FFF' },
     verifiedDot: { position: 'absolute', bottom: -2, right: -2 },
-    accountName: { fontSize: 17, fontWeight: '700', color: colors.text },
-    accountEmail: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
+    accountName: { fontSize: 16, fontWeight: '700', color: colors.text },
+    accountEmail: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
     planBadge: {
         alignSelf: 'flex-start', backgroundColor: 'rgba(212,175,55,0.15)',
-        borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, marginTop: 6,
+        borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, marginTop: 4,
         borderWidth: 1, borderColor: 'rgba(212,175,55,0.3)',
     },
     planBadgeText: { fontSize: 11, color: colors.accent, fontWeight: '600', textTransform: 'capitalize' },
 
-    sectionTitle: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 14, paddingHorizontal: 4 },
-    sectionTitleText: { fontSize: 13, fontWeight: '700', color: colors.accent, textTransform: 'uppercase', letterSpacing: 1 },
+    sectionTitle: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 12, paddingHorizontal: 4 },
+    sectionTitleText: { fontSize: 12, fontWeight: '700', color: colors.accent, textTransform: 'uppercase', letterSpacing: 1 },
     sectionCard: { padding: 4, marginBottom: 4 },
 
-    toggleRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14 },
-    toggleLabel: { fontSize: 15, fontWeight: '600', color: colors.text },
+    toggleRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 },
+    toggleLabel: { fontSize: 14, fontWeight: '600', color: colors.text },
     toggleSub: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
 
     rowDivider: { height: 1, backgroundColor: 'rgba(255,255,255,0.06)', marginHorizontal: 16 },
 
-    menuItem: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14 },
+    menuItem: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 },
     menuIconBg: {
-        width: 34, height: 34, borderRadius: 10,
+        width: 44, height: 44, borderRadius: 10,
         backgroundColor: 'rgba(212,175,55,0.1)', alignItems: 'center', justifyContent: 'center',
     },
-    menuLabel: { fontSize: 15, fontWeight: '600', color: colors.text },
+    menuLabel: { fontSize: 14, fontWeight: '600', color: colors.text },
     menuSub: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
 
-    dangerRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14 },
+    dangerRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 },
 
     version: { textAlign: 'center', fontSize: 12, color: colors.textMuted, marginTop: 24, lineHeight: 20 },
+
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.65)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: spacing.lg,
+    },
+    modalCard: {
+        width: '100%',
+        backgroundColor: colors.surfaceElevated,
+        borderRadius: radius.xl,
+        borderWidth: 1,
+        borderColor: colors.border,
+        padding: spacing.xl,
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: '800',
+        color: colors.text,
+    },
+    modalSub: {
+        fontSize: 12,
+        color: colors.textSecondary,
+        marginTop: spacing.xs,
+        marginBottom: spacing.md,
+        lineHeight: 20,
+    },
+    modalInput: {
+        minHeight: 48,
+        borderRadius: radius.md,
+        borderWidth: 1,
+        borderColor: colors.border,
+        backgroundColor: colors.surfaceLight,
+        color: colors.text,
+        paddingHorizontal: spacing.md,
+        marginBottom: spacing.sm,
+    },
+    modalError: {
+        color: colors.error,
+        fontSize: 12,
+        marginTop: 2,
+        marginBottom: spacing.sm,
+    },
+    modalActions: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.sm,
+        marginTop: spacing.xs,
+    },
+    modalCancel: {
+        minHeight: 52,
+        borderRadius: radius.lg,
+        borderWidth: 1,
+        borderColor: colors.borderStrong,
+        paddingHorizontal: spacing.lg,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    modalCancelText: {
+        color: colors.text,
+        fontSize: 14,
+        fontWeight: '700',
+    },
+    modalPrimaryBtn: {
+        flex: 1,
+    },
 });

@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
+import ScreenHeader from '../../components/ui/ScreenHeader';
 import colors from '../../theme/colors';
 import { glassStyles } from '../../theme/glassmorphism';
 import { API_BASE_URL } from '../../utils/constants';
@@ -87,7 +88,7 @@ export default function BlockedUsersScreen({ navigation }) {
                         </LinearGradient>
                     )}
                 </View>
-                <View style={{ flex: 1, marginLeft: 14 }}>
+                <View style={{ flex: 1, marginLeft: 12 }}>
                     <Text style={styles.userName}>{item.name}</Text>
                     <Text style={styles.userDetails}>
                         {[item.age && `${item.age} yrs`, item.city].filter(Boolean).join(' · ')}
@@ -113,16 +114,16 @@ export default function BlockedUsersScreen({ navigation }) {
             <StatusBar barStyle="light-content" />
             <LinearGradient colors={['#1A000A', '#0D0D0D']} style={StyleSheet.absoluteFill} />
 
-            {/* Header */}
-            <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-                    <MaterialCommunityIcons name="arrow-left" size={24} color={colors.text} />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Blocked Users</Text>
-                <View style={styles.countBadge}>
-                    <Text style={styles.countText}>{blockedUsers.length}</Text>
-                </View>
-            </View>
+            <ScreenHeader
+                title="Blocked Users"
+                onBack={() => navigation.goBack()}
+                insetsTop={insets.top}
+                right={
+                    <View style={styles.countBadge}>
+                        <Text style={styles.countText}>{blockedUsers.length}</Text>
+                    </View>
+                }
+            />
 
             {!loading && blockedUsers.length === 0 ? (
                 <Animated.View style={[styles.emptyState, { opacity: fadeAnim }]}>
@@ -156,50 +157,44 @@ export default function BlockedUsersScreen({ navigation }) {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
-    header: {
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-        paddingBottom: 16, paddingHorizontal: 20,
-    },
-    backBtn: { padding: 8, backgroundColor: colors.glass, borderRadius: 12, borderWidth: 1, borderColor: colors.glassBorderLight },
-    headerTitle: { fontSize: 20, fontWeight: '700', color: colors.text },
     countBadge: {
         minWidth: 40, height: 28, borderRadius: 14,
         backgroundColor: 'rgba(231,76,60,0.2)', alignItems: 'center', justifyContent: 'center',
-        paddingHorizontal: 10, borderWidth: 1, borderColor: 'rgba(231,76,60,0.4)',
+        paddingHorizontal: 8, borderWidth: 1, borderColor: 'rgba(231,76,60,0.4)',
     },
     countText: { fontSize: 14, fontWeight: '700', color: colors.error },
 
     list: { paddingHorizontal: 20, paddingBottom: 40 },
     infoBox: {
         flexDirection: 'row', alignItems: 'flex-start', gap: 8,
-        padding: 14, backgroundColor: 'rgba(255,255,255,0.04)',
+        padding: 12, backgroundColor: 'rgba(255,255,255,0.04)',
         borderRadius: 12, marginBottom: 16, borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.08)',
     },
-    infoText: { fontSize: 13, color: colors.textSecondary, flex: 1, lineHeight: 18 },
+    infoText: { fontSize: 12, color: colors.textSecondary, flex: 1, lineHeight: 18 },
 
-    userCard: { flexDirection: 'row', alignItems: 'center', padding: 14 },
+    userCard: { flexDirection: 'row', alignItems: 'center', padding: 12 },
     userAvatar: { width: 52, height: 52, borderRadius: 26, overflow: 'hidden' },
     avatarImg: { width: 52, height: 52, borderRadius: 26 },
     avatarPlaceholder: { flex: 1, alignItems: 'center', justifyContent: 'center' },
     avatarInitial: { fontSize: 20, fontWeight: '800', color: '#FFF' },
     userName: { fontSize: 16, fontWeight: '700', color: colors.text },
-    userDetails: { fontSize: 13, color: colors.textSecondary, marginTop: 3 },
+    userDetails: { fontSize: 12, color: colors.textSecondary, marginTop: 3 },
     blockedBadge: {
         flexDirection: 'row', alignItems: 'center', gap: 4,
-        marginTop: 6, alignSelf: 'flex-start',
+        marginTop: 4, alignSelf: 'flex-start',
         backgroundColor: 'rgba(231,76,60,0.12)', borderRadius: 6,
         paddingHorizontal: 8, paddingVertical: 3,
     },
     blockedBadgeText: { fontSize: 11, color: colors.error, fontWeight: '600' },
 
     unblockBtn: {
-        paddingHorizontal: 16, paddingVertical: 9, borderRadius: 12,
+        paddingHorizontal: 16, paddingVertical: 8, borderRadius: 12,
         borderWidth: 1.5, borderColor: colors.accent,
     },
-    unblockBtnText: { fontSize: 13, fontWeight: '700', color: colors.accent },
+    unblockBtnText: { fontSize: 12, fontWeight: '700', color: colors.accent },
 
     emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40 },
-    emptyTitle: { fontSize: 22, fontWeight: '700', color: colors.text, marginTop: 20 },
-    emptySub: { fontSize: 15, color: colors.textSecondary, marginTop: 10, textAlign: 'center', lineHeight: 22 },
+    emptyTitle: { fontSize: 20, fontWeight: '700', color: colors.text, marginTop: 20 },
+    emptySub: { fontSize: 14, color: colors.textSecondary, marginTop: 8, textAlign: 'center', lineHeight: 22 },
 });

@@ -36,17 +36,56 @@ function AppRoot() {
   useEffect(() => {
     const restore = async () => {
       try {
-        const token = await SecureStore.getItemAsync('auth_token');
-        const userRaw = await SecureStore.getItemAsync('auth_user');
-        if (token && userRaw) {
-          dispatch(restoreSession({ token, user: JSON.parse(userRaw) }));
+        const [token, refreshToken, userRaw] = await Promise.all([
+          SecureStore.getItemAsync('auth_token'),
+          SecureStore.getItemAsync('auth_refresh_token'),
+          SecureStore.getItemAsync('auth_user'),
+        ]);
+
+        if (!userRaw) return; // No persisted session
+
+        const user = JSON.parse(userRaw);
+
+        if (token) {
+          // Check if access token is still valid (not expired)
+          try {
+            const { API_BASE_URL } = require('./src/utils/constants');
+            // Ping /me with current token
+            const res = await fetch(`${API_BASE_URL}/auth/me`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            if (res.ok) {
+              dispatch(restoreSession({ token, refreshToken, user }));
+              return;
+            }
+          } catch { /* network error — restore anyway */ }
         }
+
+        // Access token expired or failed — try to refresh
+        if (refreshToken) {
+          try {
+            const { API_BASE_URL } = require('./src/utils/constants');
+            const res = await fetch(`${API_BASE_URL}/auth/refresh`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ refreshToken }),
+            });
+            const data = await res.json();
+            if (data.success && data.token) {
+              dispatch(restoreSession({ token: data.token, refreshToken: data.refreshToken, user }));
+              return;
+            }
+          } catch { /* silent fail */ }
+        }
+
+        // Both tokens invalid — don't restore (user sees login)
       } catch {
         // Silent fail — user will see login screen
       }
     };
     restore();
   }, []);
+
 
   return (
     <>

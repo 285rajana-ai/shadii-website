@@ -2,7 +2,6 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   Animated,
   Dimensions,
   Image,
@@ -17,7 +16,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
 import colors from '../../theme/colors';
-import { spacing } from '../../theme/glassmorphism';
+import { radius, spacing } from '../../theme/spacing';
 import { API_BASE_URL } from '../../utils/constants';
 
 const { width } = Dimensions.get('window');
@@ -29,6 +28,7 @@ export default function HomeScreen({ navigation }) {
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [unreadNotif, setUnreadNotif] = useState(0);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
 
@@ -41,17 +41,29 @@ export default function HomeScreen({ navigation }) {
       if (data.success) {
         setMatches(data.matches || []);
       }
-    } catch (e) {
-      console.log('Match fetch error, using mocks:', e.message);
+    } catch (_) {
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   };
 
+  const fetchUnreadCount = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/notifications`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.success && Array.isArray(data.notifications)) {
+        setUnreadNotif(data.notifications.filter((n) => !n.read).length);
+      }
+    } catch (_) { }
+  };
+
   useEffect(() => {
     setLoading(true);
     fetchMatches();
+    fetchUnreadCount();
     Animated.parallel([
       Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
       Animated.timing(slideAnim, { toValue: 0, duration: 500, useNativeDriver: true }),
@@ -61,6 +73,7 @@ export default function HomeScreen({ navigation }) {
   const onRefresh = () => {
     setRefreshing(true);
     fetchMatches();
+    fetchUnreadCount();
   };
 
   const getGreeting = () => {
@@ -96,14 +109,14 @@ export default function HomeScreen({ navigation }) {
                 onPress={() => navigation.navigate('Notifications')}
               >
                 <MaterialCommunityIcons name="bell-outline" size={22} color={colors.text} />
-                <View style={styles.notifBadge} />
+                {unreadNotif > 0 && <View style={styles.notifBadge} />}
               </TouchableOpacity>
             </View>
 
             {/* Stats strip */}
             <View style={styles.statsStrip}>
               {[{ icon: 'eye-outline', val: user?.profileViews || 0, label: 'Views' },
-              { icon: 'heart-outline', val: '—', label: 'Likes' },
+              { icon: 'heart-outline', val: user?.likeCount ?? 0, label: 'Likes' },
               { icon: 'account-check-outline', val: user?.subscription?.isActive ? user.subscription.plan : 'Free', label: 'Plan' },
               ].map((s, i) => (
                 <View key={i} style={[styles.statItem, i < 2 && styles.statBorder]}>
@@ -128,7 +141,7 @@ export default function HomeScreen({ navigation }) {
                 <LinearGradient colors={colors.gradients.gold} style={styles.upgradeIconBg}>
                   <MaterialCommunityIcons name="crown" size={20} color={colors.maroon} />
                 </LinearGradient>
-                <View style={{ flex: 1, marginLeft: 14 }}>
+                <View style={{ flex: 1, marginLeft: 12 }}>
                   <Text style={styles.upgradeTitle}>Unlock Premium Experience</Text>
                   <Text style={styles.upgradeSub}>Starting from PKR 1,000 • Cancel anytime</Text>
                 </View>
@@ -151,9 +164,7 @@ export default function HomeScreen({ navigation }) {
             </View>
 
             {loading ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator color={colors.accent} size="large" />
-              </View>
+              <MatchCardSkeleton />
             ) : matches.length === 0 ? (
               <TouchableOpacity
                 style={styles.emptyMatchesCard}
@@ -245,10 +256,11 @@ function MatchCard({ match, navigation }) {
       onPress={() => navigation.navigate('ProfileDetail', { userId })}
       activeOpacity={0.9}
     >
-      <Image
-        source={{ uri: photo || 'https://via.placeholder.com/400' }}
-        style={styles.matchPhoto}
-      />
+      {photo ? (
+        <Image source={{ uri: photo }} style={styles.matchPhoto} />
+      ) : (
+        <LinearGradient colors={colors.gradients.royal} style={styles.matchPhoto} />
+      )}
       <LinearGradient
         colors={['transparent', 'rgba(0,0,0,0.9)']}
         style={styles.matchGradient}
@@ -257,12 +269,12 @@ function MatchCard({ match, navigation }) {
       <View style={styles.matchContent}>
         <View style={styles.matchTopInfo}>
           <View style={styles.matchHeaderRow}>
-            <Text style={styles.matchName}>{match.name}, {match.age}</Text>
+            <Text style={styles.matchName} numberOfLines={1}>{match.name}, {match.age}</Text>
             {match.isVerified && (
               <MaterialCommunityIcons name="check-decagram" size={18} color={colors.accent} />
             )}
           </View>
-          <Text style={styles.matchLocation}>
+          <Text style={styles.matchLocation} numberOfLines={1}>
             <MaterialCommunityIcons name="map-marker" size={12} color="rgba(255,255,255,0.7)" /> {match.city}
           </Text>
         </View>
@@ -276,6 +288,7 @@ function MatchCard({ match, navigation }) {
           <TouchableOpacity
             style={styles.chatIconButton}
             onPress={() => navigation.navigate('ChatDetail', { userId, userName: match.name })}
+            accessibilityLabel={`Message ${match.name}`}
           >
             <MaterialCommunityIcons name="message-text" size={20} color={colors.primary} />
           </TouchableOpacity>
@@ -306,13 +319,13 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   orb1: { position: 'absolute', width: width * 0.7, height: width * 0.7, borderRadius: width * 0.35, top: -width * 0.2, right: -width * 0.15, backgroundColor: 'rgba(139,26,74,0.12)' },
   orb2: { position: 'absolute', width: width * 0.6, height: width * 0.6, borderRadius: width * 0.3, bottom: width * 0.3, left: -width * 0.2, backgroundColor: 'rgba(212,175,55,0.06)' },
-  scrollContent: {},
+  scrollContent: { paddingBottom: 112 },
   header: { paddingHorizontal: spacing.lg, marginBottom: 24 },
-  headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 },
-  greetingText: { color: colors.textSecondary, fontSize: 15, fontWeight: '500', letterSpacing: 0.3 },
-  userName: { color: colors.text, fontSize: 30, fontWeight: '900', marginTop: 2, letterSpacing: -0.5 },
+  headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  greetingText: { color: colors.textSecondary, fontSize: 14, fontWeight: '500', letterSpacing: 0.3 },
+  userName: { color: colors.text, fontSize: 32, fontWeight: '900', marginTop: 2, letterSpacing: -0.5 },
   notifBtn: {
-    width: 46, height: 46, borderRadius: 23,
+    width: 48, height: 48, borderRadius: 24,
     backgroundColor: 'rgba(255,255,255,0.07)',
     alignItems: 'center', justifyContent: 'center',
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)'
@@ -327,10 +340,10 @@ const styles = StyleSheet.create({
     borderRadius: 16, marginBottom: 16, overflow: 'hidden',
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.07)'
   },
-  statItem: { flex: 1, alignItems: 'center', paddingVertical: 14, gap: 4 },
+  statItem: { flex: 1, alignItems: 'center', paddingVertical: 12, gap: 4 },
   statBorder: { borderRightWidth: 1, borderRightColor: 'rgba(255,255,255,0.07)' },
-  statVal: { color: colors.text, fontSize: 15, fontWeight: '800' },
-  statLabel: { color: colors.textMuted, fontSize: 10, fontWeight: '500', textTransform: 'uppercase', letterSpacing: 0.5 },
+  statVal: { color: colors.text, fontSize: 14, fontWeight: '800' },
+  statLabel: { color: colors.textMuted, fontSize: 11, fontWeight: '500', textTransform: 'uppercase', letterSpacing: 0.5 },
   upgradeCard: {
     flexDirection: 'row', alignItems: 'center',
     padding: 16, borderRadius: 20, overflow: 'hidden',
@@ -343,40 +356,40 @@ const styles = StyleSheet.create({
   upgradeTitle: { color: colors.text, fontWeight: '700', fontSize: 14 },
   upgradeSub: { color: colors.accent, fontSize: 11, marginTop: 3, fontWeight: '500' },
 
-  section: { marginTop: 28 },
+  section: { marginTop: 24 },
   sectionHeader: {
     flexDirection: 'row', justifyContent: 'space-between',
     alignItems: 'center', paddingHorizontal: spacing.lg, marginBottom: 16
   },
-  sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   sectionAccentBar: { width: 3, height: 20, borderRadius: 2, backgroundColor: colors.accent },
   sectionTitle: { fontSize: 20, fontWeight: '800', color: colors.text, letterSpacing: -0.3 },
   seeAllBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  seeAll: { color: colors.accent, fontWeight: '600', fontSize: 13 },
+  seeAll: { color: colors.accent, fontWeight: '600', fontSize: 12 },
 
   matchesScroll: { paddingHorizontal: spacing.lg, gap: 16 },
   emptyMatchesCard: {
-    marginHorizontal: spacing.lg, padding: 36, borderRadius: 28,
+    marginHorizontal: spacing.lg, padding: 32, borderRadius: radius.xxl,
     backgroundColor: 'rgba(255,255,255,0.04)',
     alignItems: 'center', borderWidth: 1, borderColor: 'rgba(212,175,55,0.15)',
   },
-  emptyMatchesText: { color: colors.text, fontWeight: '700', fontSize: 16, marginTop: 14, textAlign: 'center' },
-  emptyMatchesSub: { color: colors.accent, fontSize: 13, marginTop: 6, fontWeight: '500' },
+  emptyMatchesText: { color: colors.text, fontWeight: '700', fontSize: 16, marginTop: 12, textAlign: 'center' },
+  emptyMatchesSub: { color: colors.accent, fontSize: 12, marginTop: 4, fontWeight: '500' },
   matchCard: { width: CARD_WIDTH, height: 440, borderRadius: 32, overflow: 'hidden', backgroundColor: colors.surface },
   matchPhoto: { width: '100%', height: '100%' },
   matchGradient: { ...StyleSheet.absoluteFillObject },
-  matchContent: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 22 },
-  matchHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  matchName: { fontSize: 22, fontWeight: '800', color: '#FFF', flex: 1 },
-  matchLocation: { color: 'rgba(255,255,255,0.7)', fontSize: 13, marginTop: 4 },
-  matchFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 18 },
+  matchContent: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 20 },
+  matchHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  matchName: { fontSize: 20, fontWeight: '800', color: '#FFF', flex: 1 },
+  matchLocation: { color: 'rgba(255,255,255,0.7)', fontSize: 12, marginTop: 4 },
+  matchFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 },
   compatibilityBadge: {
-    backgroundColor: 'rgba(212,175,55,0.25)', paddingHorizontal: 14, paddingVertical: 7,
+    backgroundColor: 'rgba(212,175,55,0.25)', paddingHorizontal: 12, paddingVertical: 8,
     borderRadius: 14, borderWidth: 0.5, borderColor: colors.accent
   },
   compatibilityText: { color: colors.accent, fontSize: 12, fontWeight: '700' },
   chatIconButton: {
-    width: 46, height: 46, borderRadius: 23,
+    width: 48, height: 48, borderRadius: 24,
     backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center',
     shadowColor: colors.accent, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8
   },
@@ -385,7 +398,7 @@ const styles = StyleSheet.create({
   actionBtn: {
     width: (width - spacing.lg * 2 - 12) / 2,
     backgroundColor: 'rgba(255,255,255,0.04)',
-    padding: 18, borderRadius: 22,
+    padding: 16, borderRadius: 22,
     alignItems: 'center', overflow: 'hidden',
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.07)'
   },
@@ -400,21 +413,53 @@ const styles = StyleSheet.create({
   actionSub: { color: colors.textMuted, fontSize: 11, marginTop: 3, fontWeight: '400' },
 
   progressCard: {
-    marginHorizontal: spacing.lg, padding: 22, borderRadius: 24, overflow: 'hidden',
+    marginHorizontal: spacing.lg, padding: 20, borderRadius: 24, overflow: 'hidden',
     borderWidth: 1, borderColor: 'rgba(212,175,55,0.2)'
   },
   progressTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   progressTitle: { color: colors.text, fontSize: 16, fontWeight: '700' },
   progressSub: { color: colors.textSecondary, fontSize: 12, marginTop: 4 },
   progressCircle: {
-    width: 46, height: 46, borderRadius: 23,
+    width: 48, height: 48, borderRadius: 24,
     borderWidth: 2, borderColor: colors.accent, alignItems: 'center', justifyContent: 'center',
     backgroundColor: 'rgba(212,175,55,0.08)'
   },
-  progressPercent: { color: colors.accent, fontSize: 13, fontWeight: '900' },
+  progressPercent: { color: colors.accent, fontSize: 12, fontWeight: '900' },
   progressBarBg: { height: 6, backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 3, overflow: 'hidden' },
   progressBarFill: { height: '100%', borderRadius: 3 },
 
   loadingContainer: { height: 300, justifyContent: 'center', alignItems: 'center' },
   matchTopInfo: {},
+
+  // Skeleton styles
+  skeletonCard: { width: CARD_WIDTH, height: 440, borderRadius: 32, overflow: 'hidden', backgroundColor: 'rgba(255,255,255,0.06)', marginRight: 0 },
+  skeletonBar: { backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 8 },
+  skeletonFooter: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 20, gap: 8 },
 });
+
+function MatchCardSkeleton() {
+  const shimmer = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmer, { toValue: 1, duration: 900, useNativeDriver: true }),
+        Animated.timing(shimmer, { toValue: 0, duration: 900, useNativeDriver: true }),
+      ])
+    ).start();
+    return () => shimmer.stopAnimation();
+  }, []);
+  const opacity = shimmer.interpolate({ inputRange: [0, 1], outputRange: [0.4, 0.85] });
+  return (
+    <View style={styles.matchesScroll}>
+      {[0, 1].map((i) => (
+        <Animated.View key={i} style={[styles.skeletonCard, { opacity, marginRight: i === 0 ? 16 : 0 }]}>
+          <LinearGradient colors={['rgba(255,255,255,0.04)', 'rgba(255,255,255,0.08)', 'rgba(255,255,255,0.04)']} style={StyleSheet.absoluteFill} />
+          <View style={styles.skeletonFooter}>
+            <View style={[styles.skeletonBar, { height: 22, width: '60%' }]} />
+            <View style={[styles.skeletonBar, { height: 14, width: '40%' }]} />
+          </View>
+        </Animated.View>
+      ))}
+    </View>
+  );
+}

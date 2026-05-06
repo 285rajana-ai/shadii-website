@@ -1,5 +1,6 @@
-import { StyleSheet, Platform } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 import colors from './colors';
+import { radius, spacing } from './spacing';
 
 // Luxury Glassmorphism card styles
 export const glassStyles = StyleSheet.create({
@@ -7,7 +8,7 @@ export const glassStyles = StyleSheet.create({
     backgroundColor: colors.glassMedium,
     borderWidth: 1,
     borderColor: colors.glassBorderLight,
-    borderRadius: 22,
+    borderRadius: radius.xl,
     overflow: 'hidden',
     ...Platform.select({
       ios: {
@@ -26,7 +27,7 @@ export const glassStyles = StyleSheet.create({
     backgroundColor: 'rgba(212, 175, 55, 0.05)', // Subtle gold tint
     borderWidth: 1,
     borderColor: colors.accent,
-    borderRadius: 22,
+    borderRadius: radius.xl,
     overflow: 'hidden',
   },
 
@@ -34,8 +35,8 @@ export const glassStyles = StyleSheet.create({
     backgroundColor: colors.glass,
     borderWidth: 1,
     borderColor: colors.glassBorderLight,
-    borderRadius: 50,
-    paddingHorizontal: 16,
+    borderRadius: radius.full,
+    paddingHorizontal: spacing.md,
     paddingVertical: 8,
   },
 
@@ -43,9 +44,9 @@ export const glassStyles = StyleSheet.create({
     backgroundColor: colors.surfaceLight,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 16,
-    paddingHorizontal: 18,
-    paddingVertical: 16,
+    borderRadius: radius.md,
+    paddingHorizontal: 16,
+    paddingVertical: spacing.md,
     color: colors.text,
     fontSize: 16,
   },
@@ -56,9 +57,9 @@ export const glassStyles = StyleSheet.create({
   },
 
   button: {
-    borderRadius: 16,
-    paddingVertical: 18,
-    paddingHorizontal: 24,
+    borderRadius: radius.md,
+    paddingVertical: 16,
+    paddingHorizontal: spacing.xl,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
@@ -71,11 +72,11 @@ export const glassStyles = StyleSheet.create({
 
   modal: {
     backgroundColor: colors.surface,
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    paddingHorizontal: 24,
+    borderTopLeftRadius: radius.xxl,
+    borderTopRightRadius: radius.xxl,
+    paddingHorizontal: spacing.xl,
     paddingTop: 12,
-    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+    paddingBottom: Platform.OS === 'ios' ? spacing.xxxl : spacing.xl,
     borderWidth: 1,
     borderColor: colors.glassBorderLight,
   },
@@ -84,14 +85,14 @@ export const glassStyles = StyleSheet.create({
     backgroundColor: 'rgba(212, 175, 55, 0.15)',
     borderWidth: 1,
     borderColor: 'rgba(212, 175, 55, 0.3)',
-    borderRadius: 20,
+    borderRadius: radius.lg,
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 4,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 4,
   },
-  
+
   badgeText: {
     color: colors.accent,
     fontSize: 12,
@@ -101,24 +102,6 @@ export const glassStyles = StyleSheet.create({
   }
 });
 
-export const spacing = {
-  xxs: 2,
-  xs: 4,
-  sm: 8,
-  md: 16,
-  lg: 24,
-  xl: 32,
-  xxl: 48,
-  huge: 64,
-};
-
-export const radius = {
-  sm: 8,
-  md: 14,
-  lg: 20,
-  xl: 28,
-  xxl: 32,
-  full: 999,
-};
+export { radius, spacing };
 
 export default glassStyles;

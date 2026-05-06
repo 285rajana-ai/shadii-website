@@ -34,8 +34,10 @@ exports.getConversations = async (req, res) => {
       { $sort: { 'lastMessage.createdAt': -1 } },
     ]);
 
-    // Populate the other user
-    const populated = await Promise.all(
+    const viewerSubscribed = req.user.hasActiveSubscription();
+
+    // Populate the other user without letting one bad record break the whole list
+    const populatedResults = await Promise.allSettled(
       conversations.map(async (conv) => {
         const lastMsg = conv.lastMessage;
         const otherUserId =
@@ -45,21 +47,21 @@ exports.getConversations = async (req, res) => {
           'name photos gender isVerified isOnline lastActive subscription'
         );
 
-        const viewerSubscribed = req.user.hasActiveSubscription();
+        if (!otherUser) {
+          return null;
+        }
 
         return {
           conversationId: conv._id,
-          otherUser: otherUser
-            ? {
-              id: otherUser._id,
-              name: otherUser.name,
-              isVerified: otherUser.isVerified,
-              isOnline: otherUser.isOnline,
-              lastActive: otherUser.lastActive,
-              photo: otherUser.getProfilePhoto(viewerSubscribed),
-              gender: otherUser.gender,
-            }
-            : null,
+          otherUser: {
+            id: otherUser._id,
+            name: otherUser.name,
+            isVerified: otherUser.isVerified,
+            isOnline: otherUser.isOnline,
+            lastActive: otherUser.lastActive,
+            photo: otherUser.getProfilePhoto(viewerSubscribed),
+            gender: otherUser.gender,
+          },
           lastMessage: {
             content: lastMsg.isFlagged ? '[Message flagged]' : lastMsg.content,
             status: lastMsg.status,
@@ -70,6 +72,10 @@ exports.getConversations = async (req, res) => {
         };
       })
     );
+
+    const populated = populatedResults
+      .filter((result) => result.status === 'fulfilled' && result.value)
+      .map((result) => result.value);
 
     res.json({ success: true, conversations: populated });
   } catch (err) {
@@ -83,21 +89,42 @@ exports.getMessages = async (req, res) => {
     const { otherUserId } = req.params;
     const { page = 1, limit = 50 } = req.query;
     const userId = req.user.id;
+    const pageNumber = Number(page);
+    const limitNumber = Number(limit);
 
     const conversationId = getConversationId(userId, otherUserId);
 
     const messages = await Message.find({ conversationId, isDeleted: false })
       .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(Number(limit));
+      .skip((pageNumber - 1) * limitNumber)
+      .limit(limitNumber);
 
-    // Mark messages as delivered
-    await Message.updateMany(
-      { conversationId, receiver: userId, status: 'sent' },
-      { status: 'delivered', deliveredAt: new Date() }
-    );
+    const deliveredAt = new Date();
+    const deliverableIds = messages
+      .filter((message) => String(message.receiver) === String(userId) && message.status === 'sent')
+      .map((message) => message._id);
 
-    res.json({ success: true, messages: messages.reverse(), page: Number(page) });
+    if (deliverableIds.length > 0) {
+      await Message.updateMany(
+        { _id: { $in: deliverableIds } },
+        { status: 'delivered', deliveredAt }
+      );
+    }
+
+    const deliverableIdsSet = new Set(deliverableIds.map((messageId) => String(messageId)));
+    const responseMessages = messages.reverse().map((message) => {
+      if (!deliverableIdsSet.has(String(message._id))) {
+        return message;
+      }
+
+      return {
+        ...message.toObject(),
+        status: 'delivered',
+        deliveredAt,
+      };
+    });
+
+    res.json({ success: true, messages: responseMessages, page: pageNumber });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -167,8 +194,8 @@ exports.sendMessage = async (req, res) => {
         success: false,
         warning: true,
         message: `⚠️ Warning: Sharing ${label} is not allowed on Shadii.pk. ${violationResult.action === 'suspended_24h'
-            ? 'Your account has been suspended for 24 hours.'
-            : 'Repeated violations will result in suspension.'
+          ? 'Your account has been suspended for 24 hours.'
+          : 'Repeated violations will result in suspension.'
           }`,
         action: violationResult.action,
         flaggedMessage: message,

@@ -3,7 +3,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
 import {
     Alert,
-    Animated, Easing,
+    Animated,
+    Dimensions,
+    Easing,
     LayoutAnimation,
     Linking,
     ScrollView,
@@ -14,8 +16,14 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import ScreenHeader from '../../components/ui/ScreenHeader';
 import colors from '../../theme/colors';
 import { glassStyles } from '../../theme/glassmorphism';
+import { spacing } from '../../theme/spacing';
+
+const { width } = Dimensions.get('window');
+const CONTACT_CARD_WIDTH = (width - (20 * 2) - 10) / 2;
 
 const CONTACT = {
     general: 'help@shadii.pk',
@@ -138,8 +146,13 @@ export default function HelpSupportScreen({ navigation }) {
 
     const sendMessage = () => {
         if (!message.trim()) return;
-        Alert.alert('Message Sent', `Your message has been sent to ${CONTACT.support}. We'll respond within 24 hours.`);
-        setMessage('');
+        const subject = encodeURIComponent('Support Request — Shadii.pk App');
+        const body = encodeURIComponent(message.trim());
+        Linking.openURL(`mailto:${CONTACT.support}?subject=${subject}&body=${body}`).then(() => {
+            setMessage('');
+        }).catch(() => {
+            Alert.alert('Error', 'Could not open email client. Please email us directly at ' + CONTACT.support);
+        });
     };
 
     return (
@@ -147,14 +160,7 @@ export default function HelpSupportScreen({ navigation }) {
             <StatusBar barStyle="light-content" />
             <LinearGradient colors={['#1A000A', '#0D0D0D']} style={StyleSheet.absoluteFill} />
 
-            {/* Header -- insets applied inline below */}
-            <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-                    <MaterialCommunityIcons name="arrow-left" size={24} color={colors.text} />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Help & Support</Text>
-                <View style={{ width: 40 }} />
-            </View>
+            <ScreenHeader title="Help & Support" onBack={() => navigation.goBack()} insetsTop={insets.top} />
 
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
                 <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
@@ -269,24 +275,19 @@ export default function HelpSupportScreen({ navigation }) {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
-    header: {
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-        paddingBottom: 16, paddingHorizontal: 20,
-    },
-    backBtn: { padding: 8, backgroundColor: colors.glass, borderRadius: 12, borderWidth: 1, borderColor: colors.glassBorderLight },
-    headerTitle: { fontSize: 20, fontWeight: '700', color: colors.text },
     scroll: { paddingHorizontal: 20, paddingBottom: 40 },
 
     hero: {
-        alignItems: 'center', paddingVertical: 28, borderRadius: 20, marginBottom: 20,
+        alignItems: 'center', paddingVertical: 24, borderRadius: 20, marginBottom: 20,
         overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(212,175,55,0.2)',
     },
-    heroTitle: { fontSize: 22, fontWeight: '800', color: colors.text, marginTop: 12 },
-    heroSub: { fontSize: 14, color: colors.textSecondary, marginTop: 6, textAlign: 'center' },
+    heroTitle: { fontSize: 20, fontWeight: '800', color: colors.text, marginTop: 12 },
+    heroSub: { fontSize: 14, color: colors.textSecondary, marginTop: 4, textAlign: 'center' },
 
-    contactGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 20 },
+    contactGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs + 2, marginBottom: 20 },
     contactCard: {
-        width: '47.5%', padding: 16,
+        width: CONTACT_CARD_WIDTH,
+        padding: 16,
         backgroundColor: colors.glassMedium, borderRadius: 18,
         borderWidth: 1, borderColor: colors.glassBorderLight,
     },
@@ -295,34 +296,34 @@ const styles = StyleSheet.create({
     contactEmail: { fontSize: 11, color: colors.textMuted, marginTop: 4 },
 
     quickMessage: { padding: 20, marginBottom: 24 },
-    quickMessageTitle: { fontSize: 17, fontWeight: '700', color: colors.text },
-    quickMessageSub: { fontSize: 13, color: colors.textSecondary, marginTop: 4, marginBottom: 14 },
+    quickMessageTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
+    quickMessageSub: { fontSize: 12, color: colors.textSecondary, marginTop: 4, marginBottom: 12 },
     messageInput: {
         backgroundColor: colors.surfaceLight, borderRadius: 14,
-        padding: 14, fontSize: 15, color: colors.text,
+        padding: 12, fontSize: 14, color: colors.text,
         borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
-        minHeight: 100, marginBottom: 14,
+        minHeight: 100, marginBottom: 12,
     },
     sendBtn: {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-        paddingVertical: 14, borderRadius: 14, overflow: 'hidden',
+        paddingVertical: 12, borderRadius: 14, overflow: 'hidden',
     },
-    sendBtnText: { fontSize: 15, fontWeight: '700', color: '#1A000A' },
+    sendBtnText: { fontSize: 14, fontWeight: '700', color: '#1A000A' },
 
     faqHeading: { fontSize: 20, fontWeight: '800', color: colors.text, marginBottom: 16 },
     faqSection: { marginBottom: 20 },
-    faqCategoryHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
-    faqCategory: { fontSize: 13, fontWeight: '700', color: colors.accent, textTransform: 'uppercase', letterSpacing: 0.8 },
+    faqCategoryHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+    faqCategory: { fontSize: 12, fontWeight: '700', color: colors.accent, textTransform: 'uppercase', letterSpacing: 0.8 },
     faqQuestion: {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
         paddingHorizontal: 16, paddingVertical: 16,
     },
-    faqQText: { fontSize: 15, fontWeight: '600', color: colors.text, flex: 1, paddingRight: 12, lineHeight: 22 },
+    faqQText: { fontSize: 14, fontWeight: '600', color: colors.text, flex: 1, paddingRight: 12, lineHeight: 22 },
     faqAnswer: { paddingHorizontal: 16, paddingBottom: 16 },
     faqAText: { fontSize: 14, color: colors.textSecondary, lineHeight: 22 },
     faqDivider: { height: 1, backgroundColor: 'rgba(255,255,255,0.06)', marginHorizontal: 16 },
 
     bottomLinks: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 8 },
-    linkText: { fontSize: 13, color: colors.accent, fontWeight: '600' },
+    linkText: { fontSize: 12, color: colors.accent, fontWeight: '600' },
     linkDot: { color: colors.textMuted, fontSize: 14 },
 });

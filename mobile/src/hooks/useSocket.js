@@ -25,11 +25,16 @@ export const useSocket = () => {
     socketRef.current = socket;
     forceUpdate((n) => n + 1); // trigger re-render so callers get the socket
 
-    socket.on('connect_error', (err) => {
-      console.log('Socket connect error:', err.message);
-    });
+    const handleConnectError = (err) => {
+      if (__DEV__) {
+        console.warn('Socket connect error:', err.message);
+      }
+    };
+
+    socket.on('connect_error', handleConnectError);
 
     return () => {
+      socket.off('connect_error', handleConnectError);
       socket.disconnect();
       socketRef.current = null;
     };

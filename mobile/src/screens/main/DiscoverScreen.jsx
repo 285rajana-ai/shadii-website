@@ -5,7 +5,7 @@ import { ActivityIndicator, Animated, Dimensions, FlatList, Image, RefreshContro
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
 import colors from '../../theme/colors';
-import { spacing } from '../../theme/glassmorphism';
+import { spacing } from '../../theme/spacing';
 import { API_BASE_URL } from '../../utils/constants';
 
 const FILTERS = [
@@ -46,8 +46,7 @@ export default function DiscoverScreen({ navigation }) {
         setHasMore(data.hasMore);
         setPage(pageNum);
       }
-    } catch (e) {
-      console.log('Discover fetch error:', e.message);
+    } catch (_) {
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -85,8 +84,7 @@ export default function DiscoverScreen({ navigation }) {
           <Text style={styles.headerSubtitle}>Explore & Connect</Text>
           <Text style={styles.headerTitle}>Discover</Text>
         </View>
-        <TouchableOpacity style={styles.iconButton}
-          onPress={() => navigation.navigate('Discover')}>
+        <TouchableOpacity style={styles.iconButton} activeOpacity={0.7}>
           <MaterialCommunityIcons name="tune-variant" size={22} color={colors.accent} />
         </TouchableOpacity>
       </View>
@@ -125,10 +123,7 @@ export default function DiscoverScreen({ navigation }) {
       </ScrollView>
 
       {loading && page === 1 ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color={colors.accent} />
-          <Text style={styles.loadingText}>Finding your matches...</Text>
-        </View>
+        <DiscoverSkeleton />
       ) : (
         <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
           <FlatList
@@ -165,7 +160,7 @@ function ProfileCard({ item, navigation, index }) {
   const scaleAnim = useRef(new Animated.Value(0.95)).current;
   useEffect(() => {
     Animated.spring(scaleAnim, {
-      toValue: 1, delay: index * 60,
+      toValue: 1, delay: Math.min(index * 40, 200),
       useNativeDriver: true, tension: 80, friction: 8
     }).start();
   }, []);
@@ -178,10 +173,13 @@ function ProfileCard({ item, navigation, index }) {
         onPress={() => navigation.navigate('ProfileDetail', { userId: item.id || item._id })}
       >
         <Image
-          source={{ uri: item.photo || 'https://via.placeholder.com/300' }}
+          source={{ uri: item.photo }}
           style={styles.cardImage}
           resizeMode="cover"
         />
+        {!item.photo && (
+          <LinearGradient colors={colors.gradients.royal} style={StyleSheet.absoluteFill} />
+        )}
         {/* Dark gradient overlay */}
         <LinearGradient
           colors={['transparent', 'rgba(0,0,0,0.3)', 'rgba(0,0,0,0.88)']}
@@ -222,7 +220,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   orb: { position: 'absolute', width: width * 0.7, height: width * 0.7, borderRadius: width * 0.35, top: -width * 0.15, right: -width * 0.2, backgroundColor: 'rgba(139,26,74,0.1)' },
   header: {
-    paddingBottom: 14, paddingHorizontal: spacing.lg,
+    paddingBottom: 12, paddingHorizontal: spacing.lg,
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end',
   },
   headerSubtitle: { color: colors.textSecondary, fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', fontWeight: '600' },
@@ -233,20 +231,20 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
   },
-  filterScroll: { maxHeight: 48, marginBottom: 12 },
+  filterScroll: { maxHeight: 52, marginBottom: 12 },
   filterRow: { paddingHorizontal: spacing.lg, gap: 8, alignItems: 'center' },
   filterChip: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    paddingHorizontal: 14, paddingVertical: 8,
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingHorizontal: 12, paddingVertical: 8,
     borderRadius: 20, overflow: 'hidden',
     backgroundColor: 'rgba(255,255,255,0.06)',
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
   },
   filterChipActive: { borderColor: colors.rose },
-  filterLabel: { color: colors.textSecondary, fontSize: 13, fontWeight: '600' },
+  filterLabel: { color: colors.textSecondary, fontSize: 12, fontWeight: '600' },
   filterLabelActive: { color: '#fff', fontWeight: '700' },
-  listContent: { paddingHorizontal: spacing.lg, paddingBottom: 110 },
-  columnWrapper: { justifyContent: 'space-between', marginBottom: 14 },
+  listContent: { paddingHorizontal: spacing.lg, paddingBottom: 112 },
+  columnWrapper: { justifyContent: 'space-between', marginBottom: 12 },
   card: {
     width: COLUMN_WIDTH, height: COLUMN_WIDTH * 1.55,
     borderRadius: 22, overflow: 'hidden',
@@ -259,18 +257,54 @@ const styles = StyleSheet.create({
   },
   goldBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 3,
-    paddingHorizontal: 7, paddingVertical: 3,
+    paddingHorizontal: 8, paddingVertical: 3,
     borderRadius: 8,
   },
-  goldText: { color: colors.maroon, fontSize: 9, fontWeight: '900', letterSpacing: 0.5 },
+  goldText: { color: colors.maroon, fontSize: 11, fontWeight: '900', letterSpacing: 0.4 },
   onlineDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.online, borderWidth: 2, borderColor: 'rgba(0,0,0,0.5)' },
   cardInfo: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 12 },
   cardNameRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  cardName: { fontSize: 15, fontWeight: '800', color: '#fff', flex: 1 },
-  cardCity: { color: 'rgba(255,255,255,0.65)', fontSize: 11, marginTop: 3 },
-  emptyContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 60, paddingHorizontal: 40 },
-  emptyTitle: { color: colors.text, fontSize: 20, fontWeight: '800', marginTop: 18 },
+  cardName: { fontSize: 14, fontWeight: '800', color: '#fff', flex: 1 },
+  cardCity: { color: 'rgba(255,255,255,0.72)', fontSize: 12, marginTop: 3 },
+  emptyContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 56, paddingHorizontal: 40 },
+  emptyTitle: { color: colors.text, fontSize: 20, fontWeight: '800', marginTop: 16 },
   emptyText: { color: colors.textSecondary, fontSize: 14, textAlign: 'center', marginTop: 8, lineHeight: 22 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14 },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
   loadingText: { color: colors.textSecondary, fontSize: 14, fontWeight: '500', letterSpacing: 0.3 },
+
+  // Skeleton
+  skeletonGrid: { paddingHorizontal: spacing.lg, flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  skeletonCard: { width: COLUMN_WIDTH, height: COLUMN_WIDTH * 1.55, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.06)', overflow: 'hidden' },
+  skeletonBar: { backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 8 },
+  skeletonFooter: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 12, gap: 8 },
 });
+
+function DiscoverSkeleton() {
+  const shimmer = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmer, { toValue: 1, duration: 900, useNativeDriver: true }),
+        Animated.timing(shimmer, { toValue: 0, duration: 900, useNativeDriver: true }),
+      ])
+    ).start();
+    return () => shimmer.stopAnimation();
+  }, []);
+  const opacity = shimmer.interpolate({ inputRange: [0, 1], outputRange: [0.4, 0.85] });
+  return (
+    <Animated.View style={[styles.skeletonGrid, { opacity }]}>
+      {[0, 1, 2, 3, 4, 5].map((i) => (
+        <View key={i} style={styles.skeletonCard}>
+          <LinearGradient
+            colors={['rgba(255,255,255,0.04)', 'rgba(255,255,255,0.08)', 'rgba(255,255,255,0.04)']}
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={styles.skeletonFooter}>
+            <View style={[styles.skeletonBar, { height: 14, width: '70%' }]} />
+            <View style={[styles.skeletonBar, { height: 11, width: '45%' }]} />
+          </View>
+        </View>
+      ))}
+    </Animated.View>
+  );
+}

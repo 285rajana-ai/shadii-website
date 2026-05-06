@@ -115,6 +115,9 @@ const userSchema = new mongoose.Schema(
     // Profile views
     profileViews: { type: Number, default: 0 },
 
+    // Profile likes (received)
+    likeCount: { type: Number, default: 0 },
+
     // Fake review flag (admin only)
     isFeaturedTestimonial: { type: Boolean, default: false },
 
