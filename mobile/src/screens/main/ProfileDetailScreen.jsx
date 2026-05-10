@@ -273,9 +273,8 @@ export default function ProfileDetailScreen({ route, navigation }) {
         </View>
 
         <View style={{ height: 40 }} />
+      </ScrollView>
     </View>
-      </ScrollView >
-    </View >
   );
 }
 
