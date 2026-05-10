@@ -82,29 +82,58 @@ export default function LivePhotoScreen({ route, navigation }) {
       </View>
 
       <View style={styles.content}>
-        <Text style={styles.title}>Live Selfie</Text>
+        <Text style={styles.title}>Live Selfie with ID Card</Text>
         <Text style={styles.subtitle}>
-          Take a clear selfie right now to prove you match your CNIC. Ensure good lighting and remove glasses/masks.
+          Take a selfie while holding your CNIC clearly visible next to your face. Both your face and the CNIC text must be clearly readable.
         </Text>
+
+        <View style={styles.instructionBox}>
+          <View style={styles.instructionRow}>
+            <MaterialCommunityIcons name="check-circle" size={16} color={colors.success} />
+            <Text style={styles.instructionText}>Hold CNIC next to your face</Text>
+          </View>
+          <View style={styles.instructionRow}>
+            <MaterialCommunityIcons name="check-circle" size={16} color={colors.success} />
+            <Text style={styles.instructionText}>Good lighting — no shadows</Text>
+          </View>
+          <View style={styles.instructionRow}>
+            <MaterialCommunityIcons name="check-circle" size={16} color={colors.success} />
+            <Text style={styles.instructionText}>Remove glasses, masks, or caps</Text>
+          </View>
+          <View style={styles.instructionRow}>
+            <MaterialCommunityIcons name="close-circle" size={16} color={colors.error} />
+            <Text style={styles.instructionText}>No filters or edited photos</Text>
+          </View>
+        </View>
 
         <TouchableOpacity style={styles.cameraCard} onPress={takePhoto}>
           {livePhoto ? (
-            <Image source={{ uri: livePhoto }} style={styles.previewImage} />
+            <>
+              <Image source={{ uri: livePhoto }} style={styles.previewImage} />
+              <TouchableOpacity style={styles.retakeBtn} onPress={takePhoto}>
+                <Text style={styles.retakeText}>Retake</Text>
+              </TouchableOpacity>
+            </>
           ) : (
             <>
               <View style={styles.cameraCircle}>
-                <Text style={styles.cameraIcon}>🤳</Text>
+                <MaterialCommunityIcons name="camera-front" size={40} color={colors.accent} />
               </View>
-              <Text style={styles.cameraText}>Open Camera</Text>
+              <Text style={styles.cameraText}>Open Front Camera</Text>
+              <Text style={styles.cameraSubText}>Hold your CNIC next to your face</Text>
             </>
           )}
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.btnWrap} onPress={handleSubmit} disabled={loading}>
-          <LinearGradient colors={colors.gradients.primary} style={styles.btn}>
-            <Text style={styles.btnText}>{loading ? 'Submitting...' : 'Submit Verification ✅'}</Text>
+          <LinearGradient colors={loading ? ['#555', '#333'] : colors.gradients.primary} style={styles.btn}>
+            <Text style={styles.btnText}>{loading ? 'Submitting...' : 'Submit for Review'}</Text>
           </LinearGradient>
         </TouchableOpacity>
+
+        <Text style={styles.securityNote}>
+          🔒 Your verification data is stored securely and never shown publicly. Review takes 24-48 hours.
+        </Text>
       </View>
     </LinearGradient>
   );
@@ -117,18 +146,23 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 20, fontWeight: '700', color: colors.text },
   content: { padding: 24, flex: 1 },
   title: { fontSize: 24, fontWeight: '800', color: colors.text, marginBottom: 8 },
-  subtitle: { fontSize: 14, color: colors.textSecondary, marginBottom: 40, lineHeight: 22 },
+  subtitle: { fontSize: 14, color: colors.textSecondary, marginBottom: 20, lineHeight: 22 },
+  instructionBox: { backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 14, padding: 16, marginBottom: 24, gap: 10, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' },
+  instructionRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  instructionText: { fontSize: 13, color: colors.textSecondary, flex: 1 },
   cameraCard: {
-    width: 250, height: 300, alignSelf: 'center', borderRadius: 120,
-    backgroundColor: 'rgba(255,255,255,0.7)', borderWidth: 4, borderColor: colors.primaryLight,
-    alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
-    shadowColor: colors.shadow, shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.2, shadowRadius: 20, elevation: 8,
+    height: 240, borderRadius: 20, marginBottom: 24,
+    backgroundColor: 'rgba(255,255,255,0.05)', borderWidth: 2, borderColor: 'rgba(212,175,55,0.3)',
+    borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
   },
   previewImage: { width: '100%', height: '100%', resizeMode: 'cover' },
-  cameraCircle: { width: 80, height: 80, borderRadius: 40, backgroundColor: colors.glassMedium, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
-  cameraIcon: { fontSize: 40 },
-  cameraText: { fontSize: 16, color: colors.primary, fontWeight: '700' },
-  btnWrap: { borderRadius: 16, overflow: 'hidden', marginTop: 'auto', marginBottom: 16 },
+  retakeBtn: { position: 'absolute', bottom: 12, right: 12, backgroundColor: 'rgba(0,0,0,0.65)', paddingHorizontal: 14, paddingVertical: 7, borderRadius: 12 },
+  retakeText: { color: '#fff', fontSize: 13, fontWeight: '600' },
+  cameraCircle: { width: 72, height: 72, borderRadius: 36, backgroundColor: 'rgba(212,175,55,0.12)', alignItems: 'center', justifyContent: 'center', marginBottom: 12, borderWidth: 1, borderColor: 'rgba(212,175,55,0.3)' },
+  cameraText: { fontSize: 16, color: colors.text, fontWeight: '700', marginBottom: 4 },
+  cameraSubText: { fontSize: 12, color: colors.textMuted, textAlign: 'center', paddingHorizontal: 16 },
+  btnWrap: { borderRadius: 16, overflow: 'hidden', marginBottom: 16 },
   btn: { paddingVertical: 16, alignItems: 'center' },
   btnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  securityNote: { fontSize: 11, color: colors.textMuted, textAlign: 'center', lineHeight: 17, paddingHorizontal: 8 },
 });

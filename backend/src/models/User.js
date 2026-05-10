@@ -118,6 +118,17 @@ const userSchema = new mongoose.Schema(
     // Profile likes (received)
     likeCount: { type: Number, default: 0 },
 
+    // Photo view requests (from other users requesting to see blurred photos)
+    photoViewRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+
+    // Contact share requests
+    contactShareRequests: [{
+      fromUser: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      status: { type: String, enum: ['pending', 'accepted', 'rejected'], default: 'pending' },
+      unlockedByRequester: { type: Boolean, default: false }, // paid 299
+      createdAt: { type: Date, default: Date.now },
+    }],
+
     // Fake review flag (admin only)
     isFeaturedTestimonial: { type: Boolean, default: false },
 

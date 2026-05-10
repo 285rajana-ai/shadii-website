@@ -17,24 +17,24 @@ if (missing.length > 0) {
 }
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
-const authRoutes         = require('./routes/auth.routes');
-const profileRoutes      = require('./routes/profile.routes');
-const matchRoutes        = require('./routes/match.routes');
-const chatRoutes         = require('./routes/chat.routes');
+const authRoutes = require('./routes/auth.routes');
+const profileRoutes = require('./routes/profile.routes');
+const matchRoutes = require('./routes/match.routes');
+const chatRoutes = require('./routes/chat.routes');
 const subscriptionRoutes = require('./routes/subscription.routes');
-const reportRoutes       = require('./routes/report.routes');
-const adminRoutes        = require('./routes/admin.routes');
+const reportRoutes = require('./routes/report.routes');
+const adminRoutes = require('./routes/admin.routes');
 const notificationRoutes = require('./routes/notification.routes');
 
 // ─── Services ─────────────────────────────────────────────────────────────────
 const socketHandler = require('./socket/socketHandler');
-const connectDB     = require('./config/db');
+const connectDB = require('./config/db');
 const { initScheduler } = require('./services/cronScheduler');
 
 // ─── App Setup ────────────────────────────────────────────────────────────────
-const app    = express();
+const app = express();
 const server = http.createServer(app);
-const io     = socketio(server, {
+const io = socketio(server, {
   cors: { origin: '*', methods: ['GET', 'POST'] },
 });
 
@@ -73,13 +73,13 @@ app.use('/api/auth/register', authLimiter);
 app.use('/api/auth/forgot-password', authLimiter);
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
-app.use('/api/auth',          authRoutes);
-app.use('/api/profile',       profileRoutes);
-app.use('/api/matches',       matchRoutes);
-app.use('/api/chat',          chatRoutes);
-app.use('/api/subscription',  subscriptionRoutes);
-app.use('/api/reports',       reportRoutes);
-app.use('/api/admin',         adminRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/profile', profileRoutes);
+app.use('/api/matches', matchRoutes);
+app.use('/api/chat', chatRoutes);
+app.use('/api/subscription', subscriptionRoutes);
+app.use('/api/reports', reportRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
@@ -107,6 +107,7 @@ app.use((err, req, res, next) => {
 });
 
 // ─── Socket.io ────────────────────────────────────────────────────────────────
+app.set('io', io);
 socketHandler(io);
 
 // ─── Start Server ─────────────────────────────────────────────────────────────

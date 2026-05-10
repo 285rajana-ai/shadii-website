@@ -287,7 +287,7 @@ function MatchCard({ match, navigation }) {
           ) : <View />}
           <TouchableOpacity
             style={styles.chatIconButton}
-            onPress={() => navigation.navigate('ChatDetail', { userId, userName: match.name })}
+            onPress={() => navigation.navigate('ChatDetail', { userId, userName: match.name, isOnline: match.isOnline, lastActive: match.lastActive })}
             accessibilityLabel={`Message ${match.name}`}
           >
             <MaterialCommunityIcons name="message-text" size={20} color={colors.primary} />

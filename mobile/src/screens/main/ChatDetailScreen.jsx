@@ -5,6 +5,7 @@ import {
   Alert,
   Animated,
   FlatList,
+  Keyboard,
   KeyboardAvoidingView, Platform,
   StyleSheet,
   Text,
@@ -18,7 +19,7 @@ import colors from '../../theme/colors';
 import { API_BASE_URL } from '../../utils/constants';
 
 export default function ChatDetailScreen({ route, navigation }) {
-  const { userId: otherUserId, userName } = route.params;
+  const { userId: otherUserId, userName, isOnline, lastActive } = route.params;
   const { token, user } = useSelector((s) => s.auth);
   const socket = useSocket();
   const insets = useSafeAreaInsets();
@@ -27,10 +28,24 @@ export default function ChatDetailScreen({ route, navigation }) {
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(true);
   const [typing, setTyping] = useState(false);
+  const [otherUserOnline, setOtherUserOnline] = useState(isOnline ?? false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const flatListRef = useRef(null);
 
   const myId = user?.id || user?._id;
   const conversationId = [myId, otherUserId].sort().join('_');
+
+  // Track keyboard height for Android manual adjustment
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+    const show = Keyboard.addListener('keyboardDidShow', (e) => {
+      setKeyboardHeight(e.endCoordinates.height);
+    });
+    const hide = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardHeight(0);
+    });
+    return () => { show.remove(); hide.remove(); };
+  }, []);
 
   useEffect(() => {
     fetchMessages();
@@ -112,8 +127,37 @@ export default function ChatDetailScreen({ route, navigation }) {
     }
   };
 
+  // Listen for online/offline status changes
+  useEffect(() => {
+    if (!socket) return;
+    socket.on('user:online', ({ userId }) => {
+      if (userId === otherUserId) setOtherUserOnline(true);
+    });
+    socket.on('user:offline', ({ userId }) => {
+      if (userId === otherUserId) setOtherUserOnline(false);
+    });
+    return () => {
+      socket.off('user:online');
+      socket.off('user:offline');
+    };
+  }, [socket]);
+
+  const getLastActiveText = () => {
+    if (otherUserOnline) return '● Online';
+    if (!lastActive) return 'Last seen recently';
+    const diff = Date.now() - new Date(lastActive).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 2) return 'Active just now';
+    if (mins < 60) return `Active ${mins} mins ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `Active ${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    if (days === 1) return 'Active yesterday';
+    if (days < 7) return `Active ${days} days ago`;
+    return 'Last seen long ago';
+  };
+
   const handleSend = () => {
-    if (!inputText.trim() || !socket) return;
 
     socket.emit('message:send', {
       receiverId: otherUserId,
@@ -182,14 +226,16 @@ export default function ChatDetailScreen({ route, navigation }) {
               <View style={styles.headerAvatar}>
                 <Text style={styles.headerAvatarText}>{userName?.[0]?.toUpperCase() || '?'}</Text>
               </View>
-              <View style={styles.headerOnlineDot} />
+              {otherUserOnline && <View style={styles.headerOnlineDot} />}
             </View>
             <View style={styles.headerInfo}>
               <Text style={styles.headerName}>{userName}</Text>
               {typing ? (
                 <Text style={styles.typingText}>typing...</Text>
               ) : (
-                <Text style={styles.onlineText}>● Active</Text>
+                <Text style={[styles.onlineText, !otherUserOnline && styles.lastSeenText]}>
+                  {getLastActiveText()}
+                </Text>
               )}
             </View>
           </TouchableOpacity>
@@ -205,56 +251,58 @@ export default function ChatDetailScreen({ route, navigation }) {
       {/* KAV only wraps messages + input */}
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? headerHeight : 0}
       >
-        {loading ? (
-          <MessageSkeleton />
-        ) : (
-          <FlatList
-            ref={flatListRef}
-            data={messages}
-            keyExtractor={(i) => i._id || Math.random().toString()}
-            renderItem={renderMessage}
-            contentContainerStyle={styles.list}
-            inverted
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-          />
-        )}
-
-        {/* Input */}
-        <View style={[styles.inputArea, { paddingBottom: Math.max(insets.bottom, 4) + 4 }]}>
-          <View style={styles.inputRow}>
-            <TextInput
-              style={styles.input}
-              value={inputText}
-              onChangeText={handleTyping}
-              placeholder="Type a message..."
-              placeholderTextColor="rgba(255,255,255,0.3)"
-              multiline
-              maxLength={500}
+        <View style={[styles.flex, Platform.OS === 'android' && { marginBottom: keyboardHeight }]}>
+          {loading ? (
+            <MessageSkeleton />
+          ) : (
+            <FlatList
+              ref={flatListRef}
+              data={messages}
+              keyExtractor={(i) => i._id || Math.random().toString()}
+              renderItem={renderMessage}
+              contentContainerStyle={styles.list}
+              inverted
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
             />
-            <TouchableOpacity
-              onPress={handleSend}
-              style={styles.sendBtnWrap}
-              disabled={!inputText.trim()}
-              activeOpacity={0.8}
-            >
-              <LinearGradient
-                colors={inputText.trim() ? [colors.rose, colors.maroon] : ['rgba(255,255,255,0.08)', 'rgba(255,255,255,0.04)']}
-                style={styles.sendBtn}
-                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+          )}
+
+          {/* Input */}
+          <View style={[styles.inputArea, { paddingBottom: Math.max(insets.bottom, 4) + 4 }]}>
+            <View style={styles.inputRow}>
+              <TextInput
+                style={styles.input}
+                value={inputText}
+                onChangeText={handleTyping}
+                placeholder="Type a message..."
+                placeholderTextColor="rgba(255,255,255,0.3)"
+                multiline
+                maxLength={500}
+              />
+              <TouchableOpacity
+                onPress={handleSend}
+                style={styles.sendBtnWrap}
+                disabled={!inputText.trim()}
+                activeOpacity={0.8}
               >
-                <MaterialCommunityIcons
-                  name="send"
-                  size={18}
-                  color={inputText.trim() ? '#fff' : colors.textMuted}
-                />
-              </LinearGradient>
-            </TouchableOpacity>
+                <LinearGradient
+                  colors={inputText.trim() ? [colors.rose, colors.maroon] : ['rgba(255,255,255,0.08)', 'rgba(255,255,255,0.04)']}
+                  style={styles.sendBtn}
+                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                >
+                  <MaterialCommunityIcons
+                    name="send"
+                    size={18}
+                    color={inputText.trim() ? '#fff' : colors.textMuted}
+                  />
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.safetyNote}>Contact sharing is monitored</Text>
           </View>
-          <Text style={styles.safetyNote}>Contact sharing is monitored</Text>
         </View>
       </KeyboardAvoidingView>
     </View>
@@ -287,6 +335,7 @@ const styles = StyleSheet.create({
   headerInfo: { flex: 1 },
   headerName: { fontSize: 16, fontWeight: '800', color: colors.text, letterSpacing: -0.3 },
   onlineText: { fontSize: 11, color: colors.online, fontWeight: '600', marginTop: 1 },
+  lastSeenText: { color: 'rgba(255,255,255,0.45)' },
   typingText: { fontSize: 11, color: colors.accent, fontStyle: 'italic', marginTop: 1 },
   headerActionBtn: { padding: 8 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },

@@ -68,7 +68,7 @@ export default function ChatListScreen({ navigation }) {
         unreadCount={item.unreadCount}
         time={item.lastMessage?.createdAt}
         index={index}
-        onPress={() => navigation.navigate('ChatDetail', { userId: user?.id || user?._id, userName: user?.name })}
+        onPress={() => navigation.navigate('ChatDetail', { userId: user?.id || user?._id, userName: user?.name, isOnline: user?.isOnline, lastActive: user?.lastActive })}
       />
     );
   };

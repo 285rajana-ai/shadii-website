@@ -61,10 +61,10 @@ router.get('/discover', protect, async (req, res) => {
 
     // ── Sort ──────────────────────────────────────────────────────────────
     let sortObj = { createdAt: -1 };
-    if (sort === 'active')   sortObj = { lastActive: -1 };
-    if (sort === 'premium')  sortObj = { 'subscription.isActive': -1, createdAt: -1 };
-    if (sort === 'nearby')   sortObj = { city: 1, createdAt: -1 };
-    if (sort === 'boosted')  sortObj = { 'boost.isActive': -1, 'boost.endDate': -1, createdAt: -1 };
+    if (sort === 'active') sortObj = { lastActive: -1 };
+    if (sort === 'premium') sortObj = { 'subscription.isActive': -1, createdAt: -1 };
+    if (sort === 'nearby') sortObj = { city: 1, createdAt: -1 };
+    if (sort === 'boosted') sortObj = { 'boost.isActive': -1, 'boost.endDate': -1, createdAt: -1 };
     if (sort === 'verified') sortObj = { isVerified: -1, createdAt: -1 };
 
     const skip = (Number(page) - 1) * Number(limit);
@@ -313,6 +313,144 @@ router.post('/:id/like', protect, async (req, res) => {
     res.json({ success: true, message: 'Liked' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+
+// POST /api/profile/:id/request-photo — request to view someone's photos
+router.post('/:id/request-photo', protect, async (req, res) => {
+  try {
+    const target = await User.findById(req.params.id);
+    if (!target) return res.status(404).json({ success: false, message: 'User not found' });
+
+    const alreadyRequested = target.photoViewRequests?.some(
+      (uid) => uid.toString() === req.user._id.toString()
+    );
+    if (alreadyRequested) return res.json({ success: true, message: 'Already requested' });
+
+    target.photoViewRequests = target.photoViewRequests || [];
+    target.photoViewRequests.push(req.user._id);
+    await target.save();
+
+    // Emit real-time notification if socket available
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`${target._id}`).emit('photo:request', {
+        fromUser: { _id: req.user._id, name: req.user.name },
+      });
+    }
+
+    res.json({ success: true, message: 'Photo view request sent' });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// POST /api/profile/:id/contact-request — request contact sharing (PKR 299 unlock)
+router.post('/:id/contact-request', protect, async (req, res) => {
+  try {
+    const me = req.user;
+    if (!me.hasActiveSubscription()) {
+      return res.status(403).json({ success: false, message: 'Subscription required' });
+    }
+
+    const target = await User.findById(req.params.id);
+    if (!target) return res.status(404).json({ success: false, message: 'User not found' });
+
+    target.contactShareRequests = target.contactShareRequests || [];
+    const existing = target.contactShareRequests.find(
+      (r) => r.fromUser.toString() === me._id.toString()
+    );
+    if (existing) return res.json({ success: true, message: 'Already requested', status: existing.status });
+
+    target.contactShareRequests.push({ fromUser: me._id });
+    await target.save();
+
+    // Emit real-time notification
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`${target._id}`).emit('contact:request', {
+        fromUser: { _id: me._id, name: me.name },
+      });
+    }
+
+    res.json({ success: true, message: 'Contact share request sent' });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// PUT /api/profile/contact-requests/:requestId/respond — accept or reject a contact share request
+router.put('/contact-requests/:requestId/respond', protect, async (req, res) => {
+  try {
+    const { status } = req.body; // 'accepted' or 'rejected'
+    const me = await User.findById(req.user._id);
+    const request = me.contactShareRequests?.id(req.params.requestId);
+    if (!request) return res.status(404).json({ success: false, message: 'Request not found' });
+
+    request.status = status;
+    await me.save();
+
+    // Notify the requester
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`${request.fromUser}`).emit('contact:response', {
+        fromUser: { _id: me._id, name: me.name },
+        status,
+      });
+    }
+
+    res.json({ success: true, message: `Request ${status}` });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// PUT /api/profile/photo-requests/:userId/respond — accept/reject photo view request
+router.put('/photo-requests/:userId/respond', protect, async (req, res) => {
+  try {
+    const { action } = req.body; // 'accept' or 'reject'
+    const me = await User.findById(req.user._id);
+
+    if (action === 'accept') {
+      // do nothing extra — the viewer can see photos after acceptance tracked on client
+    } else {
+      // remove from photoViewRequests
+      me.photoViewRequests = (me.photoViewRequests || []).filter(
+        (uid) => uid.toString() !== req.params.userId
+      );
+    }
+
+    await me.save();
+
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`${req.params.userId}`).emit('photo:response', {
+        fromUser: { _id: me._id, name: me.name },
+        accepted: action === 'accept',
+      });
+    }
+
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// GET /api/profile/incoming-requests — get all incoming photo + contact share requests
+router.get('/incoming-requests', protect, async (req, res) => {
+  try {
+    const me = await User.findById(req.user._id)
+      .populate('photoViewRequests', 'name photos age city')
+      .populate('contactShareRequests.fromUser', 'name photos age city');
+
+    res.json({
+      success: true,
+      photoRequests: me.photoViewRequests || [],
+      contactRequests: (me.contactShareRequests || []).filter((r) => r.status === 'pending'),
+    });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
   }
 });
 
