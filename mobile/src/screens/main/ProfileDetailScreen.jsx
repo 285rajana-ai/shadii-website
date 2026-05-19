@@ -2,7 +2,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Dimensions, Image, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Clipboard, Dimensions, Image, Modal, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
 import colors from '../../theme/colors';
@@ -20,6 +20,10 @@ export default function ProfileDetailScreen({ route, navigation }) {
   const [photoViewRequested, setPhotoViewRequested] = useState(false);
   const [requestingPhoto, setRequestingPhoto] = useState(false);
   const [contactShareRequested, setContactShareRequested] = useState(false);
+  const [showUnlockModal, setShowUnlockModal] = useState(false);
+  const [unlockInstructions, setUnlockInstructions] = useState(null);
+  const [unlockLoading, setUnlockLoading] = useState(false);
+  const [unlockPending, setUnlockPending] = useState(false);
 
   useEffect(() => {
     fetchProfile();
@@ -31,7 +35,16 @@ export default function ProfileDetailScreen({ route, navigation }) {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
-      if (data.success) setProfile(data.profile);
+      if (data.success) {
+        setProfile(data.profile);
+        // Sync contact request state from server
+        if (data.profile.contactRequestStatus) {
+          setContactShareRequested(true);
+        }
+        if (data.profile.contactUnlocked) {
+          setUnlockPending(false);
+        }
+      }
     } catch (_) {
     } finally {
       setLoading(false);
@@ -46,6 +59,45 @@ export default function ProfileDetailScreen({ route, navigation }) {
         headers: { Authorization: `Bearer ${token}` },
       });
     } catch (_) { }
+  };
+
+  // ── Contact unlock payment flow ─────────────────────────────────────────────
+  const handleUnlockContact = async () => {
+    if (!user?.subscription?.isActive) {
+      Alert.alert('Subscription Required', 'You need an active subscription to unlock contacts.', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'View Plans', onPress: () => navigation.navigate('Plans') },
+      ]);
+      return;
+    }
+    setUnlockLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/profile/${userId}/contact-unlock-payment`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      });
+      const data = await res.json();
+      if (data.alreadyUnlocked) {
+        // refresh profile to get phone
+        await fetchProfile();
+        return;
+      }
+      if (data.success) {
+        setUnlockInstructions(data);
+        setShowUnlockModal(true);
+      } else {
+        Alert.alert('Cannot Unlock', data.message || 'Unable to initiate payment.');
+      }
+    } catch (_) {
+      Alert.alert('Error', 'Could not initiate unlock. Please try again.');
+    } finally {
+      setUnlockLoading(false);
+    }
+  };
+
+  const handleUnlockModalClose = () => {
+    setShowUnlockModal(false);
+    setUnlockPending(true); // show pending state on button
   };
 
   const handleMessage = () => {
@@ -212,22 +264,137 @@ export default function ProfileDetailScreen({ route, navigation }) {
             </TouchableOpacity>
           </View>
 
-          {/* Contact Share Request */}
-          <TouchableOpacity
-            style={[styles.contactShareBtn, contactShareRequested && styles.contactShareBtnDone]}
-            onPress={handleContactShareRequest}
-            disabled={contactShareRequested}
-            activeOpacity={0.8}
+          {/* Contact Share / Unlock Flow */}
+          {profile.contactUnlocked && profile.phone ? (
+            // ── Contact fully unlocked: show phone ──────────────────────────
+            <View style={styles.contactUnlockedCard}>
+              <LinearGradient
+                colors={['rgba(5,205,153,0.15)', 'rgba(5,205,153,0.05)']}
+                style={StyleSheet.absoluteFill}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+              />
+              <MaterialCommunityIcons name="phone-check" size={20} color={colors.success} />
+              <View style={{ flex: 1, marginLeft: 12 }}>
+                <Text style={styles.contactUnlockedLabel}>Contact Unlocked</Text>
+                <Text style={styles.contactUnlockedPhone}>{profile.phone}</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => {
+                  Clipboard.setString(profile.phone);
+                  Alert.alert('Copied!', 'Phone number copied to clipboard.');
+                }}
+                activeOpacity={0.7}
+              >
+                <MaterialCommunityIcons name="content-copy" size={18} color={colors.accent} />
+              </TouchableOpacity>
+            </View>
+          ) : profile.contactRequestStatus === 'accepted' || unlockPending ? (
+            // ── Request accepted: prompt to pay PKR 299 ─────────────────────
+            <TouchableOpacity
+              style={[styles.contactShareBtn, { borderColor: 'rgba(212,175,55,0.4)' }]}
+              onPress={handleUnlockContact}
+              disabled={unlockLoading || unlockPending}
+              activeOpacity={0.8}
+            >
+              {unlockLoading ? (
+                <ActivityIndicator size="small" color={colors.accent} />
+              ) : (
+                <>
+                  <MaterialCommunityIcons
+                    name={unlockPending ? 'clock-outline' : 'lock-open-outline'}
+                    size={18}
+                    color={unlockPending ? colors.textMuted : colors.accent}
+                  />
+                  <View style={{ flex: 1, marginLeft: 8 }}>
+                    <Text style={[styles.contactShareText, !unlockPending && { color: colors.accent }]}>
+                      {unlockPending ? 'Contact Unlock Pending Review' : 'Unlock Contact — PKR 299'}
+                    </Text>
+                    <Text style={styles.contactUnlockSub}>
+                      {unlockPending
+                        ? 'Your payment is being reviewed by admin'
+                        : `${profile.name} accepted your request! Pay PKR 299 to view contact`}
+                    </Text>
+                  </View>
+                </>
+              )}
+            </TouchableOpacity>
+          ) : profile.contactRequestStatus === 'rejected' ? (
+            // ── Request was rejected ──────────────────────────────────────
+            <View style={[styles.contactShareBtn, { opacity: 0.5 }]}>
+              <MaterialCommunityIcons name="phone-off" size={18} color={colors.error} />
+              <Text style={[styles.contactShareText, { color: colors.error }]}>Contact Request Declined</Text>
+            </View>
+          ) : contactShareRequested ? (
+            // ── Request sent, waiting ────────────────────────────────────
+            <View style={[styles.contactShareBtn, styles.contactShareBtnDone]}>
+              <MaterialCommunityIcons name="check-circle" size={18} color={colors.success} />
+              <Text style={[styles.contactShareText, { color: colors.success }]}>Contact Request Sent</Text>
+            </View>
+          ) : (
+            // ── Not yet requested ────────────────────────────────────────
+            <TouchableOpacity
+              style={styles.contactShareBtn}
+              onPress={handleContactShareRequest}
+              activeOpacity={0.8}
+            >
+              <MaterialCommunityIcons name="phone-forward" size={18} color={colors.accent} />
+              <Text style={styles.contactShareText}>Request Contact Share (PKR 299)</Text>
+            </TouchableOpacity>
+          )}
+
+          {/* Contact Unlock Payment Modal */}
+          <Modal
+            visible={showUnlockModal}
+            transparent
+            animationType="slide"
+            onRequestClose={handleUnlockModalClose}
           >
-            <MaterialCommunityIcons
-              name={contactShareRequested ? 'check-circle' : 'phone-forward'}
-              size={18}
-              color={contactShareRequested ? colors.success : colors.accent}
-            />
-            <Text style={[styles.contactShareText, contactShareRequested && { color: colors.success }]}>
-              {contactShareRequested ? 'Contact Request Sent' : 'Request Contact Share (PKR 299)'}
-            </Text>
-          </TouchableOpacity>
+            <View style={styles.modalOverlay}>
+              <View style={styles.paymentModal}>
+                <LinearGradient colors={['#1A000A', '#100808']} style={StyleSheet.absoluteFill} />
+                <View style={styles.paymentModalHandle} />
+                <Text style={styles.paymentModalTitle}>Unlock Contact — PKR 299</Text>
+                <Text style={styles.paymentModalSub}>
+                  Transfer PKR 299 to the account below and include the reference number. Admin will verify and unlock contact within 24 hours.
+                </Text>
+
+                {unlockInstructions?.paymentInstructions && (
+                  <View style={styles.paymentDetails}>
+                    {[
+                      { label: 'Account Title', value: unlockInstructions.paymentInstructions.accountTitle },
+                      { label: 'Account Number', value: unlockInstructions.paymentInstructions.accountNumber },
+                      unlockInstructions.paymentInstructions.iban ? { label: 'IBAN', value: unlockInstructions.paymentInstructions.iban } : null,
+                      { label: 'Bank', value: unlockInstructions.paymentInstructions.bankName },
+                      { label: 'Reference (MUST include)', value: unlockInstructions.paymentInstructions.reference },
+                      { label: 'Amount', value: 'PKR 299' },
+                      { label: 'Support', value: unlockInstructions.paymentInstructions.supportEmail },
+                    ].filter(Boolean).map((row) => (
+                      <View key={row.label} style={styles.paymentRow}>
+                        <Text style={styles.paymentRowLabel}>{row.label}</Text>
+                        <TouchableOpacity
+                          onPress={() => { Clipboard.setString(row.value); Alert.alert('Copied!', `${row.label} copied.`); }}
+                          activeOpacity={0.7}
+                          style={styles.paymentRowValueBox}
+                        >
+                          <Text style={styles.paymentRowValue}>{row.value}</Text>
+                          <MaterialCommunityIcons name="content-copy" size={14} color={colors.accent} />
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                  </View>
+                )}
+
+                <TouchableOpacity
+                  style={styles.paymentDoneBtn}
+                  onPress={handleUnlockModalClose}
+                  activeOpacity={0.8}
+                >
+                  <LinearGradient colors={colors.gradients.primary} style={StyleSheet.absoluteFill} />
+                  <Text style={styles.paymentDoneBtnText}>I've Sent the Payment</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
         </View>
 
         {/* About */}
@@ -342,7 +509,48 @@ const styles = StyleSheet.create({
     marginBottom: 28, backgroundColor: 'rgba(212,175,55,0.06)',
   },
   contactShareBtnDone: { borderColor: 'rgba(46,204,113,0.3)', backgroundColor: 'rgba(46,204,113,0.06)' },
-  contactShareText: { color: colors.accent, fontWeight: '700', fontSize: 14, flex: 1 },
+  contactShareText: { color: colors.accent, fontWeight: '700', fontSize: 14 },
+  contactUnlockSub: { fontSize: 11, color: colors.textMuted, marginTop: 2 },
+  contactUnlockedCard: {
+    flexDirection: 'row', alignItems: 'center',
+    borderWidth: 1, borderColor: 'rgba(5,205,153,0.35)',
+    borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14,
+    marginBottom: 28, overflow: 'hidden',
+  },
+  contactUnlockedLabel: { fontSize: 11, color: colors.success, fontWeight: '600', marginBottom: 2 },
+  contactUnlockedPhone: { fontSize: 18, color: colors.text, fontWeight: '800', letterSpacing: 1 },
+  // Payment modal
+  modalOverlay: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'flex-end',
+  },
+  paymentModal: {
+    backgroundColor: '#1A000A',
+    borderTopLeftRadius: 28, borderTopRightRadius: 28,
+    padding: 24, paddingBottom: 40, overflow: 'hidden',
+    borderTopWidth: 1, borderColor: 'rgba(212,175,55,0.2)',
+  },
+  paymentModalHandle: {
+    width: 40, height: 4, borderRadius: 2,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignSelf: 'center', marginBottom: 20,
+  },
+  paymentModalTitle: { fontSize: 20, fontWeight: '800', color: colors.text, marginBottom: 8 },
+  paymentModalSub: { fontSize: 13, color: colors.textMuted, lineHeight: 19, marginBottom: 20 },
+  paymentDetails: {
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderRadius: 16, padding: 16, gap: 12, marginBottom: 24,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
+  },
+  paymentRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  paymentRowLabel: { fontSize: 12, color: colors.textMuted, flex: 1 },
+  paymentRowValueBox: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  paymentRowValue: { fontSize: 13, fontWeight: '700', color: colors.text, textAlign: 'right', maxWidth: 200 },
+  paymentDoneBtn: {
+    borderRadius: 14, paddingVertical: 16, alignItems: 'center',
+    overflow: 'hidden',
+  },
+  paymentDoneBtnText: { fontSize: 16, fontWeight: '800', color: '#fff' },
   section: { marginBottom: 32 },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 16 },
   aboutText: { fontSize: 14, color: colors.textSecondary, lineHeight: 24 },

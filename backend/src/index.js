@@ -45,9 +45,6 @@ connectDB();
 app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(cors({ origin: '*', methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'] }));
 
-// NOTE: Stripe webhook MUST use raw body — mount BEFORE express.json()
-app.use('/api/subscription/webhook/stripe', express.raw({ type: 'application/json' }));
-
 // ─── Body Parsing ─────────────────────────────────────────────────────────────
 app.use(express.json({ limit: '10mb' }));
 

@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
-import { Alert, Image, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, Linking, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout, updateUser } from '../../store/slices/authSlice';
@@ -15,6 +15,7 @@ export default function ProfileScreen({ navigation }) {
   const dispatch = useDispatch();
   const insets = useSafeAreaInsets();
   const [matchCount, setMatchCount] = useState(null);
+  const [requestsCount, setRequestsCount] = useState(0);
 
   useEffect(() => {
     // Refresh user data from API to get latest stats
@@ -33,8 +34,21 @@ export default function ProfileScreen({ navigation }) {
         if (data.success) setMatchCount(data.matches?.length ?? 0);
       } catch (_) { }
     };
+    // Fetch incoming requests count for badge
+    const fetchRequestsCount = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/profile/incoming-requests`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (data.success) {
+          setRequestsCount((data.photoRequests?.length || 0) + (data.contactRequests?.length || 0));
+        }
+      } catch (_) { }
+    };
     refreshUser();
     fetchMatchCount();
+    fetchRequestsCount();
   }, []);
 
   const getSubscriptionExpiry = () => {
@@ -152,7 +166,17 @@ export default function ProfileScreen({ navigation }) {
         <View style={styles.menuSection}>
           <Text style={styles.menuSectionTitle}>Preferences</Text>
           <View style={[glassStyles.card, styles.menuList]}>
-            <MenuAction icon="bell-ring-outline" label="Notifications" onPress={() => navigation.navigate('Notifications')} />
+            <MenuAction
+              icon="bell-ring-outline"
+              label="Notifications"
+              onPress={() => navigation.navigate('Notifications')}
+            />
+            <MenuAction
+              icon="account-arrow-down-outline"
+              label="Incoming Requests"
+              onPress={() => navigation.navigate('IncomingRequests')}
+              badge={requestsCount > 0 ? requestsCount : null}
+            />
             <MenuAction icon="shield-lock-outline" label="Privacy & Security" onPress={() => navigation.navigate('Settings')} />
             <MenuAction icon="account-cancel-outline" label="Blocked Profiles" onPress={() => navigation.navigate('BlockedUsers')} />
           </View>
@@ -162,7 +186,7 @@ export default function ProfileScreen({ navigation }) {
           <Text style={styles.menuSectionTitle}>Support</Text>
           <View style={[glassStyles.card, styles.menuList]}>
             <MenuAction icon="help-circle-outline" label="Help Center" onPress={() => navigation.navigate('Help')} />
-            <MenuAction icon="file-document-outline" label="Terms of Service" onPress={() => { }} />
+            <MenuAction icon="file-document-outline" label="Terms of Service" onPress={() => Linking.openURL('https://shadii.pk/terms')} />
             <MenuAction icon="logout" label="Logout" onPress={handleLogout} color={colors.error} last />
           </View>
         </View>
@@ -184,7 +208,7 @@ function StatItem({ label, value, icon }) {
   );
 }
 
-function MenuAction({ icon, label, onPress, color, last }) {
+function MenuAction({ icon, label, onPress, color, last, badge }) {
   return (
     <TouchableOpacity
       style={[styles.menuItem, last && { borderBottomWidth: 0 }]}
@@ -195,6 +219,11 @@ function MenuAction({ icon, label, onPress, color, last }) {
         <MaterialCommunityIcons name={icon} size={22} color={color || colors.textSecondary} />
       </View>
       <Text style={[styles.menuLabel, color && { color }]}>{label}</Text>
+      {badge ? (
+        <View style={styles.menuBadge}>
+          <Text style={styles.menuBadgeText}>{badge}</Text>
+        </View>
+      ) : null}
       <MaterialCommunityIcons name="chevron-right" size={20} color={colors.textMuted} />
     </TouchableOpacity>
   );
@@ -276,6 +305,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceLight, alignItems: 'center', justifyContent: 'center'
   },
   menuLabel: { flex: 1, color: colors.text, fontSize: 16, fontWeight: '500', marginLeft: 16 },
+  menuBadge: {
+    backgroundColor: colors.accent,
+    borderRadius: 10, minWidth: 20, height: 20,
+    alignItems: 'center', justifyContent: 'center',
+    paddingHorizontal: 5, marginRight: 8,
+  },
+  menuBadgeText: { fontSize: 11, fontWeight: '800', color: colors.background },
 
   versionText: {
     textAlign: 'center', color: colors.textMuted,

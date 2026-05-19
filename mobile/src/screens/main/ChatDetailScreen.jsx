@@ -158,13 +158,12 @@ export default function ChatDetailScreen({ route, navigation }) {
   };
 
   const handleSend = () => {
-
+    if (!socket || !inputText.trim()) return;
     socket.emit('message:send', {
       receiverId: otherUserId,
       content: inputText.trim(),
-      conversationId
+      conversationId,
     });
-
     setInputText('');
   };
 

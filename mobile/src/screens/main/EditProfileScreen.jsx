@@ -11,6 +11,9 @@ import colors from '../../theme/colors';
 import { radius } from '../../theme/spacing';
 import { API_BASE_URL, INTERESTS } from '../../utils/constants';
 
+const MARITAL_STATUS_OPTIONS = ['Never Married', 'Divorced', 'Widowed'];
+const SECT_OPTIONS = ['Sunni', 'Shia', 'Deobandi', 'Barelvi', 'Other'];
+
 export default function EditProfileScreen({ navigation }) {
   const { token, user } = useSelector((s) => s.auth);
   const dispatch = useDispatch();
@@ -29,6 +32,7 @@ export default function EditProfileScreen({ navigation }) {
     about: user?.about || '',
     maritalStatus: user?.maritalStatus || 'Never Married',
     motherTongue: user?.motherTongue || '',
+    sect: user?.sect || '',
     religion: user?.religion || 'Islam',
   });
 
@@ -162,6 +166,39 @@ export default function EditProfileScreen({ navigation }) {
             <InputField label="Education" value={formData.education} onChangeText={(v) => updateForm('education', v)} />
             <InputField label="Cast / Community" value={formData.cast} onChangeText={(v) => updateForm('cast', v)} />
             <InputField label="About Me" value={formData.about} onChangeText={(v) => updateForm('about', v)} multiline />
+            <InputField label="Mother Tongue" value={formData.motherTongue} onChangeText={(v) => updateForm('motherTongue', v)} placeholder="e.g. Punjabi, Urdu, Sindhi" />
+          </View>
+
+          {/* Marital Status */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Marital Status</Text>
+            <View style={styles.tagsContainer}>
+              {MARITAL_STATUS_OPTIONS.map((opt) => (
+                <TouchableOpacity
+                  key={opt}
+                  style={[styles.tag, formData.maritalStatus === opt && styles.tagSelected]}
+                  onPress={() => updateForm('maritalStatus', opt)}
+                >
+                  <Text style={[styles.tagText, formData.maritalStatus === opt && styles.tagTextSelected]}>{opt}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* Sect */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Sect</Text>
+            <View style={styles.tagsContainer}>
+              {SECT_OPTIONS.map((opt) => (
+                <TouchableOpacity
+                  key={opt}
+                  style={[styles.tag, formData.sect === opt && styles.tagSelected]}
+                  onPress={() => updateForm('sect', opt)}
+                >
+                  <Text style={[styles.tagText, formData.sect === opt && styles.tagTextSelected]}>{opt}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
 
           {/* Interests */}

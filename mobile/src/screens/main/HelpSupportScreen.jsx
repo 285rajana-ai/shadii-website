@@ -93,7 +93,7 @@ const FAQ_DATA = [
         faqs: [
             {
                 q: 'What payment methods are accepted?',
-                a: 'We accept EasyPaisa, JazzCash, debit/credit cards, and bank transfers. All payments are encrypted and secure.',
+                a: 'We support EasyPaisa, JazzCash, and bank transfer. Premium access is activated only after gateway confirmation or manual verification of your bank transfer receipt.',
             },
             {
                 q: 'What is Profile Boost?',

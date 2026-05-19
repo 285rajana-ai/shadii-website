@@ -5,6 +5,7 @@ const User = require('../models/User');
 const Report = require('../models/Report');
 const Subscription = require('../models/Subscription');
 const Message = require('../models/Message');
+const Match = require('../models/Match');
 const { sendEmail } = require('../config/mailer');
 const {
   notifyVerificationApproved,
@@ -27,11 +28,16 @@ router.get('/dashboard', async (req, res) => {
   try {
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
 
     const [
       totalUsers, activeUsers, totalFemale, totalMale,
       pendingVerifications, flaggedUsers, totalReports, pendingReports,
       activeSubscriptions, totalRevenue, newUsersThisMonth, onlineNow,
+      pendingPaymentReviews, totalCompletedPayments, totalMessages,
+      activeConversations, matchTotals, activePlanBreakdown,
+      paymentMethodBreakdown, reportReasonBreakdown, verificationBreakdown,
+      recentUsers, recentReports, recentPayments,
     ] = await Promise.all([
       User.countDocuments(),
       User.countDocuments({ status: 'active', lastActive: { $gte: sevenDaysAgo } }),
@@ -48,7 +54,68 @@ router.get('/dashboard', async (req, res) => {
       ]),
       User.countDocuments({ createdAt: { $gte: thirtyDaysAgo } }),
       User.countDocuments({ isOnline: true }),
+      Subscription.countDocuments({ paymentStatus: { $in: ['awaiting_payment', 'pending', 'verification_submitted'] } }),
+      Subscription.countDocuments({ paymentStatus: 'completed' }),
+      Message.countDocuments({ createdAt: { $gte: fourteenDaysAgo } }),
+      Message.aggregate([
+        { $group: { _id: '$conversationId' } },
+        { $count: 'total' },
+      ]),
+      Match.aggregate([
+        { $project: { matchCount: { $size: { $ifNull: ['$matches', []] } }, likedCount: { $size: { $filter: { input: { $ifNull: ['$matches', []] }, as: 'match', cond: { $eq: ['$$match.isLiked', true] } } } } } },
+        { $group: { _id: null, totalMatchSuggestions: { $sum: '$matchCount' }, totalLikedProfiles: { $sum: '$likedCount' } } },
+      ]),
+      Subscription.aggregate([
+        { $match: { isActive: true } },
+        { $group: { _id: '$plan', count: { $sum: 1 }, revenue: { $sum: '$amount' } } },
+        { $sort: { count: -1 } },
+      ]),
+      Subscription.aggregate([
+        { $group: { _id: '$paymentMethod', count: { $sum: 1 }, completed: { $sum: { $cond: [{ $eq: ['$paymentStatus', 'completed'] }, 1, 0] } } } },
+        { $sort: { count: -1 } },
+      ]),
+      Report.aggregate([
+        { $group: { _id: '$reason', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+      ]),
+      User.aggregate([
+        { $group: { _id: '$verificationStatus', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+      ]),
+      User.find()
+        .select('name email city gender createdAt isVerified subscription')
+        .sort({ createdAt: -1 })
+        .limit(6),
+      Report.find()
+        .select('reason status createdAt reporter reported')
+        .populate('reporter', 'name email')
+        .populate('reported', 'name email')
+        .sort({ createdAt: -1 })
+        .limit(6),
+      Subscription.find()
+        .select('plan amount paymentMethod paymentStatus createdAt user reviewNote paymentReference')
+        .populate('user', 'name email')
+        .sort({ createdAt: -1 })
+        .limit(6),
     ]);
+
+    const likedPairs = await Match.aggregate([
+      { $unwind: '$matches' },
+      { $match: { 'matches.isLiked': true, 'matches.matchedUser': { $exists: true, $ne: null } } },
+      {
+        $project: {
+          userId: { $toString: '$user' },
+          matchedId: { $toString: '$matches.matchedUser' },
+        },
+      },
+    ]);
+
+    const pairCounter = new Map();
+    likedPairs.forEach((pair) => {
+      const key = [pair.userId, pair.matchedId].sort().join('__');
+      pairCounter.set(key, (pairCounter.get(key) || 0) + 1);
+    });
+    const mutualConnections = Array.from(pairCounter.values()).filter((count) => count >= 2).length;
 
     res.json({
       success: true,
@@ -59,6 +126,24 @@ router.get('/dashboard', async (req, res) => {
         totalRevenue: totalRevenue[0]?.total || 0,
         newUsersThisMonth,
         onlineNow,
+        pendingPaymentReviews,
+        totalCompletedPayments,
+        totalMessages,
+        activeConversations: activeConversations[0]?.total || 0,
+        totalMatchSuggestions: matchTotals[0]?.totalMatchSuggestions || 0,
+        totalLikedProfiles: matchTotals[0]?.totalLikedProfiles || 0,
+        mutualConnections,
+      },
+      breakdowns: {
+        activePlanBreakdown,
+        paymentMethodBreakdown,
+        reportReasonBreakdown,
+        verificationBreakdown,
+      },
+      recent: {
+        users: recentUsers,
+        reports: recentReports,
+        payments: recentPayments,
       },
     });
   } catch (err) {
@@ -104,13 +189,81 @@ router.get('/users/:userId', async (req, res) => {
       .populate('blockedUsers', 'name email');
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
-    const [messageCount, reportCount, subHistory] = await Promise.all([
+    const [
+      messageCount,
+      sentCount,
+      receivedCount,
+      reportCount,
+      reportsAgainstCount,
+      activeConversationIds,
+      subHistory,
+      recentMessages,
+      reportsFiled,
+      reportsAgainst,
+      matchOverview,
+    ] = await Promise.all([
       Message.countDocuments({ $or: [{ sender: user._id }, { receiver: user._id }] }),
-      Report.countDocuments({ $or: [{ reporter: user._id }, { reported: user._id }] }),
+      Message.countDocuments({ sender: user._id }),
+      Message.countDocuments({ receiver: user._id }),
+      Report.countDocuments({ reporter: user._id }),
+      Report.countDocuments({ reported: user._id }),
+      Message.distinct('conversationId', { $or: [{ sender: user._id }, { receiver: user._id }] }),
       Subscription.find({ user: user._id }).sort({ createdAt: -1 }).limit(5),
+      Message.find({ $or: [{ sender: user._id }, { receiver: user._id }] })
+        .select('conversationId content status createdAt sender receiver isFlagged flagReason')
+        .populate('sender', 'name email')
+        .populate('receiver', 'name email')
+        .sort({ createdAt: -1 })
+        .limit(8),
+      Report.find({ reporter: user._id })
+        .select('reason status createdAt reported')
+        .populate('reported', 'name email')
+        .sort({ createdAt: -1 })
+        .limit(5),
+      Report.find({ reported: user._id })
+        .select('reason status createdAt reporter')
+        .populate('reporter', 'name email')
+        .sort({ createdAt: -1 })
+        .limit(5),
+      Match.aggregate([
+        { $match: { user: user._id } },
+        {
+          $project: {
+            totalMatches: { $size: { $ifNull: ['$matches', []] } },
+            likedMatches: { $size: { $filter: { input: { $ifNull: ['$matches', []] }, as: 'match', cond: { $eq: ['$$match.isLiked', true] } } } },
+            viewedMatches: { $size: { $filter: { input: { $ifNull: ['$matches', []] }, as: 'match', cond: { $eq: ['$$match.isViewed', true] } } } },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            totalMatches: { $sum: '$totalMatches' },
+            likedMatches: { $sum: '$likedMatches' },
+            viewedMatches: { $sum: '$viewedMatches' },
+          },
+        },
+      ]),
     ]);
 
-    res.json({ success: true, user, messageCount, reportCount, subHistory });
+    res.json({
+      success: true,
+      user,
+      metrics: {
+        messageCount,
+        sentCount,
+        receivedCount,
+        reportCount,
+        reportsAgainstCount,
+        activeConversationCount: activeConversationIds.length,
+        totalMatches: matchOverview[0]?.totalMatches || 0,
+        likedMatches: matchOverview[0]?.likedMatches || 0,
+        viewedMatches: matchOverview[0]?.viewedMatches || 0,
+      },
+      subHistory,
+      recentMessages,
+      reportsFiled,
+      reportsAgainst,
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -287,12 +440,28 @@ router.post('/users/:userId/unsuspend', async (req, res) => {
 // ─── GET /api/admin/subscriptions ────────────────────────────────────────────
 router.get('/subscriptions', async (req, res) => {
   try {
-    const { page = 1, limit = 20, plan, status } = req.query;
+    const { page = 1, limit = 20, plan, status, paymentMethod, search } = req.query;
     const filter = {};
     if (plan) filter.plan = plan;
+    if (paymentMethod) filter.paymentMethod = paymentMethod;
     if (status === 'active') filter.isActive = true;
     if (status === 'expired') filter.isActive = false;
     if (status === 'completed') filter.paymentStatus = 'completed';
+    if (status === 'pending') filter.paymentStatus = { $in: ['awaiting_payment', 'pending', 'verification_submitted'] };
+    if (status === 'rejected') filter.paymentStatus = 'rejected';
+
+    let userIds = null;
+    if (search) {
+      const matchedUsers = await User.find({
+        $or: [
+          { name: new RegExp(search, 'i') },
+          { email: new RegExp(search, 'i') },
+          { phone: new RegExp(search, 'i') },
+        ],
+      }).select('_id');
+      userIds = matchedUsers.map((user) => user._id);
+      filter.user = { $in: userIds.length ? userIds : [] };
+    }
 
     const [subscriptions, total] = await Promise.all([
       Subscription.find(filter)
@@ -303,6 +472,88 @@ router.get('/subscriptions', async (req, res) => {
       Subscription.countDocuments(filter),
     ]);
     res.json({ success: true, subscriptions, total });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ─── POST /api/admin/subscriptions/:subscriptionId/review ───────────────────
+router.post('/subscriptions/:subscriptionId/review', async (req, res) => {
+  try {
+    const { action, note } = req.body;
+    const subscription = await Subscription.findById(req.params.subscriptionId).populate('user', 'name email');
+    if (!subscription) {
+      return res.status(404).json({ success: false, message: 'Subscription not found' });
+    }
+
+    if (action === 'approve') {
+      if (subscription.paymentStatus === 'completed') {
+        return res.json({ success: true, message: 'Subscription already approved', subscription });
+      }
+
+      subscription.paymentStatus = 'completed';
+      subscription.isActive = true;
+      subscription.reviewedAt = new Date();
+      subscription.reviewedBy = req.user._id;
+      subscription.reviewNote = note || 'Approved by admin';
+      if (!subscription.transactionId) {
+        subscription.transactionId = subscription.paymentReference || `ADMIN-${Date.now()}`;
+      }
+      await subscription.save();
+
+      // contact_unlock: mark unlockedByRequester on recipient's contact request
+      if (subscription.plan === 'contact_unlock' && subscription.targetUser) {
+        await User.findOneAndUpdate(
+          { _id: subscription.targetUser, 'contactShareRequests.fromUser': subscription.user._id },
+          { $set: { 'contactShareRequests.$.unlockedByRequester': true } }
+        );
+        // notify requester via socket if available (non-fatal)
+        try {
+          const io = require('../index').io;
+          if (io) {
+            io.to(`${subscription.user._id}`).emit('contact:unlocked', {
+              targetUserId: subscription.targetUser,
+            });
+          }
+        } catch (_) { }
+        return res.json({ success: true, message: 'Contact unlock approved — requester can now view contact details', subscription });
+      }
+
+      if (subscription.plan === 'boost') {
+        await User.findByIdAndUpdate(subscription.user._id, {
+          boost: { isActive: true, endDate: subscription.endDate },
+        });
+      } else {
+        await User.findByIdAndUpdate(subscription.user._id, {
+          subscription: {
+            plan: subscription.plan,
+            startDate: subscription.startDate,
+            endDate: subscription.endDate,
+            isActive: true,
+          },
+        });
+      }
+
+      await sendEmail(subscription.user.email, 'subscriptionConfirm', {
+        name: subscription.user.name,
+        plan: subscription.plan,
+        amount: subscription.amount,
+      });
+
+      return res.json({ success: true, message: 'Subscription approved and activated', subscription });
+    }
+
+    if (action === 'reject') {
+      subscription.paymentStatus = 'rejected';
+      subscription.isActive = false;
+      subscription.reviewedAt = new Date();
+      subscription.reviewedBy = req.user._id;
+      subscription.reviewNote = note || 'Payment could not be verified';
+      await subscription.save();
+      return res.json({ success: true, message: 'Subscription payment rejected', subscription });
+    }
+
+    return res.status(400).json({ success: false, message: 'Invalid action. Use "approve" or "reject".' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -331,14 +582,25 @@ router.get('/reports', async (req, res) => {
 // ─── POST /api/admin/reports/:reportId/resolve ────────────────────────────────
 router.post('/reports/:reportId/resolve', async (req, res) => {
   try {
-    const { action } = req.body; // 'resolved' | 'dismissed'
+    const { action, note, actionTaken } = req.body;
+    const mappedStatus = action === 'resolved' ? 'reviewed' : action;
+    if (!['reviewed', 'dismissed', 'action_taken'].includes(mappedStatus)) {
+      return res.status(400).json({ success: false, message: 'Invalid report action' });
+    }
+
     const report = await Report.findByIdAndUpdate(
       req.params.reportId,
-      { status: action, resolvedAt: new Date(), resolvedBy: req.user.id },
+      {
+        status: mappedStatus,
+        adminNote: note || '',
+        actionTaken: mappedStatus === 'action_taken' ? (actionTaken || 'warned') : 'none',
+        reviewedAt: new Date(),
+        reviewedBy: req.user.id,
+      },
       { new: true }
     );
     if (!report) return res.status(404).json({ success: false, message: 'Report not found' });
-    res.json({ success: true, message: `Report marked as ${action}` });
+    res.json({ success: true, message: `Report marked as ${mappedStatus}` });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -403,7 +665,112 @@ router.get('/analytics', async (req, res) => {
       { $group: { _id: '$plan', count: { $sum: 1 } } },
     ]);
 
-    res.json({ success: true, userGrowth, revenueGrowth, planDistribution });
+    const paymentMethodDistribution = await Subscription.aggregate([
+      { $match: { createdAt: { $gte: startDate } } },
+      { $group: { _id: '$paymentMethod', count: { $sum: 1 }, revenue: { $sum: '$amount' } } },
+      { $sort: { count: -1 } },
+    ]);
+
+    const reportReasonDistribution = await Report.aggregate([
+      { $match: { createdAt: { $gte: startDate } } },
+      { $group: { _id: '$reason', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+    ]);
+
+    const [conversationCount, messageCount, matchSignals] = await Promise.all([
+      Message.aggregate([
+        { $match: { createdAt: { $gte: startDate } } },
+        { $group: { _id: '$conversationId' } },
+        { $count: 'total' },
+      ]),
+      Message.countDocuments({ createdAt: { $gte: startDate } }),
+      Match.aggregate([
+        { $match: { createdAt: { $gte: startDate } } },
+        {
+          $project: {
+            matchCount: { $size: { $ifNull: ['$matches', []] } },
+            likedCount: { $size: { $filter: { input: { $ifNull: ['$matches', []] }, as: 'match', cond: { $eq: ['$$match.isLiked', true] } } } },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            totalMatchSuggestions: { $sum: '$matchCount' },
+            totalLikes: { $sum: '$likedCount' },
+          },
+        },
+      ]),
+    ]);
+
+    res.json({
+      success: true,
+      userGrowth,
+      revenueGrowth,
+      planDistribution,
+      paymentMethodDistribution,
+      reportReasonDistribution,
+      relationshipSignals: {
+        activeConversations: conversationCount[0]?.total || 0,
+        totalMessages: messageCount,
+        totalMatchSuggestions: matchSignals[0]?.totalMatchSuggestions || 0,
+        totalLikes: matchSignals[0]?.totalLikes || 0,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ─── GET /api/admin/photo-requests — monitor user-to-user photo view requests ─
+router.get('/photo-requests', async (req, res) => {
+  try {
+    const { page = 1, limit = 20 } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    // Find users that have pending photo view requests
+    const [users, total] = await Promise.all([
+      User.find({ 'photoViewRequests.0': { $exists: true } })
+        .select('name email gender age city photoViewRequests createdAt')
+        .populate('photoViewRequests', 'name email gender age city')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(Number(limit)),
+      User.countDocuments({ 'photoViewRequests.0': { $exists: true } }),
+    ]);
+
+    const rows = users.map((u) => ({
+      targetUser: { _id: u._id, name: u.name, email: u.email, gender: u.gender, age: u.age, city: u.city },
+      requests: (u.photoViewRequests || []).map((r) => ({
+        _id: r._id,
+        name: r.name,
+        email: r.email,
+        gender: r.gender,
+        age: r.age,
+        city: r.city,
+      })),
+      count: (u.photoViewRequests || []).length,
+    }));
+
+    res.json({ success: true, rows, total });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ─── GET /api/admin/contact-unlock-payments — pending contact unlock payments ─
+router.get('/contact-unlock-payments', async (req, res) => {
+  try {
+    const { page = 1, limit = 20 } = req.query;
+    const [payments, total] = await Promise.all([
+      Subscription.find({ plan: 'contact_unlock' })
+        .populate('user', 'name email gender city')
+        .populate('targetUser', 'name email gender city phone')
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(Number(limit)),
+      Subscription.countDocuments({ plan: 'contact_unlock' }),
+    ]);
+    res.json({ success: true, payments, total });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

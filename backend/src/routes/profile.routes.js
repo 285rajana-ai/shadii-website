@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/auth.middleware');
 const User = require('../models/User');
+const Subscription = require('../models/Subscription');
 const { sendEmail } = require('../config/mailer');
 const multer = require('multer');
 const fs = require('fs');
@@ -154,13 +155,32 @@ router.get('/:id', protect, async (req, res) => {
 
     const viewerSubscribed = req.user.hasActiveSubscription();
 
+    // Check if viewer has unlocked contact for this profile
+    const contactUnlocked = await Subscription.findOne({
+      user: req.user._id,
+      targetUser: profile._id,
+      plan: 'contact_unlock',
+      paymentStatus: 'completed',
+      isActive: true,
+    }).lean();
+
+    // Check if viewer sent a contact share request and it was accepted
+    const targetUser = await User.findById(req.params.id).select('contactShareRequests phone');
+    const myContactRequest = targetUser?.contactShareRequests?.find(
+      (r) => r.fromUser.toString() === req.user._id.toString()
+    );
+
     res.json({
       success: true,
       profile: {
         ...profile.toJSON(),
+        // Only expose phone if contact is fully unlocked
+        phone: contactUnlocked ? profile.phone : undefined,
         photo: profile.getProfilePhoto(viewerSubscribed),
         isPhotoBlurred: profile.gender === 'female' && profile.isVerified && !viewerSubscribed,
         isBlocked: req.user.blockedUsers?.includes(profile._id),
+        contactRequestStatus: myContactRequest?.status || null,
+        contactUnlocked: Boolean(contactUnlocked),
       },
     });
   } catch (err) {
@@ -193,37 +213,58 @@ router.put('/update', protect, async (req, res) => {
   }
 });
 
-// POST /api/profile/photo — upload profile photo (stores as base64 data URI)
+// POST /api/profile/photo — upload profile photo via Cloudinary (with blur for females)
 router.post('/photo', protect, upload.single('photo'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ success: false, message: 'No photo uploaded' });
 
     const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp'];
     if (!allowedMimeTypes.includes(req.file.mimetype)) {
+      fs.unlinkSync(req.file.path);
       return res.status(400).json({ success: false, message: 'Only JPEG, PNG, and WebP images are allowed' });
     }
 
-    // Read file and convert to base64 data URI
-    const fileBuffer = fs.readFileSync(req.file.path);
-    const base64 = fileBuffer.toString('base64');
-    const dataUri = `data:${req.file.mimetype};base64,${base64}`;
-
-    // Clean up temp file
-    fs.unlinkSync(req.file.path);
-
     const user = await User.findById(req.user.id);
-    const photoObj = {
-      url: dataUri,
-      blurredUrl: null,
-      publicId: `local_${Date.now()}`,
-      isMain: user.photos.length === 0,
-    };
+
+    let photoObj;
+
+    // ── Cloudinary path (preferred) ────────────────────────────────────────
+    const cloudinaryConfigured =
+      process.env.CLOUDINARY_CLOUD_NAME &&
+      process.env.CLOUDINARY_API_KEY &&
+      process.env.CLOUDINARY_API_SECRET;
+
+    if (cloudinaryConfigured) {
+      const { uploadProfilePhoto } = require('../config/cloudinary');
+      const result = await uploadProfilePhoto(req.file.path, user._id.toString(), user.gender);
+      fs.unlinkSync(req.file.path);
+      photoObj = {
+        url: result.url,
+        blurredUrl: result.blurredUrl || null,
+        publicId: result.publicId,
+        isMain: user.photos.length === 0,
+      };
+    } else {
+      // ── Fallback: base64 data URI (dev/no-Cloudinary mode) ──────────────
+      // NOTE: MongoDB 16 MB document limit — keep photos small
+      const fileBuffer = fs.readFileSync(req.file.path);
+      fs.unlinkSync(req.file.path);
+      const dataUri = `data:${req.file.mimetype};base64,${fileBuffer.toString('base64')}`;
+      photoObj = {
+        url: dataUri,
+        blurredUrl: null,
+        publicId: `local_${Date.now()}`,
+        isMain: user.photos.length === 0,
+      };
+    }
 
     user.photos.push(photoObj);
     await user.save();
 
     res.json({ success: true, photo: photoObj, message: 'Photo uploaded successfully' });
   } catch (err) {
+    // Clean up temp file on error
+    if (req.file?.path) { try { fs.unlinkSync(req.file.path); } catch (_) { } }
     console.error('Photo upload error:', err.message);
     res.status(500).json({ success: false, message: 'Photo upload failed. Please try again.' });
   }
@@ -448,6 +489,120 @@ router.get('/incoming-requests', protect, async (req, res) => {
       success: true,
       photoRequests: me.photoViewRequests || [],
       contactRequests: (me.contactShareRequests || []).filter((r) => r.status === 'pending'),
+    });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// GET /api/profile/my-contact-requests — outgoing contact requests status (for requester)
+router.get('/my-contact-requests', protect, async (req, res) => {
+  try {
+    // Find all users that have a contact request from me
+    const users = await User.find({
+      'contactShareRequests.fromUser': req.user._id,
+    })
+      .select('name photos age city contactShareRequests')
+      .lean();
+
+    const requests = users.map((u) => {
+      const req_ = u.contactShareRequests.find(
+        (r) => r.fromUser.toString() === req.user._id.toString()
+      );
+      return {
+        targetUserId: u._id,
+        targetUserName: u.name,
+        targetUserAge: u.age,
+        targetUserCity: u.city,
+        requestId: req_?._id,
+        status: req_?.status || 'pending',
+        unlockedByRequester: req_?.unlockedByRequester || false,
+        createdAt: req_?.createdAt,
+      };
+    });
+
+    res.json({ success: true, requests });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// POST /api/profile/:id/contact-unlock-payment — initiate PKR 299 unlock payment after request accepted
+router.post('/:id/contact-unlock-payment', protect, async (req, res) => {
+  try {
+    const me = req.user;
+    if (!me.hasActiveSubscription()) {
+      return res.status(403).json({ success: false, message: 'Active subscription required to unlock contacts' });
+    }
+
+    const target = await User.findById(req.params.id);
+    if (!target) return res.status(404).json({ success: false, message: 'User not found' });
+
+    // Confirm the contact request was accepted
+    const contactReq = target.contactShareRequests?.find(
+      (r) => r.fromUser.toString() === me._id.toString() && r.status === 'accepted'
+    );
+    if (!contactReq) {
+      return res.status(400).json({ success: false, message: 'No accepted contact request found. The recipient must accept first.' });
+    }
+
+    // Check if already unlocked
+    if (contactReq.unlockedByRequester) {
+      return res.json({ success: true, alreadyUnlocked: true, message: 'Contact already unlocked' });
+    }
+
+    // Check if a pending payment already exists
+    const existing = await Subscription.findOne({
+      user: me._id,
+      targetUser: target._id,
+      plan: 'contact_unlock',
+      paymentStatus: { $in: ['awaiting_payment', 'pending', 'verification_submitted'] },
+    });
+    if (existing) {
+      return res.json({
+        success: true,
+        alreadyInitiated: true,
+        subscriptionId: existing._id,
+        paymentStatus: existing.paymentStatus,
+        paymentInstructions: {
+          accountTitle: process.env.BANK_TRANSFER_ACCOUNT_TITLE || 'Shadii.pk',
+          accountNumber: process.env.BANK_TRANSFER_ACCOUNT_NUMBER || 'Contact support for account number',
+          iban: process.env.BANK_TRANSFER_IBAN || '',
+          bankName: process.env.BANK_TRANSFER_BANK_NAME || 'Bank Transfer',
+          reference: existing._id.toString(),
+          supportEmail: process.env.PAYMENT_SUPPORT_EMAIL || 'support@shadii.pk',
+        },
+        message: 'A payment is already pending for this unlock. Please wait for admin review.',
+      });
+    }
+
+    const now = new Date();
+    const unlock = await Subscription.create({
+      user: me._id,
+      targetUser: target._id,
+      plan: 'contact_unlock',
+      amount: 299,
+      duration: 0,
+      startDate: now,
+      endDate: now,
+      paymentMethod: 'bank_transfer',
+      paymentStatus: 'awaiting_payment',
+      isActive: false,
+    });
+
+    res.json({
+      success: true,
+      subscriptionId: unlock._id,
+      paymentInstructions: {
+        accountTitle: process.env.BANK_TRANSFER_ACCOUNT_TITLE || 'Shadii.pk',
+        accountNumber: process.env.BANK_TRANSFER_ACCOUNT_NUMBER || 'Contact support for account number',
+        iban: process.env.BANK_TRANSFER_IBAN || '',
+        bankName: process.env.BANK_TRANSFER_BANK_NAME || 'Bank Transfer',
+        reference: unlock._id.toString(),
+        supportEmail: process.env.PAYMENT_SUPPORT_EMAIL || 'support@shadii.pk',
+      },
+      amount: 299,
+      message: `Pay PKR 299 via bank transfer to unlock ${target.name}'s contact details. Your payment will be reviewed within 24 hours.`,
     });
   } catch (e) {
     res.status(500).json({ success: false, message: e.message });

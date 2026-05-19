@@ -29,6 +29,7 @@ import LivePhotoScreen from '../screens/verification/LivePhotoScreen';
 import BlockedUsersScreen from '../screens/main/BlockedUsersScreen';
 import BoostProfileScreen from '../screens/main/BoostProfileScreen';
 import HelpSupportScreen from '../screens/main/HelpSupportScreen';
+import IncomingRequestsScreen from '../screens/main/IncomingRequestsScreen';
 import NotificationsScreen from '../screens/main/NotificationsScreen';
 import ReportUserScreen from '../screens/main/ReportUserScreen';
 import SettingsScreen from '../screens/main/SettingsScreen';
@@ -65,6 +66,7 @@ export default function AppNavigator() {
             <Stack.Screen name="Report" component={ReportUserScreen} options={{ animation: 'slide_from_bottom' }} />
             <Stack.Screen name="BlockedUsers" component={BlockedUsersScreen} />
             <Stack.Screen name="Help" component={HelpSupportScreen} />
+            <Stack.Screen name="IncomingRequests" component={IncomingRequestsScreen} />
           </>
         )}
       </Stack.Navigator>

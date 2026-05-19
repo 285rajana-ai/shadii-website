@@ -18,6 +18,7 @@
     },
     "android": {
       "package": "pk.shadii.app",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0D0D0D"
@@ -25,10 +26,12 @@
       "edgeToEdgeEnabled": true,
       "permissions": [
         "CAMERA",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
         "INTERNET",
-        "ACCESS_NETWORK_STATE"
+        "ACCESS_NETWORK_STATE",
+        "READ_MEDIA_IMAGES",
+        "VIBRATE",
+        "RECEIVE_BOOT_COMPLETED",
+        "POST_NOTIFICATIONS"
       ]
     },
     "web": {
@@ -45,6 +48,16 @@
         "expo-image-picker",
         {
           "photosPermission": "Shadii.pk needs photo access to set your profile picture."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#5C0F31",
+          "sounds": [],
+          "androidMode": "default",
+          "androidCollapsedTitle": "Shadii.pk"
         }
       ]
     ]

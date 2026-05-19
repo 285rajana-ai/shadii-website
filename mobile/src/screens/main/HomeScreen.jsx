@@ -1,4 +1,5 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -261,6 +262,13 @@ function MatchCard({ match, navigation }) {
       ) : (
         <LinearGradient colors={colors.gradients.royal} style={styles.matchPhoto} />
       )}
+      {/* Blur overlay for female photos — non-subscriber view */}
+      {match.isPhotoBlurred && photo && (
+        <BlurView intensity={85} tint="dark" style={[StyleSheet.absoluteFillObject, styles.matchBlurOverlay]}>
+          <MaterialCommunityIcons name="lock" size={26} color="rgba(255,255,255,0.9)" />
+          <Text style={styles.matchBlurText}>Subscribe to view</Text>
+        </BlurView>
+      )}
       <LinearGradient
         colors={['transparent', 'rgba(0,0,0,0.9)']}
         style={styles.matchGradient}
@@ -377,6 +385,8 @@ const styles = StyleSheet.create({
   emptyMatchesSub: { color: colors.accent, fontSize: 12, marginTop: 4, fontWeight: '500' },
   matchCard: { width: CARD_WIDTH, height: 440, borderRadius: 32, overflow: 'hidden', backgroundColor: colors.surface },
   matchPhoto: { width: '100%', height: '100%' },
+  matchBlurOverlay: { alignItems: 'center', justifyContent: 'center', gap: 8 },
+  matchBlurText: { color: 'rgba(255,255,255,0.85)', fontSize: 13, fontWeight: '700', letterSpacing: 0.4 },
   matchGradient: { ...StyleSheet.absoluteFillObject },
   matchContent: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 20 },
   matchHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },

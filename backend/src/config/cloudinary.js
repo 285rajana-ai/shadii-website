@@ -23,28 +23,29 @@ const uploadImage = async (filePath, folder = 'shadii', options = {}) => {
 
 /**
  * Upload profile photo with blur transformation for females
+ * Returns { url, blurredUrl, publicId }
  */
 const uploadProfilePhoto = async (filePath, userId, gender) => {
   const result = await uploadImage(filePath, 'profiles', {
-    public_id: `profile_${userId}`,
-    overwrite: true,
-    transformation: [{ quality: 'auto', fetch_format: 'auto' }],
+    public_id: `profile_${userId}_${Date.now()}`,
+    overwrite: false,
+    transformation: [{ quality: 'auto', fetch_format: 'auto', width: 800, crop: 'limit' }],
   });
 
   let blurredUrl = null;
   if (gender === 'female') {
-    // Create blurred version URL using Cloudinary transformation
+    // Generate blurred version URL using Cloudinary on-the-fly transformation (no extra storage)
     blurredUrl = cloudinary.url(result.public_id, {
       transformation: [
-        { effect: 'blur:800', quality: 30 },
-        { overlay: { font_family: 'Arial', font_size: 40, text: '🔒 Subscribe to view' }, gravity: 'center', color: 'white' },
+        { effect: 'blur:900', quality: 20, width: 800, crop: 'limit' },
       ],
       format: 'jpg',
+      secure: true,
     });
   }
 
   return {
-    originalUrl: result.secure_url,
+    url: result.secure_url,
     blurredUrl,
     publicId: result.public_id,
   };

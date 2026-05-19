@@ -5,15 +5,17 @@ const subscriptionSchema = new mongoose.Schema(
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     plan: {
       type: String,
-      enum: ['basic', 'standard', 'premium', 'boost'],
+      enum: ['basic', 'standard', 'premium', 'boost', 'contact_unlock'],
       required: true,
     },
     amount: { type: Number, required: true }, // in PKR
     currency: { type: String, default: 'PKR' },
     duration: { type: Number, required: true }, // days
+    // For contact_unlock plan only — the user whose contact is being unlocked
+    targetUser: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true },
-    isActive: { type: Boolean, default: true },
+    isActive: { type: Boolean, default: false },
 
     // Payment
     paymentMethod: {
@@ -22,11 +24,17 @@ const subscriptionSchema = new mongoose.Schema(
     },
     paymentStatus: {
       type: String,
-      enum: ['pending', 'completed', 'failed', 'refunded'],
-      default: 'pending',
+      enum: ['awaiting_payment', 'pending', 'verification_submitted', 'completed', 'failed', 'refunded', 'rejected'],
+      default: 'awaiting_payment',
     },
     transactionId: { type: String },
+    paymentReference: { type: String },
     receiptUrl: { type: String },
+    proofSubmittedAt: { type: Date },
+    reviewedAt: { type: Date },
+    reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    reviewNote: { type: String },
+    gatewayResponse: { type: mongoose.Schema.Types.Mixed },
 
     // Auto-renewal
     autoRenew: { type: Boolean, default: false },

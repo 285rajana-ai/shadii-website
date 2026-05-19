@@ -30,10 +30,8 @@ export const SUBSCRIPTION_PLANS = [
 ];
 
 export const PAYMENT_METHODS = [
-  { id: 'easypaisa', name: 'EasyPaisa', icon: 'phone-android', color: '#4CAF50' },
-  { id: 'jazzcash', name: 'JazzCash', icon: 'phone-iphone', color: '#FF5722' },
-  { id: 'card', name: 'Credit/Debit Card', icon: 'credit-card', color: '#3498DB' },
-  { id: 'bank_transfer', name: 'Bank Transfer', icon: 'account-balance', color: '#607D8B' },
+  { id: 'easypaisa', name: 'EasyPaisa', icon: 'cellphone', color: '#4CAF50' },
+  { id: 'bank_transfer', name: 'Bank Transfer', icon: 'bank-outline', color: '#9B59B6' },
 ];
 
 export const EDUCATION_LEVELS = [
