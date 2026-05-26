@@ -18,6 +18,7 @@
     },
     "android": {
       "package": "pk.shadii",
+      "versionCode": 2,
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
