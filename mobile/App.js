@@ -3,7 +3,8 @@ import React, { useEffect } from 'react';
 import { Platform, StatusBar, Text, UIManager, View } from 'react-native';
 import 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Provider, useDispatch } from 'react-redux';
+import { Provider, useDispatch, useSelector } from 'react-redux';
+import { registerPushTokenWithBackend } from './src/utils/notifications';
 import AppNavigator from './src/navigation/AppNavigator';
 import store from './src/store';
 import { restoreSession } from './src/store/slices/authSlice';
@@ -85,6 +86,14 @@ function AppRoot() {
     };
     restore();
   }, []);
+
+  const auth = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    if (auth.isAuthenticated && auth.token) {
+      registerPushTokenWithBackend(auth.token);
+    }
+  }, [auth.isAuthenticated, auth.token]);
 
 
   return (

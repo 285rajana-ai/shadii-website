@@ -1,12 +1,6 @@
 const mongoose = require('mongoose');
-mongoose.set('bufferCommands', false);
-
-// Atlas replica set hosts
-const ATLAS_HOSTS = [
-  'ac-b7nm95o-shard-00-00.nq4a2dl.mongodb.net:27017',
-  'ac-b7nm95o-shard-00-01.nq4a2dl.mongodb.net:27017',
-  'ac-b7nm95o-shard-00-02.nq4a2dl.mongodb.net:27017',
-].join(',');
+// Allow database queries to be queued during connection initialization
+mongoose.set('bufferCommands', true);
 
 const connectDB = async () => {
   const username = process.env.MONGO_USERNAME;
@@ -18,22 +12,16 @@ const connectDB = async () => {
     process.exit(1);
   }
 
+  // URL encode credentials to handle special characters (e.g. '@', '%') correctly
+  const encodedUser = encodeURIComponent(username);
+  const encodedPass = encodeURIComponent(password);
+  
+  const mongoUri = `mongodb+srv://${encodedUser}:${encodedPass}@cluster0.nq4a2dl.mongodb.net/${dbName}?retryWrites=true&w=majority`;
+
   try {
-    const conn = await mongoose.connect(
-      `mongodb://${ATLAS_HOSTS}/${dbName}`,
-      {
-        auth: { username, password },
-        tls: true,
-        authSource: 'admin',
-        replicaSet: 'atlas-f19au4-shard-0',
-        retryWrites: true,
-        serverSelectionTimeoutMS: 15000,
-        family: 4,
-        maxPoolSize: 10,
-        minPoolSize: 1,
-        maxConnecting: 1,
-      }
-    );
+    const conn = await mongoose.connect(mongoUri, {
+      serverSelectionTimeoutMS: 15000,
+    });
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
     console.error(`❌ MongoDB Connection Error: ${error.message}`);

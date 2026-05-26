@@ -71,35 +71,38 @@ router.get('/discover', protect, async (req, res) => {
     const skip = (Number(page) - 1) * Number(limit);
     const [users, total] = await Promise.all([
       User.find(filter)
-        .select('name age city country education cast maritalStatus motherTongue sect interests hobbies photos isVerified isOnline lastActive subscription boost gender')
+        .select('name age city country education cast maritalStatus motherTongue sect interests hobbies photos isVerified isOnline lastActive subscription boost gender photoViewApproved')
         .sort(sortObj)
         .skip(skip)
         .limit(Number(limit)),
       User.countDocuments(filter),
     ]);
 
-    const viewerSubscribed = me.hasActiveSubscription();
-
-    const profiles = users.map((u) => ({
-      id: u._id,
-      name: u.name,
-      age: u.age,
-      city: u.city,
-      country: u.country,
-      education: u.education,
-      cast: u.cast,
-      maritalStatus: u.maritalStatus,
-      motherTongue: u.motherTongue,
-      sect: u.sect,
-      isVerified: u.isVerified,
-      isOnline: u.isOnline,
-      lastActive: u.lastActive,
-      isBoosted: u.hasActiveBoost?.() || false,
-      isPremium: u.subscription?.plan === 'premium' && u.subscription?.isActive,
-      photo: u.getProfilePhoto(viewerSubscribed),
-      isPhotoBlurred: u.gender === 'female' && u.isVerified && !viewerSubscribed,
-      interests: u.interests?.slice(0, 3),
-    }));
+    const profiles = users.map((u) => {
+      const isConnected = u.photoViewApproved?.some(
+        (uid) => String(uid) === String(me._id)
+      );
+      return {
+        id: u._id,
+        name: u.name,
+        age: u.age,
+        city: u.city,
+        country: u.country,
+        education: u.education,
+        cast: u.cast,
+        maritalStatus: u.maritalStatus,
+        motherTongue: u.motherTongue,
+        sect: u.sect,
+        isVerified: u.isVerified,
+        isOnline: u.isOnline,
+        lastActive: u.lastActive,
+        isBoosted: u.hasActiveBoost?.() || false,
+        isPremium: u.subscription?.plan === 'premium' && u.subscription?.isActive,
+        photo: u.getProfilePhoto(me._id),
+        isPhotoBlurred: !isConnected,
+        interests: u.interests?.slice(0, 3),
+      };
+    });
 
     res.json({
       success: true,
@@ -170,17 +173,26 @@ router.get('/:id', protect, async (req, res) => {
       (r) => r.fromUser.toString() === req.user._id.toString()
     );
 
+    const isConnected = profile.photoViewApproved?.some(
+      (uid) => String(uid) === String(req.user._id)
+    ) || String(profile._id) === String(req.user._id);
+
+    const myPhotoRequest = profile.photoViewRequests?.some(
+      (uid) => String(uid) === String(req.user._id)
+    );
+
     res.json({
       success: true,
       profile: {
         ...profile.toJSON(),
         // Only expose phone if contact is fully unlocked
         phone: contactUnlocked ? profile.phone : undefined,
-        photo: profile.getProfilePhoto(viewerSubscribed),
-        isPhotoBlurred: profile.gender === 'female' && profile.isVerified && !viewerSubscribed,
+        photo: profile.getProfilePhoto(req.user._id),
+        isPhotoBlurred: !isConnected,
         isBlocked: req.user.blockedUsers?.includes(profile._id),
         contactRequestStatus: myContactRequest?.status || null,
         contactUnlocked: Boolean(contactUnlocked),
+        photoRequestStatus: isConnected ? 'accepted' : (myPhotoRequest ? 'pending' : null),
       },
     });
   } catch (err) {
@@ -454,9 +466,22 @@ router.put('/photo-requests/:userId/respond', protect, async (req, res) => {
     const me = await User.findById(req.user._id);
 
     if (action === 'accept') {
-      // do nothing extra — the viewer can see photos after acceptance tracked on client
+      me.photoViewRequests = (me.photoViewRequests || []).filter(
+        (uid) => uid.toString() !== req.params.userId
+      );
+      if (!me.photoViewApproved) me.photoViewApproved = [];
+      if (!me.photoViewApproved.includes(req.params.userId)) {
+        me.photoViewApproved.push(req.params.userId);
+      }
+      const otherUser = await User.findById(req.params.userId);
+      if (otherUser) {
+        if (!otherUser.photoViewApproved) otherUser.photoViewApproved = [];
+        if (!otherUser.photoViewApproved.includes(me._id)) {
+          otherUser.photoViewApproved.push(me._id);
+        }
+        await otherUser.save();
+      }
     } else {
-      // remove from photoViewRequests
       me.photoViewRequests = (me.photoViewRequests || []).filter(
         (uid) => uid.toString() !== req.params.userId
       );

@@ -21,6 +21,7 @@ const reportRoutes = require('./src/routes/report.routes');
 const adminRoutes = require('./src/routes/admin.routes');
 
 const app = express();
+app.set('trust proxy', 1); // Trust the first proxy (Railway load balancer)
 const server = http.createServer(app);
 
 // Socket.IO with secure configuration
@@ -33,8 +34,6 @@ const io = socketIO(server, {
   transports: ['websocket', 'polling'],
 });
 
-// Connect DB
-connectDB();
 
 // Middleware
 app.use(helmet({

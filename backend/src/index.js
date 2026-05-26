@@ -33,13 +33,14 @@ const { initScheduler } = require('./services/cronScheduler');
 
 // ─── App Setup ────────────────────────────────────────────────────────────────
 const app = express();
+app.set('trust proxy', 1); // Trust the first proxy (Railway load balancer)
 const server = http.createServer(app);
 const io = socketio(server, {
   cors: { origin: '*', methods: ['GET', 'POST'] },
 });
 
 // ─── Connect to DB ────────────────────────────────────────────────────────────
-connectDB();
+// Will be called inside startServer() below to ensure connection is ready before listening
 
 // ─── Security Middleware ──────────────────────────────────────────────────────
 app.use(helmet({ crossOriginResourcePolicy: false }));
@@ -47,6 +48,22 @@ app.use(cors({ origin: '*', methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
 
 // ─── Body Parsing ─────────────────────────────────────────────────────────────
 app.use(express.json({ limit: '10mb' }));
+
+// ─── Database Readiness Middleware ─────────────────────────────────────────────
+app.use((req, res, next) => {
+  // Allow health check endpoint to bypass database check
+  if (req.path === '/health') {
+    return next();
+  }
+
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({
+      success: false,
+      message: 'Database connection is initializing. Please try again in a few seconds.',
+    });
+  }
+  next();
+});
 
 // ─── Rate Limiting ────────────────────────────────────────────────────────────
 // Global: 100 requests per minute per IP
@@ -89,6 +106,7 @@ app.get('/health', (req, res) => {
   });
 });
 
+
 // ─── 404 Handler ──────────────────────────────────────────────────────────────
 app.use((req, res) => {
   res.status(404).json({ success: false, message: `Route ${req.method} ${req.path} not found` });
@@ -109,9 +127,17 @@ socketHandler(io);
 
 // ─── Start Server ─────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 5000;
+
+// Listen on the port immediately so health checks succeed
 server.listen(PORT, () => {
   console.log(`🚀 Shadii.pk API running on port ${PORT}`);
+});
 
-  // Initialize cron scheduler AFTER server is up
+// Trigger DB connection asynchronously
+connectDB();
+
+// Initialize cron scheduler only after MongoDB connection is fully open
+mongoose.connection.once('open', () => {
+  console.log('⏰ Database connection ready. Initializing cron scheduler...');
   initScheduler();
 });

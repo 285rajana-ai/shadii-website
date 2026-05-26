@@ -5,12 +5,18 @@ const Subscription = require('../models/Subscription');
 const User = require('../models/User');
 const { sendEmail } = require('../config/mailer');
 const { notifySubscriptionExpiring } = require('../services/pushNotification');
+const {
+  getGooglePlayPackageName,
+  getGooglePlayProductId,
+  hasGooglePlayVerificationConfig,
+  verifyGooglePlayPurchase,
+} = require('../services/googlePlayBilling');
 const multer = require('multer');
 const fs = require('fs');
 
 const upload = multer({ dest: '/tmp/', limits: { fileSize: 5 * 1024 * 1024 } });
 const { uploadImage } = require('../config/cloudinary');
-const PAYMENT_METHODS = new Set(['easypaisa', 'bank_transfer']);
+const MANUAL_PAYMENT_METHODS = new Set(['easypaisa', 'bank_transfer']);
 
 const PLANS = {
   basic: { price: 1000, duration: 30, label: 'Basic — 1 Month' },
@@ -19,6 +25,35 @@ const PLANS = {
   boost: { price: 500, duration: 3, label: 'Profile Boost — 3 Days' },
   contact_unlock: { price: 299, duration: 0, label: 'Contact Unlock — PKR 299' },
 };
+
+function buildPlanWindow(user, plan) {
+  const planConfig = PLANS[plan];
+  const now = new Date();
+
+  if (!planConfig || plan === 'contact_unlock') {
+    return { startDate: now, endDate: now };
+  }
+
+  if (plan === 'boost') {
+    const activeBoostEnd = user?.boost?.isActive && user.boost.endDate && new Date(user.boost.endDate) > now
+      ? new Date(user.boost.endDate)
+      : now;
+
+    return {
+      startDate: activeBoostEnd,
+      endDate: new Date(activeBoostEnd.getTime() + planConfig.duration * 24 * 60 * 60 * 1000),
+    };
+  }
+
+  const activeSubscriptionEnd = user?.subscription?.isActive && user.subscription.endDate && new Date(user.subscription.endDate) > now
+    ? new Date(user.subscription.endDate)
+    : now;
+
+  return {
+    startDate: activeSubscriptionEnd,
+    endDate: new Date(activeSubscriptionEnd.getTime() + planConfig.duration * 24 * 60 * 60 * 1000),
+  };
+}
 
 function getPlanFeatures(plan) {
   const base = ['Unlimited browsing', 'Daily match suggestions'];
@@ -56,6 +91,17 @@ function getEasyPaisaInstructions(subscription) {
 }
 
 function getPaymentMethodMeta(paymentMethod) {
+  if (paymentMethod === 'google_play') {
+    const enabled = hasGooglePlayVerificationConfig();
+    return {
+      id: paymentMethod,
+      enabled,
+      requiresManualReview: false,
+      message: enabled
+        ? 'Secure checkout via Google Play Billing.'
+        : 'Google Play Billing is not configured on the server yet.',
+    };
+  }
   if (paymentMethod === 'bank_transfer') {
     return {
       id: paymentMethod,
@@ -91,7 +137,7 @@ router.get('/plans', (req, res) => {
 router.get('/payment-methods', protect, (req, res) => {
   res.json({
     success: true,
-    methods: ['easypaisa', 'bank_transfer'].map(getPaymentMethodMeta),
+    methods: ['google_play', 'easypaisa', 'bank_transfer'].map(getPaymentMethodMeta),
   });
 });
 
@@ -103,7 +149,7 @@ router.post('/initiate', protect, async (req, res) => {
     if (!PLANS[plan]) {
       return res.status(400).json({ success: false, message: 'Invalid plan selected' });
     }
-    if (!PAYMENT_METHODS.has(paymentMethod)) {
+    if (!MANUAL_PAYMENT_METHODS.has(paymentMethod)) {
       return res.status(400).json({ success: false, message: 'Invalid payment method. Choose EasyPaisa or Bank Transfer.' });
     }
 
@@ -147,6 +193,152 @@ router.post('/initiate', protect, async (req, res) => {
       amount: planConfig.price,
       plan: planConfig.label,
       message: `${methodLabel} order created for ${planConfig.label}. Send the payment then upload your receipt.`,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.post('/google-play/verify', protect, async (req, res) => {
+  try {
+    const {
+      plan,
+      productId,
+      purchaseToken,
+      transactionId,
+      packageName,
+      targetUserId,
+      purchase,
+    } = req.body;
+
+    if (!PLANS[plan]) {
+      return res.status(400).json({ success: false, message: 'Invalid plan selected.' });
+    }
+
+    if (!hasGooglePlayVerificationConfig()) {
+      return res.status(503).json({ success: false, message: 'Google Play Billing is not configured on the server yet.' });
+    }
+
+    const expectedProductId = getGooglePlayProductId(plan);
+    if (!expectedProductId) {
+      return res.status(400).json({ success: false, message: 'No Google Play product is configured for this plan.' });
+    }
+
+    if (productId !== expectedProductId) {
+      return res.status(400).json({ success: false, message: 'Google Play product does not match the selected plan.' });
+    }
+
+    if (!purchaseToken?.trim()) {
+      return res.status(400).json({ success: false, message: 'Purchase token is required.' });
+    }
+
+    let targetUser = null;
+    if (plan === 'contact_unlock') {
+      if (!req.user.hasActiveSubscription()) {
+        return res.status(403).json({ success: false, message: 'Active subscription required to unlock contacts.' });
+      }
+
+      if (!targetUserId) {
+        return res.status(400).json({ success: false, message: 'Target user is required for contact unlock.' });
+      }
+
+      targetUser = await User.findById(targetUserId);
+      if (!targetUser) {
+        return res.status(404).json({ success: false, message: 'User not found.' });
+      }
+
+      const contactReq = targetUser.contactShareRequests?.find(
+        (entry) => entry.fromUser.toString() === req.user._id.toString() && entry.status === 'accepted'
+      );
+
+      if (!contactReq) {
+        return res.status(400).json({ success: false, message: 'No accepted contact request found for this profile.' });
+      }
+
+      if (contactReq.unlockedByRequester) {
+        return res.json({ success: true, alreadyUnlocked: true, message: 'Contact is already unlocked.' });
+      }
+    }
+
+    const purchaseTokenValue = purchaseToken.trim();
+    const transactionIdValue = transactionId?.trim() || purchase?.transactionId || purchase?.orderIdAndroid || purchaseTokenValue;
+
+    // Prevent replay attacks globally (check if token was already used by any user)
+    const globallyUsed = await Subscription.findOne({
+      paymentMethod: 'google_play',
+      paymentStatus: 'completed',
+      $or: [{ paymentReference: purchaseTokenValue }, { transactionId: transactionIdValue }],
+    });
+
+    if (globallyUsed) {
+      if (String(globallyUsed.user) === String(req.user.id)) {
+        return res.json({
+          success: true,
+          alreadyProcessed: true,
+          subscriptionId: globallyUsed._id,
+          paymentStatus: globallyUsed.paymentStatus,
+          message: 'Purchase already verified and activated.',
+        });
+      }
+      return res.status(400).json({
+        success: false,
+        message: 'This purchase token has already been processed by another account.',
+      });
+    }
+
+    const existing = await Subscription.findOne({
+      user: req.user.id,
+      paymentMethod: 'google_play',
+      $or: [{ paymentReference: purchaseTokenValue }, { transactionId: transactionIdValue }],
+    });
+
+    const verification = await verifyGooglePlayPurchase({
+      packageName: packageName || getGooglePlayPackageName(),
+      productId,
+      purchaseToken: purchaseTokenValue,
+    });
+
+    if (!verification.valid) {
+      return res.status(409).json({ success: false, message: 'Google Play has not marked this purchase as completed yet.' });
+    }
+
+    const user = await User.findById(req.user.id).select('name email subscription boost');
+    const { startDate, endDate } = buildPlanWindow(user, plan);
+    const planConfig = PLANS[plan];
+    const subscription = existing || new Subscription();
+
+    subscription.user = req.user.id;
+    subscription.targetUser = plan === 'contact_unlock' ? targetUser?._id : undefined;
+    subscription.plan = plan;
+    subscription.amount = planConfig.price;
+    subscription.duration = planConfig.duration;
+    subscription.startDate = startDate;
+    subscription.endDate = endDate;
+    subscription.paymentMethod = 'google_play';
+    subscription.paymentStatus = 'pending';
+    subscription.isActive = false;
+    subscription.paymentReference = purchaseTokenValue;
+    subscription.transactionId = transactionIdValue;
+    subscription.gatewayResponse = {
+      googlePlay: verification.response,
+      clientPurchase: purchase || null,
+      verifiedAt: new Date().toISOString(),
+    };
+    await subscription.save();
+
+    await activateSubscription(subscription, transactionIdValue, user, {
+      paymentReference: purchaseTokenValue,
+      reviewNote: 'Verified by Google Play Billing',
+      gatewayResponse: subscription.gatewayResponse,
+    });
+
+    res.json({
+      success: true,
+      subscriptionId: subscription._id,
+      paymentStatus: subscription.paymentStatus,
+      message: plan === 'contact_unlock'
+        ? 'Contact unlock purchased successfully. You can now view the contact details.'
+        : 'Google Play purchase verified and your plan is now active.',
     });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -363,16 +555,30 @@ router.post('/cancel', protect, async (req, res) => {
 
 // ─── Helper: activateSubscription ────────────────────────────────────────────
 
-async function activateSubscription(subscription, transactionId, user) {
+async function activateSubscription(subscription, transactionId, user, options = {}) {
   subscription.paymentStatus = 'completed';
-  subscription.transactionId = transactionId;
+  subscription.transactionId = transactionId || subscription.transactionId;
+  if (options.paymentReference) {
+    subscription.paymentReference = options.paymentReference;
+  }
+  if (options.reviewNote) {
+    subscription.reviewNote = options.reviewNote;
+  }
+  if (options.gatewayResponse) {
+    subscription.gatewayResponse = options.gatewayResponse;
+  }
   subscription.reviewedAt = new Date();
   subscription.isActive = true;
   await subscription.save();
 
   const planConfig = PLANS[subscription.plan];
 
-  if (subscription.plan === 'boost') {
+  if (subscription.plan === 'contact_unlock' && subscription.targetUser) {
+    await User.updateOne(
+      { _id: subscription.targetUser, 'contactShareRequests.fromUser': subscription.user },
+      { $set: { 'contactShareRequests.$.unlockedByRequester': true } }
+    );
+  } else if (subscription.plan === 'boost') {
     await User.findByIdAndUpdate(subscription.user, {
       boost: { isActive: true, endDate: subscription.endDate },
     });

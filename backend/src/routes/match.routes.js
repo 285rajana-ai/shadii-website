@@ -9,7 +9,7 @@ const { generateDailyMatches } = require('../services/matchingAlgorithm');
 router.get('/today', protect, async (req, res) => {
   try {
     let matchDoc = await Match.findOne({ user: req.user.id })
-      .populate('matches.matchedUser', 'name age city country education cast interests photos isVerified isOnline lastActive subscription boost gender')
+      .populate('matches.matchedUser', 'name age city country education cast interests photos isVerified isOnline lastActive subscription boost gender photoViewApproved')
       .sort({ generatedAt: -1 });
 
     // Generate if not today's matches
@@ -20,15 +20,16 @@ router.get('/today', protect, async (req, res) => {
       matchDoc = await generateDailyMatches(req.user.id);
       matchDoc = await Match.findById(matchDoc._id).populate(
         'matches.matchedUser',
-        'name age city country education cast interests photos isVerified isOnline lastActive subscription boost gender'
+        'name age city country education cast interests photos isVerified isOnline lastActive subscription boost gender photoViewApproved'
       );
     }
-
-    const viewerSubscribed = req.user.hasActiveSubscription();
 
     const matches = matchDoc?.matches?.map((m) => {
       const u = m.matchedUser;
       if (!u) return null;
+      const isConnected = u.photoViewApproved?.some(
+        (uid) => String(uid) === String(req.user.id)
+      );
       return {
         id: u._id,
         name: u.name,
@@ -37,8 +38,8 @@ router.get('/today', protect, async (req, res) => {
         education: u.education,
         isVerified: u.isVerified,
         isOnline: u.isOnline,
-        photo: u.getProfilePhoto(viewerSubscribed),
-        isPhotoBlurred: u.gender === 'female' && u.isVerified && !viewerSubscribed,
+        photo: u.getProfilePhoto(req.user.id),
+        isPhotoBlurred: !isConnected,
         interests: u.interests?.slice(0, 3),
         matchScore: m.score,
         matchReasons: m.reasons,

@@ -262,11 +262,11 @@ function MatchCard({ match, navigation }) {
       ) : (
         <LinearGradient colors={colors.gradients.royal} style={styles.matchPhoto} />
       )}
-      {/* Blur overlay for female photos — non-subscriber view */}
+      {/* Blur overlay for unconnected matches */}
       {match.isPhotoBlurred && photo && (
         <BlurView intensity={85} tint="dark" style={[StyleSheet.absoluteFillObject, styles.matchBlurOverlay]}>
           <MaterialCommunityIcons name="lock" size={26} color="rgba(255,255,255,0.9)" />
-          <Text style={styles.matchBlurText}>Subscribe to view</Text>
+          <Text style={styles.matchBlurText}>Connect to view</Text>
         </BlurView>
       )}
       <LinearGradient
@@ -294,11 +294,21 @@ function MatchCard({ match, navigation }) {
             </View>
           ) : <View />}
           <TouchableOpacity
-            style={styles.chatIconButton}
-            onPress={() => navigation.navigate('ChatDetail', { userId, userName: match.name, isOnline: match.isOnline, lastActive: match.lastActive })}
+            style={[styles.chatIconButton, match.isPhotoBlurred && { backgroundColor: 'rgba(255,255,255,0.08)', shadowColor: 'transparent' }]}
+            onPress={() => {
+              if (match.isPhotoBlurred) {
+                navigation.navigate('ProfileDetail', { userId });
+              } else {
+                navigation.navigate('ChatDetail', { userId, userName: match.name, isOnline: match.isOnline, lastActive: match.lastActive });
+              }
+            }}
             accessibilityLabel={`Message ${match.name}`}
           >
-            <MaterialCommunityIcons name="message-text" size={20} color={colors.primary} />
+            <MaterialCommunityIcons
+              name={match.isPhotoBlurred ? 'message-lock' : 'message-text'}
+              size={20}
+              color={match.isPhotoBlurred ? colors.textMuted : colors.primary}
+            />
           </TouchableOpacity>
         </View>
       </View>

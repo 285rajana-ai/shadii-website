@@ -29,10 +29,29 @@ export const SUBSCRIPTION_PLANS = [
   },
 ];
 
+export const PLAY_BILLING_PRODUCT_IDS = {
+  basic: 'pk.shadii.basic_1m',
+  standard: 'pk.shadii.standard_3m',
+  premium: 'pk.shadii.premium_6m',
+  boost: 'pk.shadii.boost_3d',
+  contact_unlock: 'pk.shadii.contact_unlock',
+};
+
 export const PAYMENT_METHODS = [
+  { id: 'google_play', name: 'Google Play', icon: 'google-play', color: '#34A853' },
   { id: 'easypaisa', name: 'EasyPaisa', icon: 'cellphone', color: '#4CAF50' },
   { id: 'bank_transfer', name: 'Bank Transfer', icon: 'bank-outline', color: '#9B59B6' },
 ];
+
+export const CONTACT_UNLOCK_PRICE = 299;
+
+export function getPlayProductIdForPlan(planId) {
+  return PLAY_BILLING_PRODUCT_IDS[planId] || null;
+}
+
+export function getPlanIdFromPlayProductId(productId) {
+  return Object.keys(PLAY_BILLING_PRODUCT_IDS).find((planId) => PLAY_BILLING_PRODUCT_IDS[planId] === productId) || null;
+}
 
 export const EDUCATION_LEVELS = [
   'Matric', 'Intermediate', 'Bachelors', 'Masters', 'PhD', 'Other',

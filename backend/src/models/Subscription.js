@@ -20,7 +20,7 @@ const subscriptionSchema = new mongoose.Schema(
     // Payment
     paymentMethod: {
       type: String,
-      enum: ['easypaisa', 'jazzcash', 'card', 'bank_transfer'],
+      enum: ['google_play', 'easypaisa', 'jazzcash', 'card', 'bank_transfer'],
     },
     paymentStatus: {
       type: String,

@@ -150,6 +150,18 @@ exports.sendMessage = async (req, res) => {
       });
     }
 
+    // Check connection approval (must be approved to chat)
+    const isApproved = req.user.photoViewApproved?.some(
+      (uid) => String(uid) === String(otherUserId)
+    );
+    if (!isApproved) {
+      return res.status(403).json({
+        success: false,
+        message: 'You can only message this user after they approve your connection request.',
+        code: 'CONNECTION_REQUIRED',
+      });
+    }
+
     const conversationId = getConversationId(userId, otherUserId);
 
     // Check if this is the first message in this conversation

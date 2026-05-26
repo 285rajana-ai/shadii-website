@@ -93,7 +93,7 @@ const FAQ_DATA = [
         faqs: [
             {
                 q: 'What payment methods are accepted?',
-                a: 'We support EasyPaisa, JazzCash, and bank transfer. Premium access is activated only after gateway confirmation or manual verification of your bank transfer receipt.',
+                a: 'Android purchases are processed securely through Google Play Billing. If we offer any manual transfer option outside Android, access is activated only after payment verification.',
             },
             {
                 q: 'What is Profile Boost?',

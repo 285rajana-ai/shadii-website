@@ -194,7 +194,7 @@ export default function BoostProfileScreen({ navigation }) {
                     {/* Info Note */}
                     <Text style={styles.infoNote}>
                         Boost resets every 3 days. You can re-boost after your current boost expires.
-                        Payment processed securely via EasyPaisa, JazzCash, or card.
+                        Payment on Android is processed securely via Google Play Billing.
                     </Text>
                 </Animated.View>
             </ScrollView>

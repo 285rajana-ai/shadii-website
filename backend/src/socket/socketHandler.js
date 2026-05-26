@@ -49,6 +49,18 @@ module.exports = (io) => {
           return socket.emit('message:error', { error: 'Invalid receiver or conversation ID' });
         }
 
+        // Check connection approval (must be approved to chat)
+        const user = await User.findById(socket.userId);
+        if (!user) {
+          return socket.emit('message:error', { error: 'User not found' });
+        }
+        const isApproved = user.photoViewApproved?.some(
+          (uid) => String(uid) === String(receiverId)
+        );
+        if (!isApproved) {
+          return socket.emit('message:error', { error: 'You must be connected with this user to chat.' });
+        }
+
         // Check violation
         const { isViolation, label } = scanMessage(content);
         if (isViolation) {
@@ -60,7 +72,6 @@ module.exports = (io) => {
         const existingCount = await Message.countDocuments({ conversationId });
         const isFreeMessage = existingCount === 0;
 
-        const user = await User.findById(socket.userId);
         if (!isFreeMessage && !user.hasActiveSubscription()) {
           socket.emit('subscription:required', { message: 'Subscribe to continue messaging' });
           return;

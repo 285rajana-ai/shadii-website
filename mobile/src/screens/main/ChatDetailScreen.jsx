@@ -30,6 +30,8 @@ export default function ChatDetailScreen({ route, navigation }) {
   const [typing, setTyping] = useState(false);
   const [otherUserOnline, setOtherUserOnline] = useState(isOnline ?? false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [connectionStatus, setConnectionStatus] = useState('accepted');
+  const [fetchingConnection, setFetchingConnection] = useState(true);
   const flatListRef = useRef(null);
 
   const myId = user?.id || user?._id;
@@ -49,6 +51,7 @@ export default function ChatDetailScreen({ route, navigation }) {
 
   useEffect(() => {
     fetchMessages();
+    checkConnection();
 
     // Mark seen on mount
     fetch(`${API_BASE_URL}/chat/${otherUserId}/seen`, {
@@ -56,6 +59,21 @@ export default function ChatDetailScreen({ route, navigation }) {
       headers: { Authorization: `Bearer ${token}` }
     });
   }, []);
+
+  const checkConnection = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/profile/${otherUserId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setConnectionStatus(data.profile.photoRequestStatus || null);
+      }
+    } catch (_) {
+    } finally {
+      setFetchingConnection(false);
+    }
+  };
 
   useEffect(() => {
     if (!socket) return;
@@ -247,6 +265,17 @@ export default function ChatDetailScreen({ route, navigation }) {
         </View>
       </View>
 
+      {connectionStatus !== 'accepted' && !fetchingConnection && (
+        <View style={styles.notConnectedBanner}>
+          <MaterialCommunityIcons name="information-outline" size={16} color={colors.accent} />
+          <Text style={styles.notConnectedText}>
+            {connectionStatus === 'pending'
+              ? 'Connection request is pending approval.'
+              : 'Request connection to start chatting.'}
+          </Text>
+        </View>
+      )}
+
       {/* KAV only wraps messages + input */}
       <KeyboardAvoidingView
         style={styles.flex}
@@ -273,29 +302,30 @@ export default function ChatDetailScreen({ route, navigation }) {
           <View style={[styles.inputArea, { paddingBottom: Math.max(insets.bottom, 4) + 4 }]}>
             <View style={styles.inputRow}>
               <TextInput
-                style={styles.input}
+                style={[styles.input, connectionStatus !== 'accepted' && styles.disabledInput]}
                 value={inputText}
                 onChangeText={handleTyping}
-                placeholder="Type a message..."
+                placeholder={connectionStatus === 'accepted' ? "Type a message..." : "Chat locked until approved"}
                 placeholderTextColor="rgba(255,255,255,0.3)"
                 multiline
                 maxLength={500}
+                editable={connectionStatus === 'accepted'}
               />
               <TouchableOpacity
                 onPress={handleSend}
                 style={styles.sendBtnWrap}
-                disabled={!inputText.trim()}
+                disabled={!inputText.trim() || connectionStatus !== 'accepted'}
                 activeOpacity={0.8}
               >
                 <LinearGradient
-                  colors={inputText.trim() ? [colors.rose, colors.maroon] : ['rgba(255,255,255,0.08)', 'rgba(255,255,255,0.04)']}
+                  colors={inputText.trim() && connectionStatus === 'accepted' ? [colors.rose, colors.maroon] : ['rgba(255,255,255,0.08)', 'rgba(255,255,255,0.04)']}
                   style={styles.sendBtn}
                   start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
                 >
                   <MaterialCommunityIcons
                     name="send"
                     size={18}
-                    color={inputText.trim() ? '#fff' : colors.textMuted}
+                    color={inputText.trim() && connectionStatus === 'accepted' ? '#fff' : colors.textMuted}
                   />
                 </LinearGradient>
               </TouchableOpacity>
@@ -379,6 +409,27 @@ const styles = StyleSheet.create({
   sendBtnWrap: { marginBottom: 2 },
   sendBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   safetyNote: { fontSize: 11, color: colors.textMuted, textAlign: 'center', marginTop: 8, letterSpacing: 0.2 },
+  notConnectedBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    backgroundColor: 'rgba(212,175,55,0.12)',
+    borderBottomWidth: 0.5,
+    borderBottomColor: 'rgba(212,175,55,0.25)',
+  },
+  notConnectedText: {
+    color: colors.accent,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  disabledInput: {
+    backgroundColor: 'rgba(255,255,255,0.02)',
+    borderColor: 'rgba(255,255,255,0.03)',
+    color: colors.textMuted,
+  },
 });
 
 function MessageSkeleton() {

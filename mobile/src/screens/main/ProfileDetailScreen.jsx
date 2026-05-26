@@ -2,7 +2,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Clipboard, Dimensions, Image, Modal, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Clipboard, Dimensions, Image, Modal, Platform, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
 import colors from '../../theme/colors';
@@ -12,6 +12,7 @@ const { width } = Dimensions.get('window');
 
 export default function ProfileDetailScreen({ route, navigation }) {
   const { userId } = route.params;
+  const isAndroidPlayBilling = Platform.OS === 'android';
   const { token, user } = useSelector((s) => s.auth);
   const insets = useSafeAreaInsets();
   const [profile, setProfile] = useState(null);
@@ -44,6 +45,9 @@ export default function ProfileDetailScreen({ route, navigation }) {
         if (data.profile.contactUnlocked) {
           setUnlockPending(false);
         }
+        if (data.profile.photoRequestStatus) {
+          setPhotoViewRequested(data.profile.photoRequestStatus === 'pending');
+        }
       }
     } catch (_) {
     } finally {
@@ -70,6 +74,21 @@ export default function ProfileDetailScreen({ route, navigation }) {
       ]);
       return;
     }
+
+    if (isAndroidPlayBilling) {
+      navigation.navigate('Payment', {
+        plan: {
+          id: 'contact_unlock',
+          name: 'Contact Unlock',
+          price: 299,
+          duration: 'One-time',
+          features: [`Unlock ${profile?.name || 'this profile'}\'s phone number`, 'Secure checkout via Google Play Billing'],
+        },
+        targetUserId: userId,
+      });
+      return;
+    }
+
     setUnlockLoading(true);
     try {
       const res = await fetch(`${API_BASE_URL}/profile/${userId}/contact-unlock-payment`, {
@@ -101,12 +120,20 @@ export default function ProfileDetailScreen({ route, navigation }) {
   };
 
   const handleMessage = () => {
+    if (profile.photoRequestStatus !== 'accepted') {
+      if (profile.photoRequestStatus === 'pending') {
+        Alert.alert('Connection Pending', 'Your connection request is still pending approval.');
+      } else {
+        handlePhotoViewRequest();
+      }
+      return;
+    }
     navigation.navigate('ChatDetail', { userId: profile._id, userName: profile.name, isOnline: profile.isOnline, lastActive: profile.lastActive });
   };
 
   const handlePhotoViewRequest = async () => {
     if (!user?.subscription?.isActive) {
-      Alert.alert('Subscription Required', 'You need an active subscription to request photo views.', [
+      Alert.alert('Subscription Required', 'You need an active subscription to request connection.', [
         { text: 'Cancel', style: 'cancel' },
         { text: 'View Plans', onPress: () => navigation.navigate('Plans') }
       ]);
@@ -121,9 +148,10 @@ export default function ProfileDetailScreen({ route, navigation }) {
       const data = await res.json();
       if (data.success) {
         setPhotoViewRequested(true);
-        Alert.alert('Request Sent', 'Your request to view photos has been sent. You will be notified when they accept.');
+        setProfile(prev => prev ? { ...prev, photoRequestStatus: 'pending' } : null);
+        Alert.alert('Request Sent ✓', 'Your connection request has been sent. You will be notified when they accept.');
       } else {
-        Alert.alert('Already Requested', data.message || 'You have already sent a photo view request.');
+        Alert.alert('Already Requested', data.message || 'You have already sent a connection request.');
       }
     } catch (_) {
       Alert.alert('Error', 'Could not send request. Please try again.');
@@ -198,11 +226,11 @@ export default function ProfileDetailScreen({ route, navigation }) {
             <View style={styles.blurOverlay}>
               <BlurView intensity={80} tint="dark" style={StyleSheet.absoluteFill} />
               <MaterialCommunityIcons name="eye-off" size={40} color="rgba(255,255,255,0.6)" />
-              <Text style={styles.blurText}>Photos are private</Text>
+              <Text style={styles.blurText}>Profile is private</Text>
               {photoViewRequested ? (
                 <View style={styles.requestedBadge}>
                   <MaterialCommunityIcons name="check-circle" size={16} color={colors.success} />
-                  <Text style={styles.requestedText}>Request Sent</Text>
+                  <Text style={styles.requestedText}>Request Pending</Text>
                 </View>
               ) : (
                 <TouchableOpacity
@@ -212,9 +240,9 @@ export default function ProfileDetailScreen({ route, navigation }) {
                   activeOpacity={0.8}
                 >
                   <LinearGradient colors={colors.gradients.primary} style={styles.requestViewBtnGrad}>
-                    <MaterialCommunityIcons name="eye" size={16} color="#fff" />
+                    <MaterialCommunityIcons name="link-variant" size={16} color="#fff" />
                     <Text style={styles.requestViewBtnText}>
-                      {requestingPhoto ? 'Sending...' : 'Request to View'}
+                      {requestingPhoto ? 'Sending...' : 'Connect to View & Chat'}
                     </Text>
                   </LinearGradient>
                 </TouchableOpacity>
@@ -249,9 +277,19 @@ export default function ProfileDetailScreen({ route, navigation }) {
           {/* Action Buttons */}
           <View style={styles.actionRow}>
             <TouchableOpacity style={styles.msgBtn} onPress={handleMessage}>
-              <LinearGradient colors={colors.gradients.primary} style={styles.btnGradient}>
-                <MaterialCommunityIcons name="message-text" size={18} color="#fff" style={{ marginRight: 6 }} />
-                <Text style={styles.msgBtnText}>Send Message</Text>
+              <LinearGradient
+                colors={profile.photoRequestStatus === 'accepted' ? colors.gradients.primary : ['rgba(255,255,255,0.08)', 'rgba(255,255,255,0.04)']}
+                style={styles.btnGradient}
+              >
+                <MaterialCommunityIcons
+                  name={profile.photoRequestStatus === 'accepted' ? 'message-text' : profile.photoRequestStatus === 'pending' ? 'clock-outline' : 'message-text-lock'}
+                  size={18}
+                  color={profile.photoRequestStatus === 'accepted' ? '#fff' : colors.textMuted}
+                  style={{ marginRight: 6 }}
+                />
+                <Text style={[styles.msgBtnText, profile.photoRequestStatus !== 'accepted' && { color: colors.textMuted }]}>
+                  {profile.photoRequestStatus === 'accepted' ? 'Send Message' : profile.photoRequestStatus === 'pending' ? 'Connection Pending' : 'Request Connection to Chat'}
+                </Text>
               </LinearGradient>
             </TouchableOpacity>
             <TouchableOpacity
@@ -293,7 +331,7 @@ export default function ProfileDetailScreen({ route, navigation }) {
             <TouchableOpacity
               style={[styles.contactShareBtn, { borderColor: 'rgba(212,175,55,0.4)' }]}
               onPress={handleUnlockContact}
-              disabled={unlockLoading || unlockPending}
+              disabled={unlockLoading || (!isAndroidPlayBilling && unlockPending)}
               activeOpacity={0.8}
             >
               {unlockLoading ? (
@@ -301,18 +339,20 @@ export default function ProfileDetailScreen({ route, navigation }) {
               ) : (
                 <>
                   <MaterialCommunityIcons
-                    name={unlockPending ? 'clock-outline' : 'lock-open-outline'}
+                    name={!isAndroidPlayBilling && unlockPending ? 'clock-outline' : 'lock-open-outline'}
                     size={18}
-                    color={unlockPending ? colors.textMuted : colors.accent}
+                    color={!isAndroidPlayBilling && unlockPending ? colors.textMuted : colors.accent}
                   />
                   <View style={{ flex: 1, marginLeft: 8 }}>
-                    <Text style={[styles.contactShareText, !unlockPending && { color: colors.accent }]}>
-                      {unlockPending ? 'Contact Unlock Pending Review' : 'Unlock Contact — PKR 299'}
+                    <Text style={[styles.contactShareText, (isAndroidPlayBilling || !unlockPending) && { color: colors.accent }]}>
+                      {!isAndroidPlayBilling && unlockPending ? 'Contact Unlock Pending Review' : 'Unlock Contact — PKR 299'}
                     </Text>
                     <Text style={styles.contactUnlockSub}>
-                      {unlockPending
+                      {!isAndroidPlayBilling && unlockPending
                         ? 'Your payment is being reviewed by admin'
-                        : `${profile.name} accepted your request! Pay PKR 299 to view contact`}
+                        : isAndroidPlayBilling
+                          ? `${profile.name} accepted your request! Pay securely with Google Play to view contact`
+                          : `${profile.name} accepted your request! Pay PKR 299 to view contact`}
                     </Text>
                   </View>
                 </>
@@ -343,58 +383,60 @@ export default function ProfileDetailScreen({ route, navigation }) {
           )}
 
           {/* Contact Unlock Payment Modal */}
-          <Modal
-            visible={showUnlockModal}
-            transparent
-            animationType="slide"
-            onRequestClose={handleUnlockModalClose}
-          >
-            <View style={styles.modalOverlay}>
-              <View style={styles.paymentModal}>
-                <LinearGradient colors={['#1A000A', '#100808']} style={StyleSheet.absoluteFill} />
-                <View style={styles.paymentModalHandle} />
-                <Text style={styles.paymentModalTitle}>Unlock Contact — PKR 299</Text>
-                <Text style={styles.paymentModalSub}>
-                  Transfer PKR 299 to the account below and include the reference number. Admin will verify and unlock contact within 24 hours.
-                </Text>
+          {!isAndroidPlayBilling && (
+            <Modal
+              visible={showUnlockModal}
+              transparent
+              animationType="slide"
+              onRequestClose={handleUnlockModalClose}
+            >
+              <View style={styles.modalOverlay}>
+                <View style={styles.paymentModal}>
+                  <LinearGradient colors={['#1A000A', '#100808']} style={StyleSheet.absoluteFill} />
+                  <View style={styles.paymentModalHandle} />
+                  <Text style={styles.paymentModalTitle}>Unlock Contact — PKR 299</Text>
+                  <Text style={styles.paymentModalSub}>
+                    Transfer PKR 299 to the account below and include the reference number. Admin will verify and unlock contact within 24 hours.
+                  </Text>
 
-                {unlockInstructions?.paymentInstructions && (
-                  <View style={styles.paymentDetails}>
-                    {[
-                      { label: 'Account Title', value: unlockInstructions.paymentInstructions.accountTitle },
-                      { label: 'Account Number', value: unlockInstructions.paymentInstructions.accountNumber },
-                      unlockInstructions.paymentInstructions.iban ? { label: 'IBAN', value: unlockInstructions.paymentInstructions.iban } : null,
-                      { label: 'Bank', value: unlockInstructions.paymentInstructions.bankName },
-                      { label: 'Reference (MUST include)', value: unlockInstructions.paymentInstructions.reference },
-                      { label: 'Amount', value: 'PKR 299' },
-                      { label: 'Support', value: unlockInstructions.paymentInstructions.supportEmail },
-                    ].filter(Boolean).map((row) => (
-                      <View key={row.label} style={styles.paymentRow}>
-                        <Text style={styles.paymentRowLabel}>{row.label}</Text>
-                        <TouchableOpacity
-                          onPress={() => { Clipboard.setString(row.value); Alert.alert('Copied!', `${row.label} copied.`); }}
-                          activeOpacity={0.7}
-                          style={styles.paymentRowValueBox}
-                        >
-                          <Text style={styles.paymentRowValue}>{row.value}</Text>
-                          <MaterialCommunityIcons name="content-copy" size={14} color={colors.accent} />
-                        </TouchableOpacity>
-                      </View>
-                    ))}
-                  </View>
-                )}
+                  {unlockInstructions?.paymentInstructions && (
+                    <View style={styles.paymentDetails}>
+                      {[
+                        { label: 'Account Title', value: unlockInstructions.paymentInstructions.accountTitle },
+                        { label: 'Account Number', value: unlockInstructions.paymentInstructions.accountNumber },
+                        unlockInstructions.paymentInstructions.iban ? { label: 'IBAN', value: unlockInstructions.paymentInstructions.iban } : null,
+                        { label: 'Bank', value: unlockInstructions.paymentInstructions.bankName },
+                        { label: 'Reference (MUST include)', value: unlockInstructions.paymentInstructions.reference },
+                        { label: 'Amount', value: 'PKR 299' },
+                        { label: 'Support', value: unlockInstructions.paymentInstructions.supportEmail },
+                      ].filter(Boolean).map((row) => (
+                        <View key={row.label} style={styles.paymentRow}>
+                          <Text style={styles.paymentRowLabel}>{row.label}</Text>
+                          <TouchableOpacity
+                            onPress={() => { Clipboard.setString(row.value); Alert.alert('Copied!', `${row.label} copied.`); }}
+                            activeOpacity={0.7}
+                            style={styles.paymentRowValueBox}
+                          >
+                            <Text style={styles.paymentRowValue}>{row.value}</Text>
+                            <MaterialCommunityIcons name="content-copy" size={14} color={colors.accent} />
+                          </TouchableOpacity>
+                        </View>
+                      ))}
+                    </View>
+                  )}
 
-                <TouchableOpacity
-                  style={styles.paymentDoneBtn}
-                  onPress={handleUnlockModalClose}
-                  activeOpacity={0.8}
-                >
-                  <LinearGradient colors={colors.gradients.primary} style={StyleSheet.absoluteFill} />
-                  <Text style={styles.paymentDoneBtnText}>I've Sent the Payment</Text>
-                </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.paymentDoneBtn}
+                    onPress={handleUnlockModalClose}
+                    activeOpacity={0.8}
+                  >
+                    <LinearGradient colors={colors.gradients.primary} style={StyleSheet.absoluteFill} />
+                    <Text style={styles.paymentDoneBtnText}>I've Sent the Payment</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
-          </Modal>
+            </Modal>
+          )}
         </View>
 
         {/* About */}

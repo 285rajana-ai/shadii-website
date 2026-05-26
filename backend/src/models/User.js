@@ -121,6 +121,9 @@ const userSchema = new mongoose.Schema(
     // Photo view requests (from other users requesting to see blurred photos)
     photoViewRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
 
+    // Photo view approvals (users who are approved to view my profile/chat)
+    photoViewApproved: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+
     // Contact share requests
     contactShareRequests: [{
       fromUser: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
@@ -177,15 +180,27 @@ userSchema.methods.hasActiveBoost = function () {
   return this.boost.isActive && this.boost.endDate && new Date() < new Date(this.boost.endDate);
 };
 
-// Get main profile photo (blurred for females if not subscribed)
-userSchema.methods.getProfilePhoto = function (viewerHasSubscription = false) {
+// Get main profile photo (blurred unless viewer is owner or approved)
+userSchema.methods.getProfilePhoto = function (viewerId = null) {
   const mainPhoto = this.photos.find((p) => p.isMain) || this.photos[0];
   if (!mainPhoto) return null;
 
-  if (this.gender === 'female' && this.isVerified && !viewerHasSubscription) {
-    return mainPhoto.blurredUrl || mainPhoto.url;
+  // If viewing own photo, always unblurred
+  if (viewerId && String(this._id) === String(viewerId)) {
+    return mainPhoto.url;
   }
-  return mainPhoto.url;
+
+  // Check if viewer is in photoViewApproved
+  const isApproved = viewerId && this.photoViewApproved?.some(
+    (uid) => String(uid) === String(viewerId)
+  );
+
+  if (isApproved) {
+    return mainPhoto.url;
+  }
+
+  // Default is blurred
+  return mainPhoto.blurredUrl || mainPhoto.url;
 };
 
 // Check if account is suspended

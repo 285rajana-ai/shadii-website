@@ -9,7 +9,7 @@
             "client_info": {
                 "mobilesdk_app_id": "REPLACE_WITH_YOUR_APP_ID",
                 "android_client_info": {
-                    "package_name": "pk.shadii.app"
+                    "package_name": "pk.shadii"
                 }
             },
             "oauth_client": [],

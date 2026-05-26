@@ -2,7 +2,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Animated, Dimensions, FlatList, Image, RefreshControl, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Animated, Dimensions, FlatList, Image, Modal, RefreshControl, ScrollView, StatusBar, Switch, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
 import colors from '../../theme/colors';
@@ -273,7 +273,7 @@ function ProfileCard({ item, navigation, index }) {
           <BlurView intensity={85} tint="dark" style={StyleSheet.absoluteFill}>
             <View style={styles.blurContent}>
               <MaterialCommunityIcons name="lock" size={22} color="rgba(255,255,255,0.9)" />
-              <Text style={styles.blurText}>Subscribe to view</Text>
+              <Text style={styles.blurText}>Connect to view</Text>
             </View>
           </BlurView>
         )}
