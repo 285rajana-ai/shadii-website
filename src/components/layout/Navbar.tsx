@@ -64,7 +64,7 @@ export function Navbar() {
                         <a href="#plans" className="inline-flex items-center justify-center min-h-[2.6rem] rounded-full px-5 text-xs font-bold border border-[var(--gold)] bg-white/70 text-[var(--berry)] hover:bg-[var(--gold)]/10 transition-all">
                             View Plans
                         </a>
-                        <a href="#download" className="inline-flex items-center justify-center min-h-[2.6rem] rounded-full px-5 text-xs font-bold bg-[var(--berry)] text-white hover:bg-[#681023] transition-all">
+                        <a href="#download" className="inline-flex items-center justify-center min-h-[2.6rem] rounded-full px-5 text-xs font-bold bg-[var(--berry)] !text-white hover:bg-[#681023] transition-all" style={{ color: '#ffffff' }}>
                             Download App
                         </a>
                     </div>
@@ -98,7 +98,7 @@ export function Navbar() {
                             <a href="#plans" onClick={() => setOpen(false)} className="inline-flex items-center justify-center min-h-[2.8rem] rounded-full px-5 text-sm font-bold border border-[var(--gold)] bg-transparent text-[var(--berry)] hover:bg-[var(--gold)]/10 transition-all text-center justify-center">
                                 View Plans
                             </a>
-                            <a href="#download" onClick={() => setOpen(false)} className="inline-flex items-center justify-center min-h-[2.8rem] rounded-full px-5 text-sm font-bold bg-[var(--berry)] text-white hover:bg-[#681023] transition-all text-center justify-center">
+                            <a href="#download" onClick={() => setOpen(false)} className="inline-flex items-center justify-center min-h-[2.8rem] rounded-full px-5 text-sm font-bold bg-[var(--berry)] !text-white hover:bg-[#681023] transition-all text-center justify-center" style={{ color: '#ffffff' }}>
                                 Download App
                             </a>
                         </div>

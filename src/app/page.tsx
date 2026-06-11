@@ -318,9 +318,10 @@ function MatchSimulator() {
                                         onClick={() => setGender(g as "female" | "male")}
                                         className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all border ${
                                             gender === g 
-                                                ? "bg-[var(--berry)] border-[var(--berry)] text-white" 
+                                                ? "bg-[var(--berry)] border-[var(--berry)] !text-white" 
                                                 : "bg-white border-[var(--gold)]/35 text-[var(--text)] hover:bg-stone-50"
                                         }`}
+                                        style={gender === g ? { color: '#ffffff' } : undefined}
                                     >
                                         {g === "female" ? "Bride (Larki)" : "Groom (Larka)"}
                                     </button>
@@ -371,9 +372,10 @@ function MatchSimulator() {
                                         onClick={() => setSect(s)}
                                         className={`px-3 py-1.5 rounded-full text-[11px] font-bold transition-all border ${
                                             sect === s
-                                                ? "bg-[var(--berry)] border-[var(--berry)] text-white"
+                                                ? "bg-[var(--berry)] border-[var(--berry)] !text-white"
                                                 : "bg-white border-[var(--gold)]/35 text-[var(--text)] hover:bg-stone-50"
                                         }`}
+                                        style={sect === s ? { color: '#ffffff' } : undefined}
                                     >
                                         {s}
                                     </button>
@@ -387,7 +389,7 @@ function MatchSimulator() {
                             <div className="text-[10px] uppercase tracking-wider text-[var(--muted)] font-bold">Estimated Pool</div>
                             <div className="text-xl font-bold text-[var(--text)] mt-0.5">{matchesCount}+ Active Profiles</div>
                         </div>
-                        <a href="#download" className="inline-flex items-center justify-center min-h-[2.8rem] rounded-full px-5 text-xs font-bold bg-[var(--berry)] text-white hover:bg-[#681023] transition-all">
+                        <a href="#download" className="inline-flex items-center justify-center min-h-[2.8rem] rounded-full px-5 text-xs font-bold bg-[var(--berry)] !text-white hover:bg-[#681023] transition-all" style={{ color: '#ffffff' }}>
                             Find Yours Now
                         </a>
                     </div>
@@ -468,9 +470,9 @@ export default function Home() {
                             </p>
 
                             <div className="hero-actions mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                                <a href="#download" className="inline-flex items-center justify-center gap-3 min-h-[3.35rem] rounded-full px-7 text-base font-bold bg-[var(--berry)] text-white hover:bg-[#681023] transition-all">
+                                <a href="#download" className="inline-flex items-center justify-center gap-3 min-h-[3.35rem] rounded-full px-7 text-base font-bold bg-[var(--berry)] !text-white hover:bg-[#681023] transition-all" style={{ color: '#ffffff' }}>
                                     Download App
-                                    <ArrowRightIcon className="h-5 w-5" />
+                                    <ArrowRightIcon className="h-5 w-5 text-white" />
                                 </a>
                                 <a href="#about" className="inline-flex items-center justify-center gap-3 min-h-[3.35rem] rounded-full px-7 text-base font-bold border border-[var(--gold)] bg-white/70 text-[var(--berry)] hover:bg-white transition-all">
                                     Explore Features
@@ -720,9 +722,9 @@ export default function Home() {
 
                                 <a href="#download" className={`mt-8 inline-flex items-center justify-center min-h-[3rem] rounded-full px-5 text-sm font-bold transition-all ${
                                     plan.featured 
-                                        ? "bg-[var(--berry)] text-white hover:bg-[#681023]" 
+                                        ? "bg-[var(--berry)] !text-white hover:bg-[#681023]" 
                                         : "border border-[var(--gold)] bg-transparent text-[var(--berry)] hover:bg-stone-50"
-                                }`}>
+                                }`} style={plan.featured ? { color: '#ffffff' } : undefined}>
                                     Choose {plan.name}
                                 </a>
                             </article>
