@@ -56,10 +56,12 @@ export function Footer() {
                             Built for serious Pakistani matchmaking with privacy-first profiles, clean design,
                             and a calmer path from first introduction to family conversation.
                         </p>
-                        <div className="mt-6 flex flex-wrap gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">
-                            <span className="rounded-full border border-[var(--line-strong)] bg-white/50 px-3 py-2">CNIC Verified</span>
-                            <span className="rounded-full border border-[var(--line-strong)] bg-white/50 px-3 py-2">Private Messaging</span>
-                            <span className="rounded-full border border-[var(--line-strong)] bg-white/50 px-3 py-2">Family Friendly</span>
+                        <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--berry)]">
+                            <span>CNIC Verified</span>
+                            <span className="text-[var(--gold)] select-none">•</span>
+                            <span>Private Messaging</span>
+                            <span className="text-[var(--gold)] select-none">•</span>
+                            <span>Family Friendly</span>
                         </div>
                     </div>
 

@@ -204,27 +204,25 @@ function SectionLead({
     title,
     accent,
     copy,
-    lightTheme = true,
 }: {
     eyebrow: string;
     title: string;
     accent?: string;
     copy: string;
-    lightTheme?: boolean;
 }) {
     return (
         <div className="section-heading reveal-on-scroll">
-            <div className={`eyebrow ${!lightTheme ? "border-[var(--gold)]/40 bg-white/5 text-[var(--gold)]" : ""}`}>{eyebrow}</div>
-            <h2 className={`section-title ${!lightTheme ? "text-white" : "text-[var(--text)]"}`}>
+            <div className="eyebrow">{eyebrow}</div>
+            <h2 className="section-title text-[var(--text)]">
                 {title}
                 {accent ? (
                     <>
                         {" "}
-                        <span className="display-accent text-[var(--gold)] italic">{accent}</span>
+                        <span className="display-accent text-[var(--berry)] italic">{accent}</span>
                     </>
                 ) : null}
             </h2>
-            <p className={`section-copy mt-4 ${lightTheme ? "text-[var(--muted)]" : "text-stone-300"}`}>{copy}</p>
+            <p className="section-copy mt-4 text-[var(--muted)]">{copy}</p>
         </div>
     );
 }
@@ -232,8 +230,8 @@ function SectionLead({
 function StoreBadge({ label, store }: { label: string; store: string }) {
     const isApple = store === "App Store";
     return (
-        <a href="#" className="inline-flex items-center gap-4 min-w-[13rem] px-5 py-3 rounded-2xl border border-[var(--gold)]/35 bg-white/5 hover:bg-white/10 hover:border-[var(--gold)] text-white transition-all hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(194,155,80,0.15)] shadow-md">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[linear-gradient(135deg,#7a1c31,#c09950)] text-white shadow-sm shrink-0">
+        <a href="#" className="inline-flex items-center gap-4 min-w-[13rem] px-5 py-3.5 rounded-2xl border border-[var(--gold)] bg-white hover:bg-stone-50 hover:border-[var(--berry)] transition-all hover:-translate-y-0.5 hover:shadow-[0_10px_20px_rgba(194,155,87,0.08)] shadow-sm">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[linear-gradient(135deg,#801830,#c09950)] text-white shadow-sm shrink-0">
                 {isApple ? (
                     <svg className="h-5 w-5 fill-current" viewBox="0 0 24 24">
                         <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 4.17c.66-.81 1.11-1.93.99-3.06-1 .04-2.21.67-2.93 1.49-.62.69-1.16 1.84-1.01 2.96 1.12.09 2.27-.58 2.95-1.39z"/>
@@ -245,8 +243,8 @@ function StoreBadge({ label, store }: { label: string; store: string }) {
                 )}
             </div>
             <span className="text-left">
-                <small className="block text-[10px] font-bold uppercase tracking-wider text-stone-300">Download on the</small>
-                <strong className="block text-sm font-bold text-white mt-0.5">{store}</strong>
+                <small className="block text-[10px] font-bold uppercase tracking-wider text-[var(--muted)]">Download on the</small>
+                <strong className="block text-sm font-bold text-[var(--text)] mt-0.5">{store}</strong>
             </span>
         </a>
     );
@@ -296,15 +294,15 @@ function MatchSimulator() {
     const matchesCount = (age * 18) + (city.charCodeAt(0) * 12) + (sect === "Sunni" ? 140 : 85);
 
     return (
-        <div className="luxury-card luxury-card--dark relative z-10 max-w-5xl mx-auto my-12 p-8 overflow-hidden rounded-[2.2rem] border border-[var(--gold)]/35 text-white">
-            <div className="absolute top-0 right-0 h-40 w-40 bg-gradient-to-bl from-[var(--gold)]/10 to-transparent pointer-events-none" />
+        <div className="luxury-card--light relative z-10 max-w-5xl mx-auto my-12 p-8 overflow-hidden rounded-[2.2rem] border border-[var(--gold)]/35 text-[var(--text)]">
+            <div className="absolute top-0 right-0 h-40 w-40 bg-gradient-to-bl from-[var(--gold)]/5 to-transparent pointer-events-none" />
             <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
                 {/* Simulator Inputs */}
                 <div className="flex flex-col justify-between space-y-6">
                     <div>
-                        <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--gold)]">Interactive Experience</span>
-                        <h3 className="mt-2 font-display text-3xl font-bold text-white">Rishta Match Simulator</h3>
-                        <p className="mt-3 text-xs text-stone-300 leading-relaxed">
+                        <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--berry)]">Interactive Experience</span>
+                        <h3 className="mt-2 font-display text-3xl font-bold text-[var(--text)]">Rishta Match Simulator</h3>
+                        <p className="mt-3 text-xs text-[var(--muted)] leading-relaxed">
                             Simulate how our platform connects serious members. Adjust filters below to view mock verified matches.
                         </p>
                     </div>
@@ -312,7 +310,7 @@ function MatchSimulator() {
                     <div className="space-y-4">
                         {/* Gender selection */}
                         <div className="flex gap-4 items-center">
-                            <span className="text-xs font-bold text-stone-300 min-w-[80px]">Looking For:</span>
+                            <span className="text-xs font-bold text-[var(--muted)] min-w-[80px]">Looking For:</span>
                             <div className="flex gap-2">
                                 {["female", "male"].map((g) => (
                                     <button
@@ -320,8 +318,8 @@ function MatchSimulator() {
                                         onClick={() => setGender(g as "female" | "male")}
                                         className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all border ${
                                             gender === g 
-                                                ? "bg-[var(--gold)] border-[var(--gold)] text-[#1a0307]" 
-                                                : "bg-white/5 border-white/10 text-stone-300 hover:bg-white/10"
+                                                ? "bg-[var(--berry)] border-[var(--berry)] text-white" 
+                                                : "bg-white border-[var(--gold)]/35 text-[var(--text)] hover:bg-stone-50"
                                         }`}
                                     >
                                         {g === "female" ? "Bride (Larki)" : "Groom (Larka)"}
@@ -332,9 +330,9 @@ function MatchSimulator() {
 
                         {/* Age range slider */}
                         <div className="flex flex-col gap-2">
-                            <div className="flex justify-between text-xs font-bold text-stone-300">
+                            <div className="flex justify-between text-xs font-bold text-[var(--muted)]">
                                 <span>Preferred Age:</span>
-                                <span className="text-[var(--gold)]">{age} years</span>
+                                <span className="text-[var(--berry)]">{age} years</span>
                             </div>
                             <input
                                 type="range"
@@ -348,7 +346,7 @@ function MatchSimulator() {
 
                         {/* City select */}
                         <div className="flex flex-col gap-2">
-                            <label className="text-xs font-bold text-stone-300">City / Location:</label>
+                            <label className="text-xs font-bold text-[var(--muted)]">City / Location:</label>
                             <select
                                 value={city}
                                 onChange={(e) => setCity(e.target.value)}
@@ -365,7 +363,7 @@ function MatchSimulator() {
 
                         {/* Sect selection */}
                         <div className="flex gap-4 items-center">
-                            <span className="text-xs font-bold text-stone-300 min-w-[80px]">Sect Value:</span>
+                            <span className="text-xs font-bold text-[var(--muted)] min-w-[80px]">Sect:</span>
                             <div className="flex gap-2">
                                 {["Sunni", "Shia", "Any"].map((s) => (
                                     <button
@@ -373,8 +371,8 @@ function MatchSimulator() {
                                         onClick={() => setSect(s)}
                                         className={`px-3 py-1.5 rounded-full text-[11px] font-bold transition-all border ${
                                             sect === s
-                                                ? "bg-[var(--gold)] border-[var(--gold)] text-[#1a0307]"
-                                                : "bg-white/5 border-white/10 text-stone-300 hover:bg-white/10"
+                                                ? "bg-[var(--berry)] border-[var(--berry)] text-white"
+                                                : "bg-white border-[var(--gold)]/35 text-[var(--text)] hover:bg-stone-50"
                                         }`}
                                     >
                                         {s}
@@ -384,12 +382,12 @@ function MatchSimulator() {
                         </div>
                     </div>
 
-                    <div className="pt-4 border-t border-white/10 flex items-center justify-between">
+                    <div className="pt-4 border-t border-stone-100 flex items-center justify-between">
                         <div>
-                            <div className="text-[10px] uppercase tracking-wider text-stone-400 font-bold">Estimated Pool</div>
-                            <div className="text-xl font-bold text-white mt-0.5">{matchesCount}+ Active Profiles</div>
+                            <div className="text-[10px] uppercase tracking-wider text-[var(--muted)] font-bold">Estimated Pool</div>
+                            <div className="text-xl font-bold text-[var(--text)] mt-0.5">{matchesCount}+ Active Profiles</div>
                         </div>
-                        <a href="#download" className="inline-flex items-center justify-center min-h-[2.8rem] rounded-full px-5 text-xs font-bold bg-gradient-to-r from-[var(--gold)] to-[var(--gold-soft)] text-[#1a0307] hover:shadow-[0_0_20px_rgba(194,155,80,0.4)] transition-all">
+                        <a href="#download" className="inline-flex items-center justify-center min-h-[2.8rem] rounded-full px-5 text-xs font-bold bg-[var(--berry)] text-white hover:bg-[#681023] transition-all">
                             Find Yours Now
                         </a>
                     </div>
@@ -397,33 +395,33 @@ function MatchSimulator() {
 
                 {/* Simulator Outputs Display */}
                 <div className="space-y-4">
-                    <div className="text-xs font-bold uppercase tracking-widest text-stone-400 mb-2">
+                    <div className="text-xs font-bold uppercase tracking-widest text-[var(--muted)] mb-2">
                         Compatible Verified Matches:
                     </div>
                     <div className="space-y-3">
                         {getProfiles().map((profile) => (
                             <div
                                 key={profile.name}
-                                className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-sm hover:border-[var(--gold)]/40 transition-all duration-300 relative overflow-hidden"
+                                className="rounded-2xl border border-stone-100 bg-white p-4 shadow-sm hover:border-[var(--berry)]/30 transition-all duration-300 relative overflow-hidden"
                             >
-                                <div className="absolute top-0 right-0 bg-[var(--gold)]/10 text-[var(--gold)] text-[9px] font-bold px-2.5 py-1 rounded-bl-xl border-l border-b border-white/10">
+                                <div className="absolute top-0 right-0 bg-[var(--berry)]/5 text-[var(--berry)] text-[9px] font-bold px-2.5 py-1 rounded-bl-xl border-l border-b border-stone-100">
                                     {profile.compatibility}% Match
                                 </div>
                                 <div className="flex items-center gap-3">
                                     {/* Blurred avatar */}
-                                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[linear-gradient(135deg,rgba(194,155,80,0.2),rgba(255,255,255,0.05))] border border-white/10 text-xs font-bold text-[var(--gold)] relative overflow-hidden">
-                                        <div className="absolute inset-0 bg-stone-700/60 blur-[3px]" />
+                                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[linear-gradient(135deg,rgba(194,155,80,0.1),rgba(128,24,48,0.05))] border border-stone-100 text-xs font-bold text-[var(--berry)] relative overflow-hidden">
+                                        <div className="absolute inset-0 bg-stone-100 blur-[3px]" />
                                         <span className="relative z-10">{profile.name[0]}</span>
                                     </div>
                                     <div>
-                                        <div className="flex items-center gap-1.5 text-sm font-bold text-white">
+                                        <div className="flex items-center gap-1.5 text-sm font-bold text-[var(--text)]">
                                             {profile.name}, {profile.age}
-                                            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[var(--gold)]/20 text-[var(--gold)]">✓</span>
+                                            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[var(--berry)]/10 text-[var(--berry)] text-[10px] font-bold">✓</span>
                                         </div>
-                                        <div className="text-[10px] text-stone-300 font-medium">{city} · {profile.role} · {profile.education}</div>
+                                        <div className="text-[10px] text-[var(--muted)] font-medium">{city} · {profile.role} · {profile.education}</div>
                                     </div>
                                 </div>
-                                <div className="mt-3 rounded-xl bg-white/5 border border-white/5 px-3 py-2 text-[10px] leading-relaxed text-stone-300 font-medium">
+                                <div className="mt-3 rounded-xl bg-[var(--canvas)] border border-stone-100 px-3 py-2 text-[10px] leading-relaxed text-[var(--muted)] font-medium">
                                     🔒 Photo blurred for privacy · CNIC and live selfie checked.
                                 </div>
                             </div>
@@ -440,77 +438,67 @@ export default function Home() {
         <main className="page-shell overflow-x-hidden">
             <Navbar />
 
-            {/* Video Background Layer inside dark hero block */}
-            <div className="relative z-10 dark-luxury-bg pt-36 pb-20 sm:pt-40 lg:pt-44 lg:pb-32 overflow-hidden border-b border-[var(--gold)]/25">
+            {/* Video Background Layer inside light hero block */}
+            <div className="relative z-10 bg-gradient-to-b from-[var(--canvas)] via-[var(--canvas)] to-[var(--canvas-deep)] pt-36 pb-20 sm:pt-40 lg:pt-44 lg:pb-32 overflow-hidden border-b border-[var(--gold)]/20">
                 <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
                     <video
                         autoPlay
                         loop
                         muted
                         playsInline
-                        className="h-full w-full object-cover opacity-[0.09] mix-blend-screen"
-                        style={{ filter: "sepia(20%) saturate(120%) brightness(80%)" }}
+                        className="h-full w-full object-cover opacity-[0.04] mix-blend-multiply"
+                        style={{ filter: "sepia(20%) saturate(120%) brightness(100%)" }}
                     >
                         <source src="https://videos.pexels.com/video-files/7525287/7525287-uhd_2560_1440_24fps.mp4" type="video/mp4" />
                     </video>
-                    <div className="absolute inset-0 bg-gradient-to-b from-[#1a0307]/50 via-transparent to-[#1a0307]" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-[var(--canvas)]/20 via-transparent to-[var(--canvas-deep)]" />
                 </div>
 
                 <div className="site-shell relative z-10">
                     <div className="grid items-center gap-12 xl:grid-cols-[1.15fr_0.85fr] xl:gap-16">
                         <div>
-                            <div className="eyebrow border-[var(--gold)]/40 bg-white/5 text-[var(--gold)] shadow-sm">
+                            <div className="eyebrow shadow-xs bg-white/50 border-[var(--gold)]/35 text-[var(--berry)]">
                                 Pakistan&apos;s Premium Matrimonial Platform
                             </div>
-                            <h1 className="hero-title mt-6 max-w-4xl font-display text-[clamp(3.3rem,9vw,5.5rem)] font-bold leading-[1.0] tracking-[-0.04em] text-white">
-                                Find your <span className="text-[var(--gold)] italic">life partner</span> with dignity & discretion.
+                            <h1 className="hero-title mt-6 max-w-4xl font-display text-[clamp(3.3rem,9vw,5.5rem)] font-bold leading-[1.0] tracking-[-0.04em] text-[var(--text)]">
+                                Find your <span className="text-[var(--berry)] italic">life partner</span> with dignity & discretion.
                             </h1>
-                            <p className="hero-copy mt-6 max-w-2xl text-base leading-8 text-stone-200 sm:text-lg font-medium">
+                            <p className="hero-copy mt-6 max-w-2xl text-base leading-8 text-[var(--muted)] sm:text-lg font-medium">
                                 Shadii.pk is built for serious individuals and families seeking meaningful matrimonial introductions. Experience a calmer matchmaking process with verified profiles, complete photo privacy, and zero social swiping clutter.
                             </p>
 
                             <div className="hero-actions mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                                <a href="#download" className="inline-flex items-center justify-center gap-3 min-h-[3.35rem] rounded-full px-7 text-base font-bold bg-gradient-to-r from-[var(--gold)] to-[var(--gold-soft)] text-[#1a0307] hover:shadow-[0_0_25px_rgba(194,155,80,0.5)] transition-all">
+                                <a href="#download" className="inline-flex items-center justify-center gap-3 min-h-[3.35rem] rounded-full px-7 text-base font-bold bg-[var(--berry)] text-white hover:bg-[#681023] transition-all">
                                     Download App
                                     <ArrowRightIcon className="h-5 w-5" />
                                 </a>
-                                <a href="#about" className="inline-flex items-center justify-center gap-3 min-h-[3.35rem] rounded-full px-7 text-base font-bold border border-white/20 bg-transparent text-white hover:bg-white/5 transition-all">
+                                <a href="#about" className="inline-flex items-center justify-center gap-3 min-h-[3.35rem] rounded-full px-7 text-base font-bold border border-[var(--gold)] bg-white/70 text-[var(--berry)] hover:bg-white transition-all">
                                     Explore Features
                                 </a>
                             </div>
 
-                            <div className="hero-trust mt-8 flex flex-wrap gap-3 text-sm text-stone-200 font-medium">
+                            <div className="hero-trust mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm text-[var(--muted)] font-semibold">
                                 {[
                                     "CNIC + Selfie Verification",
                                     "Private Photos & Safe Chat",
                                     "Family-Backed Introductions",
-                                ].map((item) => (
-                                    <div key={item} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 shadow-sm">
-                                        <CheckCircleIcon className="h-4 w-4 text-[var(--gold)]" />
-                                        {item}
+                                ].map((item, idx) => (
+                                    <div key={item} className="inline-flex items-center gap-2">
+                                        <CheckCircleIcon className="h-5 w-5 text-[var(--berry)]" />
+                                        <span>{item}</span>
+                                        {idx < 2 && <span className="hidden sm:inline text-[var(--gold)] ml-4">•</span>}
                                     </div>
                                 ))}
                             </div>
                         </div>
 
-                        {/* Interactive Layered phone frame showcase */}
+                        {/* Interactive phone frame showcase without overlapping badge clutter */}
                         <div className="hero-showcase flex items-center justify-center py-6 select-none relative">
-                            {/* Spinning gold background decoration */}
+                            {/* Rotating gold background decoration */}
                             <div className="absolute h-96 w-96 rounded-full border border-[var(--gold)]/10 animate-[spin_45s_linear_infinite]" />
                             <div className="absolute h-80 w-80 rounded-full border border-dashed border-[var(--gold)]/20 animate-[spin_20s_linear_infinite]" />
-                            
-                            {/* Floating UI badges */}
-                            <div className="floating-ui-tag top-8 left-[-20px]">
-                                <span className="text-[var(--gold)]">💬</span> Assalam-o-Alaikum
-                            </div>
-                            <div className="floating-ui-tag top-1/2 right-[-30px] animation-delay-1500">
-                                <span className="text-emerald-500">✓</span> CNIC Verified
-                            </div>
-                            <div className="floating-ui-tag bottom-6 left-[-10px] animation-delay-3000">
-                                <span className="text-[var(--gold)]">💖</span> 94% Compatibility
-                            </div>
 
-                            <div className="phone-frame relative z-10 border-[10px] border-[#251d1d] shadow-[0_30px_70px_rgba(0,0,0,0.6)]">
+                            <div className="phone-frame relative z-10 border-[10px] border-[#2e2424] shadow-[0_20px_50px_rgba(194,155,87,0.1)]">
                                 <div className="phone-notch" />
                                 <div className="phone-content text-left">
                                     {/* App Mockup Header */}
@@ -572,18 +560,18 @@ export default function Home() {
 
                     <div className="hero-metrics mt-12 grid gap-4 md:grid-cols-2 xl:grid-cols-4 relative z-10">
                         {heroStats.map((item) => (
-                            <div key={item.label} className="metric-tile bg-white/5 border-white/10 hover:border-[var(--gold)]/40 hover:bg-white/10">
-                                <div className="font-display text-4xl font-bold tracking-[-0.04em] text-[var(--gold)]">
+                            <div key={item.label} className="metric-tile bg-white border-[var(--gold)]/20 hover:border-[var(--gold)]/50">
+                                <div className="font-display text-4xl font-bold tracking-[-0.04em] text-[var(--berry)]">
                                     {item.value}
                                 </div>
-                                <div className="mt-2 text-sm text-stone-300 font-medium">{item.label}</div>
+                                <div className="mt-2 text-sm text-[var(--muted)] font-medium">{item.label}</div>
                             </div>
                         ))}
                     </div>
                 </div>
             </div>
 
-            {/* Why Us Section (Light Theme with staggered layout) */}
+            {/* Why Us Section (Light Theme staggered layout) */}
             <section id="about" className="section bg-[var(--canvas)] relative z-10">
                 <div className="site-shell">
                     <SectionLead
@@ -593,11 +581,9 @@ export default function Home() {
                         copy="Every section now follows a cleaner layout rhythm, with stronger hierarchy, balanced grids, and components that stay in place instead of fighting each other."
                     />
 
-                    {/* Staggered asymmetric layout grid */}
                     <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3 pt-6">
                         {pillars.map((item, idx) => {
                             const Icon = item.icon;
-                            // Add custom offset heights for staggered asymmetry
                             const staggerClass = idx === 1 || idx === 4 
                                 ? "xl:translate-y-6" 
                                 : idx === 2 || idx === 5 
@@ -607,13 +593,13 @@ export default function Home() {
                             return (
                                 <article 
                                     key={item.title} 
-                                    className={`luxury-card corner-ornament-card bg-white/80 border-[var(--gold)]/20 hover:border-[var(--gold)]/50 transition-all duration-300 reveal-on-scroll ${staggerClass}`}
+                                    className={`luxury-card corner-ornament-card bg-white border-[var(--gold)]/20 hover:border-[var(--gold)]/50 transition-all duration-300 reveal-on-scroll ${staggerClass}`}
                                 >
                                     <div className="flex items-start justify-between gap-4">
-                                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[linear-gradient(145deg,rgba(194,155,87,0.15),rgba(139,38,62,0.08))] text-[var(--berry)] border border-[var(--line-strong)]">
+                                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[linear-gradient(145deg,rgba(194,155,87,0.1),rgba(139,38,62,0.05))] text-[var(--berry)] border border-[var(--line-strong)]">
                                             <Icon className="h-6 w-6" />
                                         </div>
-                                        <div className="rounded-full border border-[var(--line-strong)] bg-white px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--berry)]">
+                                        <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--berry)] mt-1.5">
                                             {item.note}
                                         </div>
                                     </div>
@@ -628,8 +614,8 @@ export default function Home() {
                 </div>
             </section>
 
-            {/* Interactive Match Simulator Divider & Section */}
-            <section className="section bg-[var(--canvas-deep)] relative z-10 py-16">
+            {/* Interactive Match Simulator Section */}
+            <section className="section bg-[var(--canvas-deep)] relative z-10 py-16 border-y border-[var(--gold)]/20">
                 <div className="site-shell">
                     <MatchSimulator />
                 </div>
@@ -684,15 +670,14 @@ export default function Home() {
                 </div>
             </section>
 
-            {/* Plans (Dark Theme Ticket pricing) */}
-            <section id="plans" className="section relative z-10 dark-luxury-bg border-y border-[var(--gold)]/25">
+            {/* Plans (Light Theme luxury ticket pricing) */}
+            <section id="plans" className="section relative z-10 bg-[var(--canvas-deep)] border-y border-[var(--gold)]/20">
                 <div className="site-shell">
                     <SectionLead
                         eyebrow="Straight pricing"
                         title="Clean plans for a"
                         accent="serious search"
                         copy="No clutter, no awkward pricing mess. The plan section now reads clearly and keeps the premium option visibly highlighted without breaking the layout."
-                        lightTheme={false}
                     />
 
                     <div className="grid gap-8 xl:grid-cols-3 mt-12">
@@ -700,34 +685,34 @@ export default function Home() {
                             <article
                                 key={plan.name}
                                 className={[
-                                    "luxury-card luxury-card--dark flex h-full flex-col relative",
-                                    plan.featured ? "border-[var(--gold)] shadow-[0_0_30px_rgba(194,155,80,0.25)] translate-y-[-4px]" : "border-white/10",
+                                    "luxury-card bg-white flex h-full flex-col relative",
+                                    plan.featured ? "border-2 border-[var(--berry)] shadow-[0_15px_40px_rgba(128,24,48,0.08)] translate-y-[-4px]" : "border-[var(--gold)]/35",
                                 ].join(" ")}
                             >
                                 {plan.featured ? (
-                                    <div className="absolute top-5 right-5 rounded-full bg-[var(--gold)] px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.24em] text-[#1a0307] shadow-md">
+                                    <div className="absolute top-5 right-5 rounded-md bg-[var(--berry)] px-3 py-1 text-[9px] font-bold uppercase tracking-[0.2em] text-white shadow-sm">
                                         Most popular
                                     </div>
                                 ) : null}
 
-                                <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--gold)]">
+                                <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--berry)]">
                                     {plan.name}
                                 </div>
-                                <div className="mt-4 flex items-end gap-2 text-white">
-                                    <span className="mb-2 text-sm font-semibold text-stone-300">PKR</span>
+                                <div className="mt-4 flex items-end gap-2 text-[var(--text)]">
+                                    <span className="mb-2 text-sm font-semibold text-[var(--muted)]">PKR</span>
                                     <span className="font-display text-[3.4rem] font-bold tracking-[-0.05em]">
                                         {plan.price}
                                     </span>
                                 </div>
-                                <div className="mt-2 text-xs text-stone-300 font-medium">for {plan.duration}</div>
-                                <p className="mt-5 text-xs leading-6 text-stone-200 font-medium">{plan.description}</p>
+                                <div className="mt-2 text-xs text-[var(--muted)] font-medium">for {plan.duration}</div>
+                                <p className="mt-5 text-xs leading-6 text-[var(--muted)] font-medium">{plan.description}</p>
 
-                                <div className="my-6 h-px bg-white/10" />
+                                <div className="my-6 h-px bg-stone-100" />
 
                                 <div className="flex-1 space-y-3">
                                     {plan.items.map((item) => (
-                                        <div key={item} className="flex items-start gap-3 text-xs text-stone-200">
-                                            <CheckCircleIcon className="mt-0.5 h-4.5 w-4.5 shrink-0 text-[var(--gold)]" />
+                                        <div key={item} className="flex items-start gap-3 text-xs text-[var(--muted)]">
+                                            <CheckCircleIcon className="mt-0.5 h-4.5 w-4.5 shrink-0 text-[var(--berry)]" />
                                             <span className="font-medium">{item}</span>
                                         </div>
                                     ))}
@@ -735,8 +720,8 @@ export default function Home() {
 
                                 <a href="#download" className={`mt-8 inline-flex items-center justify-center min-h-[3rem] rounded-full px-5 text-sm font-bold transition-all ${
                                     plan.featured 
-                                        ? "bg-gradient-to-r from-[var(--gold)] to-[var(--gold-soft)] text-[#1a0307]" 
-                                        : "border border-white/20 bg-transparent text-white hover:bg-white/5"
+                                        ? "bg-[var(--berry)] text-white hover:bg-[#681023]" 
+                                        : "border border-[var(--gold)] bg-transparent text-[var(--berry)] hover:bg-stone-50"
                                 }`}>
                                     Choose {plan.name}
                                 </a>
@@ -758,7 +743,7 @@ export default function Home() {
                     />
 
                     <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr_0.8fr]">
-                        <article className="luxury-card bg-white/90 border-[var(--gold)]/25 shadow-lg reveal-on-scroll flex flex-col justify-between p-8">
+                        <article className="luxury-card bg-white border-[var(--gold)]/35 shadow-lg reveal-on-scroll flex flex-col justify-between p-8">
                             <div>
                                 <div className="mb-5 flex gap-1 text-[var(--gold)]">
                                     {Array.from({ length: 5 }).map((_, index) => (
@@ -801,7 +786,7 @@ export default function Home() {
             </section>
 
             {/* FAQ */}
-            <section id="faq" className="section bg-[var(--canvas-deep)] relative z-10">
+            <section id="faq" className="section bg-[var(--canvas-deep)] relative z-10 border-y border-[var(--gold)]/20">
                 <FiligreeDivider />
                 <div className="site-shell">
                     <SectionLead
@@ -825,45 +810,34 @@ export default function Home() {
                 </div>
             </section>
 
-            {/* Download CTA Card (Transformed to high contrast dark luxury invitation card) */}
-            <section id="download" className="section pb-20 relative z-10 bg-[var(--canvas)]">
+            {/* Download CTA Card (Rebuilt completely as an elegant light theme invite card - no clutter, no broken layout) */}
+            <section id="download" className="section pb-20 pt-10 relative z-10 bg-[var(--canvas)]">
                 <FiligreeDivider />
                 <div className="site-shell">
-                    <div className="luxury-card luxury-card--dark relative overflow-hidden py-14 px-8 md:px-12 border border-[var(--gold)]/35 shadow-2xl text-white">
-                        
-                        {/* Floating elements for visual depth */}
-                        <div className="floating-ui-tag top-[-15px] right-[40px]">
-                            <span className="text-[var(--gold)]">🛡️</span> CNIC Secured
-                        </div>
-                        <div className="floating-ui-tag bottom-[-15px] left-[60px] animation-delay-2000">
-                            <span className="text-[var(--gold)]">✨</span> 100% Private
-                        </div>
-
-                        <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center relative z-10">
+                    <div className="luxury-card bg-white relative overflow-hidden py-14 px-8 md:px-12 border border-[var(--gold)]/35 shadow-xl text-[var(--text)]">
+                        <div className="flex flex-col items-center text-center max-w-4xl mx-auto space-y-8">
                             <div>
-                                <span className="eyebrow border-[var(--gold)]/40 bg-white/5 text-[var(--gold)] shadow-sm">
-                                    Ready to begin
-                                </span>
-                                <h2 className="mt-5 font-display text-[clamp(2.5rem,5vw,4rem)] font-bold leading-[0.98] tracking-[-0.045em] text-white">
-                                    Start your journey <span className="text-[var(--gold)] italic">today</span>
+                                <span className="eyebrow">Ready to begin</span>
+                                <h2 className="mt-6 font-display text-[clamp(2.3rem,6vw,4rem)] font-bold leading-[1.05] tracking-[-0.04em] text-[var(--text)]">
+                                    Start your journey <span className="text-[var(--berry)] italic">today</span>
                                 </h2>
-                                <p className="mt-5 max-w-2xl text-sm leading-8 text-stone-200 font-medium">
+                                <p className="mt-4 max-w-2xl text-sm leading-8 text-[var(--muted)] font-medium">
                                     Create your secure profile, complete CNIC verification, and begin introducing yourself to compatible members. Get the Shadii.pk app directly for your mobile device.
                                 </p>
                             </div>
 
-                            <div className="flex flex-col gap-4 sm:flex-row lg:justify-end">
+                            <div className="flex flex-col gap-4 sm:flex-row justify-center w-full max-w-md pt-2">
                                 <StoreBadge label="Download on the" store="App Store" />
                                 <StoreBadge label="Get it on" store="Google Play" />
                             </div>
-                        </div>
 
-                        <div className="mt-8 flex flex-wrap gap-3 text-xs text-[var(--gold)] font-bold relative z-10">
-                            {["Free profile setup", "Secure plans", "Private-first experience"].map((item) => (
-                                <div key={item} className="rounded-full border border-[var(--gold)]/30 bg-white/5 px-4 py-2 shadow-xs">
-                                    {item}
-                                </div>
-                            ))}
+                            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 pt-6 text-sm text-[var(--berry)] font-bold border-t border-stone-100 w-full">
+                                <span>Free profile setup</span>
+                                <span className="text-[var(--gold)] select-none">•</span>
+                                <span>Secure plans</span>
+                                <span className="text-[var(--gold)] select-none">•</span>
+                                <span>Private-first experience</span>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -160,24 +160,20 @@ summary::-webkit-details-marker {
     align-items: center;
     gap: 0.55rem;
     width: fit-content;
-    border: 1px solid rgba(194, 155, 87, 0.3);
-    border-radius: 999px;
-    padding: 0.65rem 1rem;
-    background: rgba(255, 255, 255, 0.6);
     color: var(--berry);
-    font-size: 0.72rem;
+    font-size: 0.75rem;
     font-weight: 700;
-    letter-spacing: 0.22em;
+    letter-spacing: 0.25em;
     text-transform: uppercase;
+    font-family: var(--font-sans);
 }
 
 .eyebrow::before {
     content: "";
-    width: 0.45rem;
-    height: 0.45rem;
-    border-radius: 999px;
+    width: 0.35rem;
+    height: 0.35rem;
     background: var(--gold);
-    box-shadow: 0 0 12px rgba(194, 155, 87, 0.4);
+    transform: rotate(45deg);
 }
 
 .section-heading {
@@ -672,8 +668,8 @@ summary::-webkit-details-marker {
     position: absolute;
     backdrop-filter: blur(16px);
     border: 1px solid rgba(194, 155, 87, 0.35);
-    background: rgba(255, 255, 255, 0.08);
-    color: #fffdf9;
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--text);
     padding: 0.6rem 1.1rem;
     border-radius: 1rem;
     font-size: 0.75rem;
@@ -682,7 +678,7 @@ summary::-webkit-details-marker {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 12px 30px rgba(194, 155, 87, 0.08);
     animation: float-gentle 6s ease-in-out infinite;
 }
 
@@ -693,7 +689,7 @@ summary::-webkit-details-marker {
     width: 100%;
     height: 6px;
     border-radius: 99px;
-    background: rgba(194, 155, 87, 0.2);
+    background: rgba(128, 24, 48, 0.12);
     outline: none;
 }
 
@@ -703,10 +699,10 @@ summary::-webkit-details-marker {
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: var(--gold);
-    border: 2px solid #fffdf9;
+    background: var(--berry);
+    border: 2px solid #ffffff;
     cursor: pointer;
-    box-shadow: 0 0 10px rgba(194, 155, 87, 0.5);
+    box-shadow: 0 4px 12px rgba(128, 24, 48, 0.25);
     transition: transform 120ms ease;
 }
 
@@ -715,9 +711,9 @@ summary::-webkit-details-marker {
 }
 
 .luxury-input {
-    border: 1px solid rgba(194, 155, 87, 0.3);
-    background: rgba(255, 255, 255, 0.04);
-    color: #fffdf9;
+    border: 1px solid rgba(194, 155, 87, 0.4);
+    background: #ffffff;
+    color: var(--text);
     padding: 0.75rem 1.25rem;
     border-radius: 1rem;
     font-size: 0.9rem;
@@ -726,13 +722,31 @@ summary::-webkit-details-marker {
 }
 
 .luxury-input:focus {
-    border-color: var(--gold);
-    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--berry);
+    box-shadow: 0 0 0 3px rgba(128, 24, 48, 0.08);
 }
 
 .luxury-input option {
-    background: #1a0307;
-    color: #fffdf9;
+    background: #ffffff;
+    color: var(--text);
+}
+
+.luxury-card--light {
+    border: 1px solid var(--line-strong);
+    padding: 2.2rem;
+    border-radius: 1.8rem;
+    background: #ffffff;
+    position: relative;
+    box-shadow: 0 16px 40px rgba(194, 155, 87, 0.05);
+}
+
+.luxury-card--light::after {
+    content: "";
+    position: absolute;
+    inset: 6px;
+    border: 1px solid rgba(194, 155, 87, 0.15);
+    border-radius: 1.5rem;
+    pointer-events: none;
 }
 
 /* Asymmetric Zigzag Timeline */
