@@ -2,9 +2,10 @@ import Link from "next/link";
 
 interface BrandMarkProps {
     compact?: boolean;
+    lightText?: boolean;
 }
 
-export function BrandMark({ compact = false }: BrandMarkProps) {
+export function BrandMark({ compact = false, lightText = false }: BrandMarkProps) {
     return (
         <Link href="/" className="brand-mark group inline-flex items-center gap-3" aria-label="Shadii.pk home">
             <div className="relative flex h-11 w-11 items-center justify-center overflow-hidden rounded-[1.15rem] border border-white/12 bg-[linear-gradient(145deg,#2e1219,#7a263a_55%,#e0b562)] shadow-[0_16px_40px_rgba(27,12,16,0.4)]">
@@ -13,10 +14,10 @@ export function BrandMark({ compact = false }: BrandMarkProps) {
             </div>
             {!compact && (
                 <span className="flex flex-col leading-none">
-                    <span className="font-display text-[1.15rem] font-bold tracking-tight text-[var(--text)]">
+                    <span className={`font-display text-[1.15rem] font-bold tracking-tight ${lightText ? "text-white" : "text-[var(--text)]"}`}>
                         Shadii<span className="text-[var(--gold)]">.pk</span>
                     </span>
-                    <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.26em] text-[var(--muted)]">
+                    <span className={`mt-1 text-[10px] font-semibold uppercase tracking-[0.26em] ${lightText ? "text-stone-300" : "text-[var(--muted)]"}`}>
                         Serious Matchmaking
                     </span>
                 </span>
@@ -24,3 +25,4 @@ export function BrandMark({ compact = false }: BrandMarkProps) {
         </Link>
     );
 }
+

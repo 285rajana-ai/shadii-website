@@ -1,3 +1,5 @@
+"use client";
+
 import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
 import {
@@ -12,6 +14,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { StarIcon } from "@heroicons/react/24/solid";
 import type { ComponentType, SVGProps } from "react";
+import { useState } from "react";
 
 type IconType = ComponentType<SVGProps<SVGSVGElement>>;
 
@@ -201,25 +204,27 @@ function SectionLead({
     title,
     accent,
     copy,
+    lightTheme = true,
 }: {
     eyebrow: string;
     title: string;
     accent?: string;
     copy: string;
+    lightTheme?: boolean;
 }) {
     return (
         <div className="section-heading reveal-on-scroll">
-            <div className="eyebrow">{eyebrow}</div>
-            <h2 className="section-title">
+            <div className={`eyebrow ${!lightTheme ? "border-[var(--gold)]/40 bg-white/5 text-[var(--gold)]" : ""}`}>{eyebrow}</div>
+            <h2 className={`section-title ${!lightTheme ? "text-white" : "text-[var(--text)]"}`}>
                 {title}
                 {accent ? (
                     <>
                         {" "}
-                        <span className="display-accent">{accent}</span>
+                        <span className="display-accent text-[var(--gold)] italic">{accent}</span>
                     </>
                 ) : null}
             </h2>
-            <p className="section-copy text-[var(--muted)]">{copy}</p>
+            <p className={`section-copy mt-4 ${lightTheme ? "text-[var(--muted)]" : "text-stone-300"}`}>{copy}</p>
         </div>
     );
 }
@@ -227,8 +232,8 @@ function SectionLead({
 function StoreBadge({ label, store }: { label: string; store: string }) {
     const isApple = store === "App Store";
     return (
-        <a href="#" className="store-badge transition-transform hover:-translate-y-0.5">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--berry)] text-white shadow-sm shrink-0">
+        <a href="#" className="inline-flex items-center gap-4 min-w-[13rem] px-5 py-3 rounded-2xl border border-[var(--gold)]/35 bg-white/5 hover:bg-white/10 hover:border-[var(--gold)] text-white transition-all hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(194,155,80,0.15)] shadow-md">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[linear-gradient(135deg,#7a1c31,#c09950)] text-white shadow-sm shrink-0">
                 {isApple ? (
                     <svg className="h-5 w-5 fill-current" viewBox="0 0 24 24">
                         <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 4.17c.66-.81 1.11-1.93.99-3.06-1 .04-2.21.67-2.93 1.49-.62.69-1.16 1.84-1.01 2.96 1.12.09 2.27-.58 2.95-1.39z"/>
@@ -239,11 +244,194 @@ function StoreBadge({ label, store }: { label: string; store: string }) {
                     </svg>
                 )}
             </div>
-            <span>
-                <small className="text-[var(--muted)]">{label}</small>
-                <strong className="text-[var(--text)]">{store}</strong>
+            <span className="text-left">
+                <small className="block text-[10px] font-bold uppercase tracking-wider text-stone-300">Download on the</small>
+                <strong className="block text-sm font-bold text-white mt-0.5">{store}</strong>
             </span>
         </a>
+    );
+}
+
+function MatchSimulator() {
+    const [age, setAge] = useState(25);
+    const [city, setCity] = useState("Lahore");
+    const [sect, setSect] = useState("Sunni");
+    const [gender, setGender] = useState<"female" | "male">("female");
+
+    const getProfiles = () => {
+        const occupations: Record<"female" | "male", string[]> = {
+            female: ["MBBS Doctor", "Software Engineer", "Clinical Psychologist", "Lecturer", "Chartered Accountant"],
+            male: ["Software Architect", "Business Director", "Civil Engineer", "Corporate Lawyer", "Finance Analyst"]
+        };
+        const education: Record<"female" | "male", string[]> = {
+            female: ["MD / MBBS (KEMU)", "Bachelors in CS (FAST)", "M.Phil Psychology", "Masters in English (PU)", "CA Finalist"],
+            male: ["MS in CS (ITU)", "MBA (LUMS)", "BE Civil (UET)", "LLM (London)", "FCA"]
+        };
+        
+        return [
+            {
+                name: gender === "female" ? "Ayesha" : "Zain",
+                age: age - 1,
+                role: occupations[gender][0],
+                education: education[gender][0],
+                compatibility: 96,
+            },
+            {
+                name: gender === "female" ? "Zainab" : "Ahmed",
+                age: age,
+                role: occupations[gender][1],
+                education: education[gender][1],
+                compatibility: 93,
+            },
+            {
+                name: gender === "female" ? "Mariam" : "Usman",
+                age: age + 2,
+                role: occupations[gender][2],
+                education: education[gender][2],
+                compatibility: 89,
+            }
+        ];
+    };
+
+    const matchesCount = (age * 18) + (city.charCodeAt(0) * 12) + (sect === "Sunni" ? 140 : 85);
+
+    return (
+        <div className="luxury-card luxury-card--dark relative z-10 max-w-5xl mx-auto my-12 p-8 overflow-hidden rounded-[2.2rem] border border-[var(--gold)]/35 text-white">
+            <div className="absolute top-0 right-0 h-40 w-40 bg-gradient-to-bl from-[var(--gold)]/10 to-transparent pointer-events-none" />
+            <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
+                {/* Simulator Inputs */}
+                <div className="flex flex-col justify-between space-y-6">
+                    <div>
+                        <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--gold)]">Interactive Experience</span>
+                        <h3 className="mt-2 font-display text-3xl font-bold text-white">Rishta Match Simulator</h3>
+                        <p className="mt-3 text-xs text-stone-300 leading-relaxed">
+                            Simulate how our platform connects serious members. Adjust filters below to view mock verified matches.
+                        </p>
+                    </div>
+
+                    <div className="space-y-4">
+                        {/* Gender selection */}
+                        <div className="flex gap-4 items-center">
+                            <span className="text-xs font-bold text-stone-300 min-w-[80px]">Looking For:</span>
+                            <div className="flex gap-2">
+                                {["female", "male"].map((g) => (
+                                    <button
+                                        key={g}
+                                        onClick={() => setGender(g as "female" | "male")}
+                                        className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all border ${
+                                            gender === g 
+                                                ? "bg-[var(--gold)] border-[var(--gold)] text-[#1a0307]" 
+                                                : "bg-white/5 border-white/10 text-stone-300 hover:bg-white/10"
+                                        }`}
+                                    >
+                                        {g === "female" ? "Bride (Larki)" : "Groom (Larka)"}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Age range slider */}
+                        <div className="flex flex-col gap-2">
+                            <div className="flex justify-between text-xs font-bold text-stone-300">
+                                <span>Preferred Age:</span>
+                                <span className="text-[var(--gold)]">{age} years</span>
+                            </div>
+                            <input
+                                type="range"
+                                min="20"
+                                max="45"
+                                value={age}
+                                onChange={(e) => setAge(parseInt(e.target.value))}
+                                className="luxury-slider"
+                            />
+                        </div>
+
+                        {/* City select */}
+                        <div className="flex flex-col gap-2">
+                            <label className="text-xs font-bold text-stone-300">City / Location:</label>
+                            <select
+                                value={city}
+                                onChange={(e) => setCity(e.target.value)}
+                                className="luxury-input"
+                            >
+                                <option value="Lahore">Lahore</option>
+                                <option value="Karachi">Karachi</option>
+                                <option value="Islamabad">Islamabad</option>
+                                <option value="Faisalabad">Faisalabad</option>
+                                <option value="Multan">Multan</option>
+                                <option value="Peshawar">Peshawar</option>
+                            </select>
+                        </div>
+
+                        {/* Sect selection */}
+                        <div className="flex gap-4 items-center">
+                            <span className="text-xs font-bold text-stone-300 min-w-[80px]">Sect Value:</span>
+                            <div className="flex gap-2">
+                                {["Sunni", "Shia", "Any"].map((s) => (
+                                    <button
+                                        key={s}
+                                        onClick={() => setSect(s)}
+                                        className={`px-3 py-1.5 rounded-full text-[11px] font-bold transition-all border ${
+                                            sect === s
+                                                ? "bg-[var(--gold)] border-[var(--gold)] text-[#1a0307]"
+                                                : "bg-white/5 border-white/10 text-stone-300 hover:bg-white/10"
+                                        }`}
+                                    >
+                                        {s}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="pt-4 border-t border-white/10 flex items-center justify-between">
+                        <div>
+                            <div className="text-[10px] uppercase tracking-wider text-stone-400 font-bold">Estimated Pool</div>
+                            <div className="text-xl font-bold text-white mt-0.5">{matchesCount}+ Active Profiles</div>
+                        </div>
+                        <a href="#download" className="inline-flex items-center justify-center min-h-[2.8rem] rounded-full px-5 text-xs font-bold bg-gradient-to-r from-[var(--gold)] to-[var(--gold-soft)] text-[#1a0307] hover:shadow-[0_0_20px_rgba(194,155,80,0.4)] transition-all">
+                            Find Yours Now
+                        </a>
+                    </div>
+                </div>
+
+                {/* Simulator Outputs Display */}
+                <div className="space-y-4">
+                    <div className="text-xs font-bold uppercase tracking-widest text-stone-400 mb-2">
+                        Compatible Verified Matches:
+                    </div>
+                    <div className="space-y-3">
+                        {getProfiles().map((profile) => (
+                            <div
+                                key={profile.name}
+                                className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-sm hover:border-[var(--gold)]/40 transition-all duration-300 relative overflow-hidden"
+                            >
+                                <div className="absolute top-0 right-0 bg-[var(--gold)]/10 text-[var(--gold)] text-[9px] font-bold px-2.5 py-1 rounded-bl-xl border-l border-b border-white/10">
+                                    {profile.compatibility}% Match
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    {/* Blurred avatar */}
+                                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[linear-gradient(135deg,rgba(194,155,80,0.2),rgba(255,255,255,0.05))] border border-white/10 text-xs font-bold text-[var(--gold)] relative overflow-hidden">
+                                        <div className="absolute inset-0 bg-stone-700/60 blur-[3px]" />
+                                        <span className="relative z-10">{profile.name[0]}</span>
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center gap-1.5 text-sm font-bold text-white">
+                                            {profile.name}, {profile.age}
+                                            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[var(--gold)]/20 text-[var(--gold)]">✓</span>
+                                        </div>
+                                        <div className="text-[10px] text-stone-300 font-medium">{city} · {profile.role} · {profile.education}</div>
+                                    </div>
+                                </div>
+                                <div className="mt-3 rounded-xl bg-white/5 border border-white/5 px-3 py-2 text-[10px] leading-relaxed text-stone-300 font-medium">
+                                    🔒 Photo blurred for privacy · CNIC and live selfie checked.
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </div>
     );
 }
 
@@ -252,59 +440,77 @@ export default function Home() {
         <main className="page-shell overflow-x-hidden">
             <Navbar />
 
-            {/* Video Background Layer */}
-            <div className="absolute top-0 left-0 right-0 h-[120vh] z-0 overflow-hidden pointer-events-none">
-                <video
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    className="h-full w-full object-cover opacity-[0.12] mix-blend-multiply"
-                    style={{ filter: "sepia(30%) saturate(140%)" }}
-                >
-                    <source src="https://videos.pexels.com/video-files/7525287/7525287-uhd_2560_1440_24fps.mp4" type="video/mp4" />
-                </video>
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[var(--canvas)]/50 to-[var(--canvas-deep)]" />
-            </div>
+            {/* Video Background Layer inside dark hero block */}
+            <div className="relative z-10 dark-luxury-bg pt-36 pb-20 sm:pt-40 lg:pt-44 lg:pb-32 overflow-hidden border-b border-[var(--gold)]/25">
+                <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+                    <video
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        className="h-full w-full object-cover opacity-[0.09] mix-blend-screen"
+                        style={{ filter: "sepia(20%) saturate(120%) brightness(80%)" }}
+                    >
+                        <source src="https://videos.pexels.com/video-files/7525287/7525287-uhd_2560_1440_24fps.mp4" type="video/mp4" />
+                    </video>
+                    <div className="absolute inset-0 bg-gradient-to-b from-[#1a0307]/50 via-transparent to-[#1a0307]" />
+                </div>
 
-            <section className="section pb-10 pt-36 sm:pt-40 lg:pt-44 relative z-10">
-                <div className="site-shell">
-                    <div className="grid items-center gap-12 xl:grid-cols-[1.1fr_0.9fr] xl:gap-16">
+                <div className="site-shell relative z-10">
+                    <div className="grid items-center gap-12 xl:grid-cols-[1.15fr_0.85fr] xl:gap-16">
                         <div>
-                            <div className="eyebrow hero-badge shadow-sm">Pakistan&apos;s Premium Matrimonial Platform</div>
-                            <h1 className="hero-title mt-6 max-w-4xl font-display text-[clamp(3.3rem,9vw,5.5rem)] font-bold leading-[1.0] tracking-[-0.04em] text-[var(--text)]">
-                                Find your <span className="display-accent">life partner</span> with dignity & discretion.
+                            <div className="eyebrow border-[var(--gold)]/40 bg-white/5 text-[var(--gold)] shadow-sm">
+                                Pakistan&apos;s Premium Matrimonial Platform
+                            </div>
+                            <h1 className="hero-title mt-6 max-w-4xl font-display text-[clamp(3.3rem,9vw,5.5rem)] font-bold leading-[1.0] tracking-[-0.04em] text-white">
+                                Find your <span className="text-[var(--gold)] italic">life partner</span> with dignity & discretion.
                             </h1>
-                            <p className="hero-copy mt-6 max-w-2xl text-base leading-8 text-[var(--muted)] sm:text-lg font-medium">
+                            <p className="hero-copy mt-6 max-w-2xl text-base leading-8 text-stone-200 sm:text-lg font-medium">
                                 Shadii.pk is built for serious individuals and families seeking meaningful matrimonial introductions. Experience a calmer matchmaking process with verified profiles, complete photo privacy, and zero social swiping clutter.
                             </p>
 
                             <div className="hero-actions mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                                <a href="#download" className="btn-primary w-full sm:w-auto px-7">
+                                <a href="#download" className="inline-flex items-center justify-center gap-3 min-h-[3.35rem] rounded-full px-7 text-base font-bold bg-gradient-to-r from-[var(--gold)] to-[var(--gold-soft)] text-[#1a0307] hover:shadow-[0_0_25px_rgba(194,155,80,0.5)] transition-all">
                                     Download App
                                     <ArrowRightIcon className="h-5 w-5" />
                                 </a>
-                                <a href="#about" className="btn-secondary w-full sm:w-auto px-7">
+                                <a href="#about" className="inline-flex items-center justify-center gap-3 min-h-[3.35rem] rounded-full px-7 text-base font-bold border border-white/20 bg-transparent text-white hover:bg-white/5 transition-all">
                                     Explore Features
                                 </a>
                             </div>
 
-                            <div className="hero-trust mt-8 flex flex-wrap gap-3 text-sm text-[var(--muted)] font-medium">
+                            <div className="hero-trust mt-8 flex flex-wrap gap-3 text-sm text-stone-200 font-medium">
                                 {[
                                     "CNIC + Selfie Verification",
                                     "Private Photos & Safe Chat",
                                     "Family-Backed Introductions",
                                 ].map((item) => (
-                                    <div key={item} className="inline-flex items-center gap-2 rounded-full border border-[var(--line-strong)] bg-white/70 px-4 py-2.5 shadow-sm">
-                                        <CheckCircleIcon className="h-4 w-4 text-[var(--berry)]" />
+                                    <div key={item} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 shadow-sm">
+                                        <CheckCircleIcon className="h-4 w-4 text-[var(--gold)]" />
                                         {item}
                                     </div>
                                 ))}
                             </div>
                         </div>
 
-                        <div className="hero-showcase glow-accent flex items-center justify-center py-6 select-none pointer-events-none">
-                            <div className="phone-frame">
+                        {/* Interactive Layered phone frame showcase */}
+                        <div className="hero-showcase flex items-center justify-center py-6 select-none relative">
+                            {/* Spinning gold background decoration */}
+                            <div className="absolute h-96 w-96 rounded-full border border-[var(--gold)]/10 animate-[spin_45s_linear_infinite]" />
+                            <div className="absolute h-80 w-80 rounded-full border border-dashed border-[var(--gold)]/20 animate-[spin_20s_linear_infinite]" />
+                            
+                            {/* Floating UI badges */}
+                            <div className="floating-ui-tag top-8 left-[-20px]">
+                                <span className="text-[var(--gold)]">💬</span> Assalam-o-Alaikum
+                            </div>
+                            <div className="floating-ui-tag top-1/2 right-[-30px] animation-delay-1500">
+                                <span className="text-emerald-500">✓</span> CNIC Verified
+                            </div>
+                            <div className="floating-ui-tag bottom-6 left-[-10px] animation-delay-3000">
+                                <span className="text-[var(--gold)]">💖</span> 94% Compatibility
+                            </div>
+
+                            <div className="phone-frame relative z-10 border-[10px] border-[#251d1d] shadow-[0_30px_70px_rgba(0,0,0,0.6)]">
                                 <div className="phone-notch" />
                                 <div className="phone-content text-left">
                                     {/* App Mockup Header */}
@@ -358,40 +564,27 @@ export default function Home() {
                                                 </div>
                                             </div>
                                         </div>
-
-                                        {/* Mockup Chat Screen */}
-                                        <div className="rounded-2xl border border-[var(--line)] bg-white/90 p-4 shadow-sm">
-                                            <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--berry)]">Dignified Chat</span>
-                                            <div className="mt-3 space-y-2">
-                                                <div className="ml-auto max-w-[85%] rounded-2xl rounded-br-none bg-[var(--berry)] p-2.5 text-[10px] font-medium text-white shadow-xs">
-                                                    Assalam o Alaikum, interest request sent.
-                                                </div>
-                                                <div className="max-w-[85%] rounded-2xl rounded-bl-none bg-[var(--canvas-deep)] border border-[var(--line)] p-2.5 text-[10px] text-[var(--text)] leading-relaxed font-medium shadow-xs">
-                                                    Walaikum Assalam, accepted. Let&apos;s involve family.
-                                                </div>
-                                            </div>
-                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div className="hero-metrics mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4 relative z-10">
+                    <div className="hero-metrics mt-12 grid gap-4 md:grid-cols-2 xl:grid-cols-4 relative z-10">
                         {heroStats.map((item) => (
-                            <div key={item.label} className="metric-tile">
-                                <div className="font-display text-4xl font-bold tracking-[-0.04em] text-[var(--berry)]">
+                            <div key={item.label} className="metric-tile bg-white/5 border-white/10 hover:border-[var(--gold)]/40 hover:bg-white/10">
+                                <div className="font-display text-4xl font-bold tracking-[-0.04em] text-[var(--gold)]">
                                     {item.value}
                                 </div>
-                                <div className="mt-2 text-sm text-[var(--muted)] font-medium">{item.label}</div>
+                                <div className="mt-2 text-sm text-stone-300 font-medium">{item.label}</div>
                             </div>
                         ))}
                     </div>
                 </div>
-            </section>
+            </div>
 
-            <section id="about" className="section relative z-10">
-                <FiligreeDivider />
+            {/* Why Us Section (Light Theme with staggered layout) */}
+            <section id="about" className="section bg-[var(--canvas)] relative z-10">
                 <div className="site-shell">
                     <SectionLead
                         eyebrow="Why this version is better"
@@ -400,11 +593,22 @@ export default function Home() {
                         copy="Every section now follows a cleaner layout rhythm, with stronger hierarchy, balanced grids, and components that stay in place instead of fighting each other."
                     />
 
-                    <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                        {pillars.map((item) => {
+                    {/* Staggered asymmetric layout grid */}
+                    <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3 pt-6">
+                        {pillars.map((item, idx) => {
                             const Icon = item.icon;
+                            // Add custom offset heights for staggered asymmetry
+                            const staggerClass = idx === 1 || idx === 4 
+                                ? "xl:translate-y-6" 
+                                : idx === 2 || idx === 5 
+                                ? "xl:translate-y-12" 
+                                : "";
+                            
                             return (
-                                <article key={item.title} className="luxury-card corner-ornament-card reveal-on-scroll">
+                                <article 
+                                    key={item.title} 
+                                    className={`luxury-card corner-ornament-card bg-white/80 border-[var(--gold)]/20 hover:border-[var(--gold)]/50 transition-all duration-300 reveal-on-scroll ${staggerClass}`}
+                                >
                                     <div className="flex items-start justify-between gap-4">
                                         <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[linear-gradient(145deg,rgba(194,155,87,0.15),rgba(139,38,62,0.08))] text-[var(--berry)] border border-[var(--line-strong)]">
                                             <Icon className="h-6 w-6" />
@@ -424,85 +628,116 @@ export default function Home() {
                 </div>
             </section>
 
-            <section id="journey" className="section relative z-10">
+            {/* Interactive Match Simulator Divider & Section */}
+            <section className="section bg-[var(--canvas-deep)] relative z-10 py-16">
+                <div className="site-shell">
+                    <MatchSimulator />
+                </div>
+            </section>
+
+            {/* Asymmetric Zigzag Timeline Steps */}
+            <section id="journey" className="section bg-[var(--canvas)] relative z-10">
                 <FiligreeDivider />
                 <div className="site-shell">
                     <SectionLead
                         eyebrow="Simple journey"
                         title="From profile setup to"
                         accent="real conversation"
-                        copy="The rebuild keeps the flow straightforward. Instead of a crowded landing page, each section now earns its place and leads naturally into the next one."
+                        copy="The rebuild keeps the flow straightforward. Instead of a crowded landing page, each section now earns its place and leads naturally into the next."
                     />
 
-                    <div className="grid gap-6 lg:grid-cols-2">
-                        {steps.map((step) => (
-                            <article key={step.number} className="luxury-card reveal-on-scroll">
-                                <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
-                                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-[var(--line-strong)] bg-white/60 font-display text-xl font-bold text-[var(--berry)] shadow-sm">
+                    <div className="timeline-container mt-16 space-y-12">
+                        {steps.map((step, idx) => {
+                            const isEven = idx % 2 === 0;
+                            return (
+                                <div 
+                                    key={step.number} 
+                                    className={`flex flex-col lg:flex-row ${isEven ? "" : "lg:flex-row-reverse"} items-stretch gap-8 relative`}
+                                >
+                                    {/* Timeline dot */}
+                                    <div className="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-10 w-10 items-center justify-center rounded-full border-2 border-[var(--gold)] bg-white shadow-md z-10 font-bold text-xs text-[var(--berry)]">
                                         {step.number}
                                     </div>
-                                    <div>
-                                        <h3 className="font-display text-[1.85rem] font-bold leading-tight text-[var(--text)]">
-                                            {step.title}
-                                        </h3>
-                                        <p className="mt-3 text-sm leading-7 text-[var(--muted)] font-medium">{step.text}</p>
+
+                                    {/* Left/Right content blocker */}
+                                    <div className="w-full lg:w-[46%] flex items-center">
+                                        <article className="luxury-card bg-white w-full border-[var(--gold)]/20 hover:border-[var(--gold)]/50 transition-all duration-300">
+                                            <div className="flex flex-col gap-4">
+                                                <div className="lg:hidden flex h-10 w-10 items-center justify-center rounded-full border border-[var(--line-strong)] bg-white font-display text-sm font-bold text-[var(--berry)] shadow-sm">
+                                                    {step.number}
+                                                </div>
+                                                <h3 className="font-display text-[1.65rem] font-bold leading-tight text-[var(--text)]">
+                                                    {step.title}
+                                                </h3>
+                                                <p className="text-sm leading-7 text-[var(--muted)] font-medium">{step.text}</p>
+                                            </div>
+                                        </article>
                                     </div>
+
+                                    {/* Empty structural blocker for zigzag layout */}
+                                    <div className="hidden lg:block lg:w-[8%]" />
+                                    <div className="hidden lg:block lg:w-[46%]" />
                                 </div>
-                            </article>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
             </section>
 
-            <section id="plans" className="section relative z-10">
-                <FiligreeDivider />
+            {/* Plans (Dark Theme Ticket pricing) */}
+            <section id="plans" className="section relative z-10 dark-luxury-bg border-y border-[var(--gold)]/25">
                 <div className="site-shell">
                     <SectionLead
                         eyebrow="Straight pricing"
                         title="Clean plans for a"
                         accent="serious search"
                         copy="No clutter, no awkward pricing mess. The plan section now reads clearly and keeps the premium option visibly highlighted without breaking the layout."
+                        lightTheme={false}
                     />
 
-                    <div className="grid gap-6 xl:grid-cols-3">
+                    <div className="grid gap-8 xl:grid-cols-3 mt-12">
                         {planCards.map((plan) => (
                             <article
                                 key={plan.name}
                                 className={[
-                                    "luxury-card reveal-on-scroll flex h-full flex-col",
-                                    plan.featured ? "surface-card--strong" : "",
+                                    "luxury-card luxury-card--dark flex h-full flex-col relative",
+                                    plan.featured ? "border-[var(--gold)] shadow-[0_0_30px_rgba(194,155,80,0.25)] translate-y-[-4px]" : "border-white/10",
                                 ].join(" ")}
                             >
                                 {plan.featured ? (
-                                    <div className="mb-5 w-fit rounded-full bg-[var(--berry)] px-4 py-2 text-[11px] font-bold uppercase tracking-[0.24em] text-white shadow-md">
+                                    <div className="absolute top-5 right-5 rounded-full bg-[var(--gold)] px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.24em] text-[#1a0307] shadow-md">
                                         Most popular
                                     </div>
                                 ) : null}
 
-                                <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-[var(--berry)]">
+                                <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--gold)]">
                                     {plan.name}
                                 </div>
-                                <div className="mt-4 flex items-end gap-2 text-[var(--text)]">
-                                    <span className="mb-2 text-sm font-semibold text-[var(--muted)]">PKR</span>
+                                <div className="mt-4 flex items-end gap-2 text-white">
+                                    <span className="mb-2 text-sm font-semibold text-stone-300">PKR</span>
                                     <span className="font-display text-[3.4rem] font-bold tracking-[-0.05em]">
                                         {plan.price}
                                     </span>
                                 </div>
-                                <div className="mt-2 text-sm text-[var(--muted)] font-medium">for {plan.duration}</div>
-                                <p className="mt-5 text-sm leading-7 text-[var(--muted)] font-medium">{plan.description}</p>
+                                <div className="mt-2 text-xs text-stone-300 font-medium">for {plan.duration}</div>
+                                <p className="mt-5 text-xs leading-6 text-stone-200 font-medium">{plan.description}</p>
 
-                                <div className="my-6 h-px bg-[var(--line-strong)]" />
+                                <div className="my-6 h-px bg-white/10" />
 
                                 <div className="flex-1 space-y-3">
                                     {plan.items.map((item) => (
-                                        <div key={item} className="flex items-start gap-3 text-sm text-[var(--muted)]">
-                                            <CheckCircleIcon className="mt-0.5 h-5 w-5 shrink-0 text-[var(--gold)]" />
+                                        <div key={item} className="flex items-start gap-3 text-xs text-stone-200">
+                                            <CheckCircleIcon className="mt-0.5 h-4.5 w-4.5 shrink-0 text-[var(--gold)]" />
                                             <span className="font-medium">{item}</span>
                                         </div>
                                     ))}
                                 </div>
 
-                                <a href="#download" className={plan.featured ? "btn-primary mt-8" : "btn-secondary mt-8"}>
+                                <a href="#download" className={`mt-8 inline-flex items-center justify-center min-h-[3rem] rounded-full px-5 text-sm font-bold transition-all ${
+                                    plan.featured 
+                                        ? "bg-gradient-to-r from-[var(--gold)] to-[var(--gold-soft)] text-[#1a0307]" 
+                                        : "border border-white/20 bg-transparent text-white hover:bg-white/5"
+                                }`}>
                                     Choose {plan.name}
                                 </a>
                             </article>
@@ -511,7 +746,8 @@ export default function Home() {
                 </div>
             </section>
 
-            <section id="stories" className="section relative z-10">
+            {/* Testimonials */}
+            <section id="stories" className="section bg-[var(--canvas)] relative z-10">
                 <FiligreeDivider />
                 <div className="site-shell">
                     <SectionLead
@@ -522,37 +758,41 @@ export default function Home() {
                     />
 
                     <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr_0.8fr]">
-                        <article className="luxury-card surface-card--strong reveal-on-scroll">
-                            <div className="mb-5 flex gap-1 text-[var(--gold)]">
-                                {Array.from({ length: 5 }).map((_, index) => (
-                                    <StarIcon key={index} className="h-5 w-5" />
-                                ))}
+                        <article className="luxury-card bg-white/90 border-[var(--gold)]/25 shadow-lg reveal-on-scroll flex flex-col justify-between p-8">
+                            <div>
+                                <div className="mb-5 flex gap-1 text-[var(--gold)]">
+                                    {Array.from({ length: 5 }).map((_, index) => (
+                                        <StarIcon key={index} className="h-5 w-5" />
+                                    ))}
+                                </div>
+                                <p className="font-display text-[1.8rem] leading-[1.45] text-[var(--text)] sm:text-[2rem] font-bold">
+                                    “The redesigned experience feels calm, private, and serious. That changes how people trust the platform.”
+                                </p>
                             </div>
-                            <p className="font-display text-[1.9rem] leading-[1.45] text-[var(--text)] sm:text-[2.2rem]">
-                                “The redesigned experience feels calm, private, and serious. That changes how people trust the platform.”
-                            </p>
-                            <div className="mt-8 flex items-center gap-3">
+                            <div className="mt-8 flex items-center gap-3 border-t border-[var(--line-strong)]/30 pt-6">
                                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--berry)] text-sm font-bold text-white shadow-md">
                                     SP
                                 </div>
                                 <div>
-                                    <div className="font-semibold text-[var(--text)]">Shadii.pk promise</div>
-                                    <div className="text-sm text-[var(--muted)]">Privacy, intent, and clean presentation</div>
+                                    <div className="font-bold text-[var(--text)]">Shadii.pk promise</div>
+                                    <div className="text-xs text-[var(--muted)]">Privacy, intent, and clean presentation</div>
                                 </div>
                             </div>
                         </article>
 
                         {testimonials.map((story) => (
-                            <article key={story.name} className="luxury-card reveal-on-scroll">
-                                <div className="mb-4 flex gap-1 text-[var(--gold)]">
-                                    {Array.from({ length: 5 }).map((_, index) => (
-                                        <StarIcon key={index} className="h-4 w-4" />
-                                    ))}
+                            <article key={story.name} className="luxury-card bg-white border-[var(--gold)]/20 shadow-md reveal-on-scroll flex flex-col justify-between p-8">
+                                <div>
+                                    <div className="mb-4 flex gap-1 text-[var(--gold)]">
+                                        {Array.from({ length: 5 }).map((_, index) => (
+                                            <StarIcon key={index} className="h-4 w-4" />
+                                        ))}
+                                    </div>
+                                    <p className="text-xs leading-6 text-[var(--muted)] font-medium">“{story.quote}”</p>
                                 </div>
-                                <p className="text-sm leading-7 text-[var(--muted)] font-medium">“{story.quote}”</p>
                                 <div className="mt-6 border-t border-[var(--line)] pt-4">
-                                    <div className="font-semibold text-[var(--text)]">{story.name}</div>
-                                    <div className="text-xs text-[var(--muted)]">{story.city}</div>
+                                    <div className="font-bold text-[var(--text)]">{story.name}</div>
+                                    <div className="text-[10px] uppercase tracking-wider text-[var(--muted)] font-bold">{story.city}</div>
                                 </div>
                             </article>
                         ))}
@@ -560,7 +800,8 @@ export default function Home() {
                 </div>
             </section>
 
-            <section id="faq" className="section relative z-10">
+            {/* FAQ */}
+            <section id="faq" className="section bg-[var(--canvas-deep)] relative z-10">
                 <FiligreeDivider />
                 <div className="site-shell">
                     <SectionLead
@@ -570,33 +811,44 @@ export default function Home() {
                         copy="The new FAQ keeps answers readable and properly spaced so the bottom of the page feels as polished as the top."
                     />
 
-                    <div className="luxury-card reveal-on-scroll mx-auto max-w-4xl">
+                    <div className="luxury-card bg-white border-[var(--gold)]/25 mx-auto max-w-4xl shadow-lg">
                         {faqs.map((faq, index) => (
                             <details key={faq.question} className="faq-item" open={index === 0}>
-                                <summary>
-                                    <span className="font-semibold text-[var(--text)]">{faq.question}</span>
+                                <summary className="py-5 font-semibold text-[var(--text)] border-b border-stone-100 hover:text-[var(--berry)] transition-colors">
+                                    <span>{faq.question}</span>
                                     <span>+</span>
                                 </summary>
-                                <p className="font-medium">{faq.answer}</p>
+                                <p className="font-medium text-sm mt-3">{faq.answer}</p>
                             </details>
                         ))}
                     </div>
                 </div>
             </section>
 
-            <section id="download" className="section pb-14 relative z-10">
+            {/* Download CTA Card (Transformed to high contrast dark luxury invitation card) */}
+            <section id="download" className="section pb-20 relative z-10 bg-[var(--canvas)]">
                 <FiligreeDivider />
                 <div className="site-shell">
-                    <div className="luxury-card surface-card--strong reveal-on-scroll overflow-hidden">
-                        <div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+                    <div className="luxury-card luxury-card--dark relative overflow-hidden py-14 px-8 md:px-12 border border-[var(--gold)]/35 shadow-2xl text-white">
+                        
+                        {/* Floating elements for visual depth */}
+                        <div className="floating-ui-tag top-[-15px] right-[40px]">
+                            <span className="text-[var(--gold)]">🛡️</span> CNIC Secured
+                        </div>
+                        <div className="floating-ui-tag bottom-[-15px] left-[60px] animation-delay-2000">
+                            <span className="text-[var(--gold)]">✨</span> 100% Private
+                        </div>
+
+                        <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center relative z-10">
                             <div>
-                                <div className="eyebrow shadow-sm">Ready to begin</div>
-                                <h2 className="mt-5 font-display text-[clamp(2.5rem,5vw,4.3rem)] font-bold leading-[0.98] tracking-[-0.045em] text-[var(--text)]">
-                                    Start your journey <span className="display-accent">today</span>
+                                <span className="eyebrow border-[var(--gold)]/40 bg-white/5 text-[var(--gold)] shadow-sm">
+                                    Ready to begin
+                                </span>
+                                <h2 className="mt-5 font-display text-[clamp(2.5rem,5vw,4rem)] font-bold leading-[0.98] tracking-[-0.045em] text-white">
+                                    Start your journey <span className="text-[var(--gold)] italic">today</span>
                                 </h2>
-                                <p className="mt-5 max-w-2xl text-base leading-8 text-[var(--muted)] font-medium">
-                                    This rebuild gives the website a proper premium structure. If you want, the same
-                                    visual language can now be carried into the admin panel and mobile app screens.
+                                <p className="mt-5 max-w-2xl text-sm leading-8 text-stone-200 font-medium">
+                                    Create your secure profile, complete CNIC verification, and begin introducing yourself to compatible members. Get the Shadii.pk app directly for your mobile device.
                                 </p>
                             </div>
 
@@ -606,9 +858,9 @@ export default function Home() {
                             </div>
                         </div>
 
-                        <div className="mt-8 flex flex-wrap gap-3 text-sm text-[var(--berry)] font-bold">
+                        <div className="mt-8 flex flex-wrap gap-3 text-xs text-[var(--gold)] font-bold relative z-10">
                             {["Free profile setup", "Secure plans", "Private-first experience"].map((item) => (
-                                <div key={item} className="rounded-full border border-[var(--gold)]/35 bg-white/70 px-4 py-2 shadow-xs">
+                                <div key={item} className="rounded-full border border-[var(--gold)]/30 bg-white/5 px-4 py-2 shadow-xs">
                                     {item}
                                 </div>
                             ))}
