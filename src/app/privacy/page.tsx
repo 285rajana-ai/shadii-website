@@ -72,7 +72,7 @@ export default function PrivacyPage() {
             <Navbar />
             
             <div className="site-shell max-w-4xl relative z-10">
-                <div className="mb-10 rounded-3xl border border-[var(--line-strong)] bg-[var(--surface-strong)] p-8 shadow-[0_20px_80px_rgba(139,38,62,0.04)] surface-card surface-card--strong">
+                <div className="mb-10 luxury-card surface-card--strong corner-ornament-card">
                     <div className="eyebrow mb-4">
                         Shadii.pk Legal
                     </div>
@@ -88,7 +88,7 @@ export default function PrivacyPage() {
 
                 <div className="space-y-6">
                     {sections.map((section) => (
-                        <section key={section.title} className="rounded-3xl border border-[var(--line)] bg-[var(--surface)] p-7 shadow-sm surface-card">
+                        <section key={section.title} className="luxury-card mb-6">
                             <h2 className="text-xl font-bold text-[var(--berry)] mb-4">{section.title}</h2>
                             <ul className="list-disc space-y-3 pl-5 text-sm leading-7 text-[var(--muted)] sm:text-base font-medium">
                                 {section.items.map((item) => (

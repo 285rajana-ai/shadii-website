@@ -30,7 +30,7 @@ export default function DeleteAccountPage() {
             <Navbar />
             
             <div className="site-shell max-w-4xl relative z-10">
-                <div className="mb-10 rounded-3xl border border-[var(--line-strong)] bg-[var(--surface-strong)] p-8 shadow-[0_20px_80px_rgba(139,38,62,0.04)] surface-card surface-card--strong">
+                <div className="mb-10 luxury-card surface-card--strong corner-ornament-card">
                     <div className="eyebrow mb-4">
                         Shadii.pk Support
                     </div>
@@ -43,7 +43,7 @@ export default function DeleteAccountPage() {
                     <p className="mt-4 text-xs text-[var(--muted)]/60">Last updated: 11 May 2026</p>
                 </div>
 
-                <section className="rounded-3xl border border-[var(--line)] bg-[var(--surface)] p-7 shadow-sm surface-card mb-6">
+                <section className="luxury-card mb-6">
                     <h2 className="text-xl font-bold text-[var(--berry)] mb-4 font-display">Delete your account in the app</h2>
                     <ol className="list-decimal space-y-3 pl-5 text-sm leading-7 text-[var(--muted)] sm:text-base font-medium">
                         {steps.map((step) => (
@@ -52,7 +52,7 @@ export default function DeleteAccountPage() {
                     </ol>
                 </section>
 
-                <section className="rounded-3xl border border-[var(--line)] bg-[var(--surface)] p-7 shadow-sm surface-card mb-6">
+                <section className="luxury-card mb-6">
                     <h2 className="text-xl font-bold text-[var(--berry)] mb-4 font-display">What may be retained</h2>
                     <ul className="list-disc space-y-3 pl-5 text-sm leading-7 text-[var(--muted)] sm:text-base font-medium">
                         {retention.map((item) => (
@@ -61,7 +61,7 @@ export default function DeleteAccountPage() {
                     </ul>
                 </section>
 
-                <section className="rounded-3xl border border-[var(--line)] bg-[var(--surface)] p-7 shadow-sm surface-card mb-6">
+                <section className="luxury-card mb-6">
                     <h2 className="text-xl font-bold text-[var(--berry)] mb-4 font-display">Need help?</h2>
                     <p className="text-sm leading-7 text-[var(--muted)] sm:text-base font-medium">
                         Contact support at <a className="text-[var(--berry)] hover:underline" href="mailto:support@shadii.pk">support@shadii.pk</a> or report abuse at <a className="text-[var(--berry)] hover:underline" href="mailto:abuse@shadii.pk">abuse@shadii.pk</a>.

@@ -182,6 +182,20 @@ const faqs = [
     },
 ];
 
+function FiligreeDivider() {
+    return (
+        <div className="w-full flex items-center justify-center gap-4 py-10 text-[var(--gold)] opacity-35 select-none pointer-events-none site-shell">
+            <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent to-[var(--gold)]" />
+            <svg className="w-16 h-6 shrink-0" viewBox="0 0 100 24" fill="currentColor">
+                <path d="M50,12 C40,4 35,4 30,12 C25,20 20,20 10,12 C5,8 2,12 0,12 C0,12 5,16 10,12 C20,4 25,4 30,12 C35,20 40,20 50,12 Z" />
+                <circle cx="50" cy="12" r="3" />
+                <path d="M50,12 C60,4 65,4 70,12 C75,20 80,20 90,12 C95,8 98,12 100,12 C100,12 95,16 90,12 C80,4 75,4 70,12 C65,20 60,20 50,12 Z" />
+            </svg>
+            <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent to-[var(--gold)]" />
+        </div>
+    );
+}
+
 function SectionLead({
     eyebrow,
     title,
@@ -211,10 +225,19 @@ function SectionLead({
 }
 
 function StoreBadge({ label, store }: { label: string; store: string }) {
+    const isApple = store === "App Store";
     return (
         <a href="#" className="store-badge transition-transform hover:-translate-y-0.5">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--berry)] text-lg text-white shadow-sm">
-                {store === "App Store" ? "A" : "P"}
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--berry)] text-white shadow-sm shrink-0">
+                {isApple ? (
+                    <svg className="h-5 w-5 fill-current" viewBox="0 0 24 24">
+                        <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 4.17c.66-.81 1.11-1.93.99-3.06-1 .04-2.21.67-2.93 1.49-.62.69-1.16 1.84-1.01 2.96 1.12.09 2.27-.58 2.95-1.39z"/>
+                    </svg>
+                ) : (
+                    <svg className="h-5 w-5 fill-current" viewBox="0 0 24 24">
+                        <path d="M5.25 3.004c-.266 0-.525.064-.757.19L14.7 12.28 5.6 21.056c.205.105.434.157.666.157.26 0 .513-.065.736-.196L19.267 13.9c.776-.448.776-1.75 0-2.198L7.002 4.57c-.502-.294-1.118-.4-1.752-.396zM3.5 4.77v14.46c0 .52.293.985.72 1.228l8.28-8.228-8.28-8.227c-.427.243-.72.708-.72 1.227z"/>
+                    </svg>
+                )}
             </div>
             <span>
                 <small className="text-[var(--muted)]">{label}</small>
@@ -246,36 +269,33 @@ export default function Home() {
 
             <section className="section pb-10 pt-36 sm:pt-40 lg:pt-44 relative z-10">
                 <div className="site-shell">
-                    <div className="grid items-center gap-10 xl:grid-cols-[1.08fr_0.92fr] xl:gap-14">
+                    <div className="grid items-center gap-12 xl:grid-cols-[1.1fr_0.9fr] xl:gap-16">
                         <div>
-                            <div className="eyebrow hero-badge shadow-sm">Pakistan&apos;s serious matrimonial platform</div>
-                            <h1 className="hero-title mt-6 max-w-4xl font-display text-[clamp(3.3rem,9vw,6.2rem)] font-bold leading-[0.94] tracking-[-0.055em] text-[var(--text)]">
-                                Find your <span className="display-accent">life partner</span> with dignity,
-                                privacy, and real intent.
+                            <div className="eyebrow hero-badge shadow-sm">Pakistan&apos;s Premium Matrimonial Platform</div>
+                            <h1 className="hero-title mt-6 max-w-4xl font-display text-[clamp(3.3rem,9vw,5.5rem)] font-bold leading-[1.0] tracking-[-0.04em] text-[var(--text)]">
+                                Find your <span className="display-accent">life partner</span> with dignity & discretion.
                             </h1>
-                            <p className="hero-copy mt-6 max-w-2xl text-base leading-8 text-[var(--muted)] sm:text-lg">
-                                A full rebuild for the Shadii.pk homepage means a calmer experience from the first
-                                screen: better spacing, clearer hierarchy, stronger trust signals, and a design that
-                                feels premium without feeling noisy.
+                            <p className="hero-copy mt-6 max-w-2xl text-base leading-8 text-[var(--muted)] sm:text-lg font-medium">
+                                Shadii.pk is built for serious individuals and families seeking meaningful matrimonial introductions. Experience a calmer matchmaking process with verified profiles, complete photo privacy, and zero social swiping clutter.
                             </p>
 
                             <div className="hero-actions mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                                <a href="#download" className="btn-primary w-full sm:w-auto">
+                                <a href="#download" className="btn-primary w-full sm:w-auto px-7">
                                     Download App
                                     <ArrowRightIcon className="h-5 w-5" />
                                 </a>
-                                <a href="#about" className="btn-secondary w-full sm:w-auto">
+                                <a href="#about" className="btn-secondary w-full sm:w-auto px-7">
                                     Explore Features
                                 </a>
                             </div>
 
                             <div className="hero-trust mt-8 flex flex-wrap gap-3 text-sm text-[var(--muted)] font-medium">
                                 {[
-                                    "CNIC + selfie verification",
-                                    "Private photos & safe chat",
-                                    "Built for families as well",
+                                    "CNIC + Selfie Verification",
+                                    "Private Photos & Safe Chat",
+                                    "Family-Backed Introductions",
                                 ].map((item) => (
-                                    <div key={item} className="inline-flex items-center gap-2 rounded-full border border-[var(--line-strong)] bg-white/60 px-4 py-2 shadow-sm">
+                                    <div key={item} className="inline-flex items-center gap-2 rounded-full border border-[var(--line-strong)] bg-white/70 px-4 py-2.5 shadow-sm">
                                         <CheckCircleIcon className="h-4 w-4 text-[var(--berry)]" />
                                         {item}
                                     </div>
@@ -283,80 +303,73 @@ export default function Home() {
                             </div>
                         </div>
 
-                        <div className="hero-showcase glow-accent surface-card surface-card--strong overflow-hidden p-5 sm:p-6">
-                            <div className="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(14rem,0.9fr)]">
-                                <div className="floating-panel rounded-[1.5rem] border border-[var(--line)] bg-white/90 p-5 shadow-sm">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--berry)]">
-                                                Today&apos;s compatibility board
-                                            </div>
-                                            <div className="mt-3 font-display text-4xl font-bold text-[var(--text)]">92%</div>
+                        <div className="hero-showcase glow-accent flex items-center justify-center py-6 select-none pointer-events-none">
+                            <div className="phone-frame">
+                                <div className="phone-notch" />
+                                <div className="phone-content text-left">
+                                    {/* App Mockup Header */}
+                                    <div className="flex items-center justify-between border-b border-[var(--line)] pb-3 mb-4">
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="font-display font-bold text-xs text-[var(--berry)]">Shadii.pk</span>
+                                            <span className="rounded-full bg-[var(--gold)]/10 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-[var(--gold)] border border-[var(--gold)]/20">VIP</span>
                                         </div>
-                                        <div className="rounded-full border border-[var(--gold)]/30 bg-[var(--gold)]/10 px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--berry)]">
-                                            High fit
+                                        <div className="flex items-center gap-1">
+                                            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                                            <span className="text-[9px] uppercase tracking-widest text-[var(--muted)] font-bold">Safe Mode</span>
                                         </div>
                                     </div>
 
-                                    <div className="mt-6 space-y-3">
-                                        {[
-                                            ["Education", "Aligned"],
-                                            ["Family intent", "Strong"],
-                                            ["City preference", "Matched"],
-                                        ].map(([label, value]) => (
-                                            <div key={label} className="flex items-center justify-between rounded-2xl border border-[var(--line)] bg-white/50 px-4 py-3 text-sm">
-                                                <span className="text-[var(--muted)]">{label}</span>
-                                                <span className="font-semibold text-[var(--text)]">{value}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    <div className="mt-5 rounded-[1.3rem] bg-[linear-gradient(135deg,rgba(194,155,87,0.1),rgba(139,38,62,0.06))] border border-[var(--line-strong)] px-4 py-3 text-sm leading-7 text-[var(--muted)]">
-                                        Daily suggestions are presented with clarity, trust, and enough context for a
-                                        serious decision.
-                                    </div>
-                                </div>
-
-                                <div className="grid gap-4">
-                                    <div className="floating-panel floating-panel-delay rounded-[1.5rem] border border-[var(--line)] bg-white/80 p-4 shadow-sm">
-                                        <div className="flex items-center gap-3">
-                                            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(145deg,var(--berry),var(--gold))] text-sm font-bold text-white shadow-md">
-                                                M
-                                            </div>
-                                            <div>
-                                                <div className="flex items-center gap-2 text-sm font-semibold text-[var(--text)]">
-                                                    Mahnoor, 25
-                                                    <CheckBadgeIcon className="h-4 w-4 text-[var(--berry)]" />
+                                    {/* Scrollable mockup content */}
+                                    <div className="space-y-4">
+                                        {/* Mockup Profile */}
+                                        <div className="rounded-2xl border border-[var(--line-strong)] bg-white p-4 shadow-sm relative overflow-hidden">
+                                            <div className="absolute top-0 right-0 h-10 w-10 bg-gradient-to-bl from-[var(--gold)]/10 to-transparent pointer-events-none" />
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[linear-gradient(135deg,#7a1c31,#c09950)] text-sm font-bold text-white shadow-sm">
+                                                    M
                                                 </div>
-                                                <div className="text-xs text-[var(--muted)]">Lahore · Doctor · Family involved</div>
+                                                <div>
+                                                    <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--text)]">
+                                                        Mahnoor, 25
+                                                        <CheckBadgeIcon className="h-4 w-4 text-[var(--berry)]" />
+                                                    </div>
+                                                    <div className="text-[10px] text-[var(--muted)] font-medium">Lahore · MBBS Doctor</div>
+                                                </div>
+                                            </div>
+                                            <div className="mt-3.5 rounded-xl bg-[var(--canvas-deep)] border border-[var(--line-strong)] px-3 py-2 text-[10px] leading-relaxed text-[var(--muted)] font-medium">
+                                                🔒 Photo blurred for privacy. Verified CNIC. Family contact sharing enabled.
                                             </div>
                                         </div>
-                                        <div className="mt-4 rounded-2xl border border-[var(--gold)]/20 bg-[var(--canvas-deep)] px-3 py-2 text-xs text-[var(--muted)] font-medium">
-                                            Photos private. Profile verified. First conversation protected.
-                                        </div>
-                                    </div>
 
-                                    <div className="rounded-[1.5rem] border border-[var(--line)] bg-white/80 p-4 shadow-sm">
-                                        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--berry)]">
-                                            Safe messaging
+                                        {/* Mockup Match Meter */}
+                                        <div className="rounded-2xl border border-[var(--line)] bg-white/90 p-4 shadow-sm">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--berry)]">Match Compatibility</span>
+                                                <span className="rounded-full bg-emerald-50 border border-emerald-200/50 px-2 py-0.5 text-[9px] font-bold text-emerald-800">92% Match</span>
+                                            </div>
+                                            <div className="mt-3.5 space-y-2 text-[10px]">
+                                                <div className="flex justify-between text-[var(--muted)] font-medium">
+                                                    <span>Sect & Values</span>
+                                                    <span className="font-bold text-[var(--text)]">Matched</span>
+                                                </div>
+                                                <div className="flex justify-between text-[var(--muted)] font-medium">
+                                                    <span>Education Level</span>
+                                                    <span className="font-bold text-[var(--text)]">Aligned</span>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className="mt-4 space-y-2">
-                                            <div className="ml-auto max-w-[85%] rounded-2xl rounded-br-md bg-[var(--berry)] px-3 py-2 text-xs font-semibold text-white shadow-sm">
-                                                Assalam o Alaikum
-                                            </div>
-                                            <div className="max-w-[85%] rounded-2xl rounded-bl-md bg-[var(--canvas-deep)] border border-[var(--line)] px-3 py-2 text-xs text-[var(--text)]">
-                                                Walaikum Assalam, glad to connect.
-                                            </div>
-                                            <div className="max-w-[85%] rounded-2xl rounded-bl-md bg-[var(--canvas-deep)] border border-[var(--line)] px-3 py-2 text-xs text-[var(--text)]">
-                                                Let&apos;s proceed respectfully and involve family when ready.
-                                            </div>
-                                        </div>
-                                    </div>
 
-                                    <div className="rounded-[1.5rem] border border-[var(--line-strong)] bg-white/95 p-4 shadow-sm">
-                                        <div className="text-sm font-semibold text-[var(--text)]">A calmer first impression</div>
-                                        <div className="mt-2 text-sm leading-7 text-[var(--muted)]">
-                                            Premium feel, better spacing, stronger content hierarchy, and no broken card stacking.
+                                        {/* Mockup Chat Screen */}
+                                        <div className="rounded-2xl border border-[var(--line)] bg-white/90 p-4 shadow-sm">
+                                            <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--berry)]">Dignified Chat</span>
+                                            <div className="mt-3 space-y-2">
+                                                <div className="ml-auto max-w-[85%] rounded-2xl rounded-br-none bg-[var(--berry)] p-2.5 text-[10px] font-medium text-white shadow-xs">
+                                                    Assalam o Alaikum, interest request sent.
+                                                </div>
+                                                <div className="max-w-[85%] rounded-2xl rounded-bl-none bg-[var(--canvas-deep)] border border-[var(--line)] p-2.5 text-[10px] text-[var(--text)] leading-relaxed font-medium shadow-xs">
+                                                    Walaikum Assalam, accepted. Let&apos;s involve family.
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -377,7 +390,8 @@ export default function Home() {
                 </div>
             </section>
 
-            <section id="about" className="section section-rule relative z-10">
+            <section id="about" className="section relative z-10">
+                <FiligreeDivider />
                 <div className="site-shell">
                     <SectionLead
                         eyebrow="Why this version is better"
@@ -386,11 +400,11 @@ export default function Home() {
                         copy="Every section now follows a cleaner layout rhythm, with stronger hierarchy, balanced grids, and components that stay in place instead of fighting each other."
                     />
 
-                    <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                    <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
                         {pillars.map((item) => {
                             const Icon = item.icon;
                             return (
-                                <article key={item.title} className="surface-card reveal-on-scroll p-6 sm:p-7">
+                                <article key={item.title} className="luxury-card corner-ornament-card reveal-on-scroll">
                                     <div className="flex items-start justify-between gap-4">
                                         <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[linear-gradient(145deg,rgba(194,155,87,0.15),rgba(139,38,62,0.08))] text-[var(--berry)] border border-[var(--line-strong)]">
                                             <Icon className="h-6 w-6" />
@@ -402,7 +416,7 @@ export default function Home() {
                                     <h3 className="mt-6 font-display text-[1.7rem] font-bold leading-tight text-[var(--text)]">
                                         {item.title}
                                     </h3>
-                                    <p className="mt-3 text-sm leading-7 text-[var(--muted)]">{item.text}</p>
+                                    <p className="mt-3 text-sm leading-7 text-[var(--muted)] font-medium">{item.text}</p>
                                 </article>
                             );
                         })}
@@ -410,7 +424,8 @@ export default function Home() {
                 </div>
             </section>
 
-            <section id="journey" className="section section-rule relative z-10">
+            <section id="journey" className="section relative z-10">
+                <FiligreeDivider />
                 <div className="site-shell">
                     <SectionLead
                         eyebrow="Simple journey"
@@ -419,9 +434,9 @@ export default function Home() {
                         copy="The rebuild keeps the flow straightforward. Instead of a crowded landing page, each section now earns its place and leads naturally into the next one."
                     />
 
-                    <div className="grid gap-5 lg:grid-cols-2">
+                    <div className="grid gap-6 lg:grid-cols-2">
                         {steps.map((step) => (
-                            <article key={step.number} className="surface-card reveal-on-scroll p-6 sm:p-8">
+                            <article key={step.number} className="luxury-card reveal-on-scroll">
                                 <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
                                     <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-[var(--line-strong)] bg-white/60 font-display text-xl font-bold text-[var(--berry)] shadow-sm">
                                         {step.number}
@@ -430,7 +445,7 @@ export default function Home() {
                                         <h3 className="font-display text-[1.85rem] font-bold leading-tight text-[var(--text)]">
                                             {step.title}
                                         </h3>
-                                        <p className="mt-3 text-sm leading-7 text-[var(--muted)]">{step.text}</p>
+                                        <p className="mt-3 text-sm leading-7 text-[var(--muted)] font-medium">{step.text}</p>
                                     </div>
                                 </div>
                             </article>
@@ -439,7 +454,8 @@ export default function Home() {
                 </div>
             </section>
 
-            <section id="plans" className="section section-rule relative z-10">
+            <section id="plans" className="section relative z-10">
+                <FiligreeDivider />
                 <div className="site-shell">
                     <SectionLead
                         eyebrow="Straight pricing"
@@ -448,12 +464,12 @@ export default function Home() {
                         copy="No clutter, no awkward pricing mess. The plan section now reads clearly and keeps the premium option visibly highlighted without breaking the layout."
                     />
 
-                    <div className="grid gap-5 xl:grid-cols-3">
+                    <div className="grid gap-6 xl:grid-cols-3">
                         {planCards.map((plan) => (
                             <article
                                 key={plan.name}
                                 className={[
-                                    "surface-card reveal-on-scroll flex h-full flex-col p-6 sm:p-8",
+                                    "luxury-card reveal-on-scroll flex h-full flex-col",
                                     plan.featured ? "surface-card--strong" : "",
                                 ].join(" ")}
                             >
@@ -473,7 +489,7 @@ export default function Home() {
                                     </span>
                                 </div>
                                 <div className="mt-2 text-sm text-[var(--muted)] font-medium">for {plan.duration}</div>
-                                <p className="mt-5 text-sm leading-7 text-[var(--muted)]">{plan.description}</p>
+                                <p className="mt-5 text-sm leading-7 text-[var(--muted)] font-medium">{plan.description}</p>
 
                                 <div className="my-6 h-px bg-[var(--line-strong)]" />
 
@@ -495,7 +511,8 @@ export default function Home() {
                 </div>
             </section>
 
-            <section id="stories" className="section section-rule relative z-10">
+            <section id="stories" className="section relative z-10">
+                <FiligreeDivider />
                 <div className="site-shell">
                     <SectionLead
                         eyebrow="Real outcomes"
@@ -504,8 +521,8 @@ export default function Home() {
                         copy="A decent matrimonial homepage should not just look pretty. It should build enough trust that users can imagine a respectful next step."
                     />
 
-                    <div className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr_0.8fr]">
-                        <article className="surface-card surface-card--strong reveal-on-scroll p-7 sm:p-10">
+                    <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr_0.8fr]">
+                        <article className="luxury-card surface-card--strong reveal-on-scroll">
                             <div className="mb-5 flex gap-1 text-[var(--gold)]">
                                 {Array.from({ length: 5 }).map((_, index) => (
                                     <StarIcon key={index} className="h-5 w-5" />
@@ -526,7 +543,7 @@ export default function Home() {
                         </article>
 
                         {testimonials.map((story) => (
-                            <article key={story.name} className="surface-card reveal-on-scroll p-6">
+                            <article key={story.name} className="luxury-card reveal-on-scroll">
                                 <div className="mb-4 flex gap-1 text-[var(--gold)]">
                                     {Array.from({ length: 5 }).map((_, index) => (
                                         <StarIcon key={index} className="h-4 w-4" />
@@ -543,7 +560,8 @@ export default function Home() {
                 </div>
             </section>
 
-            <section id="faq" className="section section-rule relative z-10">
+            <section id="faq" className="section relative z-10">
+                <FiligreeDivider />
                 <div className="site-shell">
                     <SectionLead
                         eyebrow="Questions"
@@ -552,30 +570,31 @@ export default function Home() {
                         copy="The new FAQ keeps answers readable and properly spaced so the bottom of the page feels as polished as the top."
                     />
 
-                    <div className="surface-card reveal-on-scroll mx-auto max-w-4xl p-5 sm:p-8">
+                    <div className="luxury-card reveal-on-scroll mx-auto max-w-4xl">
                         {faqs.map((faq, index) => (
                             <details key={faq.question} className="faq-item" open={index === 0}>
                                 <summary>
-                                    <span>{faq.question}</span>
+                                    <span className="font-semibold text-[var(--text)]">{faq.question}</span>
                                     <span>+</span>
                                 </summary>
-                                <p>{faq.answer}</p>
+                                <p className="font-medium">{faq.answer}</p>
                             </details>
                         ))}
                     </div>
                 </div>
             </section>
 
-            <section id="download" className="section section-rule pb-14 relative z-10">
+            <section id="download" className="section pb-14 relative z-10">
+                <FiligreeDivider />
                 <div className="site-shell">
-                    <div className="surface-card surface-card--strong reveal-on-scroll overflow-hidden px-6 py-8 sm:px-10 sm:py-10 lg:px-14 lg:py-14">
+                    <div className="luxury-card surface-card--strong reveal-on-scroll overflow-hidden">
                         <div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
                             <div>
                                 <div className="eyebrow shadow-sm">Ready to begin</div>
                                 <h2 className="mt-5 font-display text-[clamp(2.5rem,5vw,4.3rem)] font-bold leading-[0.98] tracking-[-0.045em] text-[var(--text)]">
                                     Start your journey <span className="display-accent">today</span>
                                 </h2>
-                                <p className="mt-5 max-w-2xl text-base leading-8 text-[var(--muted)]">
+                                <p className="mt-5 max-w-2xl text-base leading-8 text-[var(--muted)] font-medium">
                                     This rebuild gives the website a proper premium structure. If you want, the same
                                     visual language can now be carried into the admin panel and mobile app screens.
                                 </p>
@@ -587,9 +606,9 @@ export default function Home() {
                             </div>
                         </div>
 
-                        <div className="mt-8 flex flex-wrap gap-3 text-sm text-[var(--muted)] font-medium">
+                        <div className="mt-8 flex flex-wrap gap-3 text-sm text-[var(--berry)] font-bold">
                             {["Free profile setup", "Secure plans", "Private-first experience"].map((item) => (
-                                <div key={item} className="rounded-full border border-[var(--line-strong)] bg-white/60 px-4 py-2 shadow-sm">
+                                <div key={item} className="rounded-full border border-[var(--gold)]/35 bg-white/70 px-4 py-2 shadow-xs">
                                     {item}
                                 </div>
                             ))}
