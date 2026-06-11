@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Navbar } from "@/components/layout/Navbar";
+import { Footer } from "@/components/layout/Footer";
 
 export const metadata: Metadata = {
     title: "Account Deletion | Shadii.pk",
@@ -24,55 +26,59 @@ const retention = [
 
 export default function DeleteAccountPage() {
     return (
-        <main className="min-h-screen bg-[#0A0A0B] px-6 py-14 text-white sm:px-8 lg:px-12">
-            <div className="mx-auto max-w-4xl">
-                <div className="mb-10 rounded-3xl border border-white/10 bg-white/[0.04] p-8 shadow-[0_20px_80px_rgba(0,0,0,0.28)]">
-                    <div className="mb-4 text-sm font-semibold uppercase tracking-[0.28em] text-[#D4AF37]">
+        <main className="page-shell min-h-screen pt-32 pb-10">
+            <Navbar />
+            
+            <div className="site-shell max-w-4xl relative z-10">
+                <div className="mb-10 rounded-3xl border border-[var(--line-strong)] bg-[var(--surface-strong)] p-8 shadow-[0_20px_80px_rgba(139,38,62,0.04)] surface-card surface-card--strong">
+                    <div className="eyebrow mb-4">
                         Shadii.pk Support
                     </div>
-                    <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl">
+                    <h1 className="font-display text-4xl font-bold tracking-tight text-[var(--text)] sm:text-5xl">
                         Account Deletion
                     </h1>
-                    <p className="mt-4 max-w-3xl text-sm leading-7 text-white/72 sm:text-base">
+                    <p className="mt-4 max-w-3xl text-sm leading-7 text-[var(--muted)] sm:text-base">
                         You can delete your Shadii.pk account directly from the mobile app. This page exists for app store compliance and user support reference.
                     </p>
-                    <p className="mt-4 text-sm text-white/50">Last updated: 11 May 2026</p>
+                    <p className="mt-4 text-xs text-[var(--muted)]/60">Last updated: 11 May 2026</p>
                 </div>
 
-                <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-7">
-                    <h2 className="text-2xl font-semibold text-white">Delete your account in the app</h2>
-                    <ol className="mt-4 list-decimal space-y-3 pl-5 text-sm leading-7 text-white/72 sm:text-base">
+                <section className="rounded-3xl border border-[var(--line)] bg-[var(--surface)] p-7 shadow-sm surface-card mb-6">
+                    <h2 className="text-xl font-bold text-[var(--berry)] mb-4 font-display">Delete your account in the app</h2>
+                    <ol className="list-decimal space-y-3 pl-5 text-sm leading-7 text-[var(--muted)] sm:text-base font-medium">
                         {steps.map((step) => (
                             <li key={step}>{step}</li>
                         ))}
                     </ol>
                 </section>
 
-                <section className="mt-6 rounded-3xl border border-white/10 bg-white/[0.03] p-7">
-                    <h2 className="text-2xl font-semibold text-white">What may be retained</h2>
-                    <ul className="mt-4 list-disc space-y-3 pl-5 text-sm leading-7 text-white/72 sm:text-base">
+                <section className="rounded-3xl border border-[var(--line)] bg-[var(--surface)] p-7 shadow-sm surface-card mb-6">
+                    <h2 className="text-xl font-bold text-[var(--berry)] mb-4 font-display">What may be retained</h2>
+                    <ul className="list-disc space-y-3 pl-5 text-sm leading-7 text-[var(--muted)] sm:text-base font-medium">
                         {retention.map((item) => (
                             <li key={item}>{item}</li>
                         ))}
                     </ul>
                 </section>
 
-                <section className="mt-6 rounded-3xl border border-white/10 bg-white/[0.03] p-7">
-                    <h2 className="text-2xl font-semibold text-white">Need help?</h2>
-                    <p className="mt-4 text-sm leading-7 text-white/72 sm:text-base">
-                        Contact support at <a className="text-[#D4AF37]" href="mailto:support@shadii.pk">support@shadii.pk</a> or report abuse at <a className="text-[#D4AF37]" href="mailto:abuse@shadii.pk">abuse@shadii.pk</a>.
+                <section className="rounded-3xl border border-[var(--line)] bg-[var(--surface)] p-7 shadow-sm surface-card mb-6">
+                    <h2 className="text-xl font-bold text-[var(--berry)] mb-4 font-display">Need help?</h2>
+                    <p className="text-sm leading-7 text-[var(--muted)] sm:text-base font-medium">
+                        Contact support at <a className="text-[var(--berry)] hover:underline" href="mailto:support@shadii.pk">support@shadii.pk</a> or report abuse at <a className="text-[var(--berry)] hover:underline" href="mailto:abuse@shadii.pk">abuse@shadii.pk</a>.
                     </p>
                 </section>
 
-                <div className="mt-10 flex flex-wrap gap-4 text-sm text-white/72">
-                    <Link href="/privacy" className="rounded-full border border-white/12 px-5 py-3 transition hover:border-[#D4AF37]/50 hover:text-white">
+                <div className="mt-10 flex flex-wrap gap-4 text-sm">
+                    <Link href="/privacy" className="btn-secondary px-5 py-3 text-sm">
                         Privacy Policy
                     </Link>
-                    <Link href="/terms" className="rounded-full border border-white/12 px-5 py-3 transition hover:border-[#D4AF37]/50 hover:text-white">
+                    <Link href="/terms" className="btn-secondary px-5 py-3 text-sm">
                         Terms of Service
                     </Link>
                 </div>
             </div>
+            
+            <Footer />
         </main>
     );
 }
