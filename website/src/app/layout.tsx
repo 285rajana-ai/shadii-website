@@ -49,7 +49,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0A0A0B",
+  themeColor: "#fdfbf7",
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
@@ -65,7 +65,7 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} ${playfair.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-[#0A0A0B] text-white">
+      <body className="min-h-full flex flex-col bg-[var(--canvas)] text-[var(--text)]">
         {children}
       </body>
     </html>

@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
 import colors from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
-import { API_BASE_URL } from '../../utils/constants';
+import { API_BASE_URL, CAST_OPTIONS, EDUCATION_LEVELS, PAKISTAN_CITIES } from '../../utils/constants';
 
 const FILTERS = [
   { id: 'all', label: 'All', icon: 'account-group-outline' },

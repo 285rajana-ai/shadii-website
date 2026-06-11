@@ -13,10 +13,10 @@ export function BrandMark({ compact = false }: BrandMarkProps) {
             </div>
             {!compact && (
                 <span className="flex flex-col leading-none">
-                    <span className="font-display text-[1.15rem] font-bold tracking-tight text-white">
-                        Shadii<span className="text-[#e0b562]">.pk</span>
+                    <span className="font-display text-[1.15rem] font-bold tracking-tight text-[var(--text)]">
+                        Shadii<span className="text-[var(--gold)]">.pk</span>
                     </span>
-                    <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.26em] text-white/48">
+                    <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.26em] text-[var(--muted)]">
                         Serious Matchmaking
                     </span>
                 </span>

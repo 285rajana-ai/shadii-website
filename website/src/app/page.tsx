@@ -205,7 +205,7 @@ function SectionLead({
                     </>
                 ) : null}
             </h2>
-            <p className="section-copy">{copy}</p>
+            <p className="section-copy text-[var(--muted)]">{copy}</p>
         </div>
     );
 }
@@ -213,12 +213,12 @@ function SectionLead({
 function StoreBadge({ label, store }: { label: string; store: string }) {
     return (
         <a href="#" className="store-badge transition-transform hover:-translate-y-0.5">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/[0.08] text-lg text-white">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--berry)] text-lg text-white shadow-sm">
                 {store === "App Store" ? "A" : "P"}
             </div>
             <span>
-                <small>{label}</small>
-                <strong>{store}</strong>
+                <small className="text-[var(--muted)]">{label}</small>
+                <strong className="text-[var(--text)]">{store}</strong>
             </span>
         </a>
     );
@@ -229,16 +229,31 @@ export default function Home() {
         <main className="page-shell overflow-x-hidden">
             <Navbar />
 
-            <section className="section pb-10 pt-36 sm:pt-40 lg:pt-44">
+            {/* Video Background Layer */}
+            <div className="absolute top-0 left-0 right-0 h-[120vh] z-0 overflow-hidden pointer-events-none">
+                <video
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    className="h-full w-full object-cover opacity-[0.12] mix-blend-multiply"
+                    style={{ filter: "sepia(30%) saturate(140%)" }}
+                >
+                    <source src="https://videos.pexels.com/video-files/7525287/7525287-uhd_2560_1440_24fps.mp4" type="video/mp4" />
+                </video>
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[var(--canvas)]/50 to-[var(--canvas-deep)]" />
+            </div>
+
+            <section className="section pb-10 pt-36 sm:pt-40 lg:pt-44 relative z-10">
                 <div className="site-shell">
                     <div className="grid items-center gap-10 xl:grid-cols-[1.08fr_0.92fr] xl:gap-14">
                         <div>
-                            <div className="eyebrow hero-badge">Pakistan&apos;s serious matrimonial platform</div>
-                            <h1 className="hero-title mt-6 max-w-4xl font-display text-[clamp(3.3rem,9vw,6.2rem)] font-bold leading-[0.94] tracking-[-0.055em] text-white">
+                            <div className="eyebrow hero-badge shadow-sm">Pakistan&apos;s serious matrimonial platform</div>
+                            <h1 className="hero-title mt-6 max-w-4xl font-display text-[clamp(3.3rem,9vw,6.2rem)] font-bold leading-[0.94] tracking-[-0.055em] text-[var(--text)]">
                                 Find your <span className="display-accent">life partner</span> with dignity,
                                 privacy, and real intent.
                             </h1>
-                            <p className="hero-copy mt-6 max-w-2xl text-base leading-8 text-white/68 sm:text-lg">
+                            <p className="hero-copy mt-6 max-w-2xl text-base leading-8 text-[var(--muted)] sm:text-lg">
                                 A full rebuild for the Shadii.pk homepage means a calmer experience from the first
                                 screen: better spacing, clearer hierarchy, stronger trust signals, and a design that
                                 feels premium without feeling noisy.
@@ -254,14 +269,14 @@ export default function Home() {
                                 </a>
                             </div>
 
-                            <div className="hero-trust mt-8 flex flex-wrap gap-3 text-sm text-white/58">
+                            <div className="hero-trust mt-8 flex flex-wrap gap-3 text-sm text-[var(--muted)] font-medium">
                                 {[
                                     "CNIC + selfie verification",
                                     "Private photos & safe chat",
                                     "Built for families as well",
                                 ].map((item) => (
-                                    <div key={item} className="inline-flex items-center gap-2 rounded-full border border-white/10 px-4 py-2">
-                                        <CheckCircleIcon className="h-4 w-4 text-[#e0b562]" />
+                                    <div key={item} className="inline-flex items-center gap-2 rounded-full border border-[var(--line-strong)] bg-white/60 px-4 py-2 shadow-sm">
+                                        <CheckCircleIcon className="h-4 w-4 text-[var(--berry)]" />
                                         {item}
                                     </div>
                                 ))}
@@ -270,15 +285,15 @@ export default function Home() {
 
                         <div className="hero-showcase glow-accent surface-card surface-card--strong overflow-hidden p-5 sm:p-6">
                             <div className="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(14rem,0.9fr)]">
-                                <div className="floating-panel rounded-[1.5rem] border border-white/10 bg-[#1b1216] p-5">
+                                <div className="floating-panel rounded-[1.5rem] border border-[var(--line)] bg-white/90 p-5 shadow-sm">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#f2dcc0]/70">
+                                            <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--berry)]">
                                                 Today&apos;s compatibility board
                                             </div>
-                                            <div className="mt-3 font-display text-4xl font-bold text-white">92%</div>
+                                            <div className="mt-3 font-display text-4xl font-bold text-[var(--text)]">92%</div>
                                         </div>
-                                        <div className="rounded-full border border-[#e0b562]/30 bg-[#e0b562]/10 px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-[#e0b562]">
+                                        <div className="rounded-full border border-[var(--gold)]/30 bg-[var(--gold)]/10 px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--berry)]">
                                             High fit
                                         </div>
                                     </div>
@@ -289,58 +304,58 @@ export default function Home() {
                                             ["Family intent", "Strong"],
                                             ["City preference", "Matched"],
                                         ].map(([label, value]) => (
-                                            <div key={label} className="flex items-center justify-between rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3 text-sm">
-                                                <span className="text-white/58">{label}</span>
-                                                <span className="font-semibold text-white">{value}</span>
+                                            <div key={label} className="flex items-center justify-between rounded-2xl border border-[var(--line)] bg-white/50 px-4 py-3 text-sm">
+                                                <span className="text-[var(--muted)]">{label}</span>
+                                                <span className="font-semibold text-[var(--text)]">{value}</span>
                                             </div>
                                         ))}
                                     </div>
 
-                                    <div className="mt-5 rounded-[1.3rem] bg-[linear-gradient(135deg,rgba(224,181,98,0.18),rgba(122,38,58,0.15))] px-4 py-3 text-sm leading-7 text-white/70">
+                                    <div className="mt-5 rounded-[1.3rem] bg-[linear-gradient(135deg,rgba(194,155,87,0.1),rgba(139,38,62,0.06))] border border-[var(--line-strong)] px-4 py-3 text-sm leading-7 text-[var(--muted)]">
                                         Daily suggestions are presented with clarity, trust, and enough context for a
                                         serious decision.
                                     </div>
                                 </div>
 
                                 <div className="grid gap-4">
-                                    <div className="floating-panel floating-panel-delay rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-4">
+                                    <div className="floating-panel floating-panel-delay rounded-[1.5rem] border border-[var(--line)] bg-white/80 p-4 shadow-sm">
                                         <div className="flex items-center gap-3">
-                                            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(145deg,#7a263a,#e0b562)] text-sm font-bold text-white">
+                                            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(145deg,var(--berry),var(--gold))] text-sm font-bold text-white shadow-md">
                                                 M
                                             </div>
                                             <div>
-                                                <div className="flex items-center gap-2 text-sm font-semibold text-white">
+                                                <div className="flex items-center gap-2 text-sm font-semibold text-[var(--text)]">
                                                     Mahnoor, 25
-                                                    <CheckBadgeIcon className="h-4 w-4 text-[#e0b562]" />
+                                                    <CheckBadgeIcon className="h-4 w-4 text-[var(--berry)]" />
                                                 </div>
-                                                <div className="text-xs text-white/52">Lahore · Doctor · Family involved</div>
+                                                <div className="text-xs text-[var(--muted)]">Lahore · Doctor · Family involved</div>
                                             </div>
                                         </div>
-                                        <div className="mt-4 rounded-2xl border border-[#e0b562]/20 bg-[#e0b562]/8 px-3 py-2 text-xs text-[#f2dcc0]">
+                                        <div className="mt-4 rounded-2xl border border-[var(--gold)]/20 bg-[var(--canvas-deep)] px-3 py-2 text-xs text-[var(--muted)] font-medium">
                                             Photos private. Profile verified. First conversation protected.
                                         </div>
                                     </div>
 
-                                    <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-4">
-                                        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#e0b562]">
+                                    <div className="rounded-[1.5rem] border border-[var(--line)] bg-white/80 p-4 shadow-sm">
+                                        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--berry)]">
                                             Safe messaging
                                         </div>
                                         <div className="mt-4 space-y-2">
-                                            <div className="ml-auto max-w-[85%] rounded-2xl rounded-br-md bg-[#e0b562] px-3 py-2 text-xs font-semibold text-[#2a1712]">
+                                            <div className="ml-auto max-w-[85%] rounded-2xl rounded-br-md bg-[var(--berry)] px-3 py-2 text-xs font-semibold text-white shadow-sm">
                                                 Assalam o Alaikum
                                             </div>
-                                            <div className="max-w-[85%] rounded-2xl rounded-bl-md bg-white/[0.07] px-3 py-2 text-xs text-white/80">
+                                            <div className="max-w-[85%] rounded-2xl rounded-bl-md bg-[var(--canvas-deep)] border border-[var(--line)] px-3 py-2 text-xs text-[var(--text)]">
                                                 Walaikum Assalam, glad to connect.
                                             </div>
-                                            <div className="max-w-[85%] rounded-2xl rounded-bl-md bg-white/[0.07] px-3 py-2 text-xs text-white/80">
+                                            <div className="max-w-[85%] rounded-2xl rounded-bl-md bg-[var(--canvas-deep)] border border-[var(--line)] px-3 py-2 text-xs text-[var(--text)]">
                                                 Let&apos;s proceed respectfully and involve family when ready.
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="rounded-[1.5rem] border border-white/10 bg-[#1a1215] p-4">
-                                        <div className="text-sm font-semibold text-white">A calmer first impression</div>
-                                        <div className="mt-2 text-sm leading-7 text-white/56">
+                                    <div className="rounded-[1.5rem] border border-[var(--line-strong)] bg-white/95 p-4 shadow-sm">
+                                        <div className="text-sm font-semibold text-[var(--text)]">A calmer first impression</div>
+                                        <div className="mt-2 text-sm leading-7 text-[var(--muted)]">
                                             Premium feel, better spacing, stronger content hierarchy, and no broken card stacking.
                                         </div>
                                     </div>
@@ -349,20 +364,20 @@ export default function Home() {
                         </div>
                     </div>
 
-                    <div className="hero-metrics mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                    <div className="hero-metrics mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4 relative z-10">
                         {heroStats.map((item) => (
                             <div key={item.label} className="metric-tile">
-                                <div className="font-display text-4xl font-bold tracking-[-0.04em] text-white">
+                                <div className="font-display text-4xl font-bold tracking-[-0.04em] text-[var(--berry)]">
                                     {item.value}
                                 </div>
-                                <div className="mt-2 text-sm text-white/56">{item.label}</div>
+                                <div className="mt-2 text-sm text-[var(--muted)] font-medium">{item.label}</div>
                             </div>
                         ))}
                     </div>
                 </div>
             </section>
 
-            <section id="about" className="section section-rule">
+            <section id="about" className="section section-rule relative z-10">
                 <div className="site-shell">
                     <SectionLead
                         eyebrow="Why this version is better"
@@ -377,17 +392,17 @@ export default function Home() {
                             return (
                                 <article key={item.title} className="surface-card reveal-on-scroll p-6 sm:p-7">
                                     <div className="flex items-start justify-between gap-4">
-                                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[linear-gradient(145deg,rgba(122,38,58,0.9),rgba(224,181,98,0.24))] text-[#f2dcc0]">
+                                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[linear-gradient(145deg,rgba(194,155,87,0.15),rgba(139,38,62,0.08))] text-[var(--berry)] border border-[var(--line-strong)]">
                                             <Icon className="h-6 w-6" />
                                         </div>
-                                        <div className="rounded-full border border-[#e0b562]/20 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[#e0b562]">
+                                        <div className="rounded-full border border-[var(--line-strong)] bg-white px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--berry)]">
                                             {item.note}
                                         </div>
                                     </div>
-                                    <h3 className="mt-6 font-display text-[1.7rem] font-bold leading-tight text-white">
+                                    <h3 className="mt-6 font-display text-[1.7rem] font-bold leading-tight text-[var(--text)]">
                                         {item.title}
                                     </h3>
-                                    <p className="mt-3 text-sm leading-7 text-white/58">{item.text}</p>
+                                    <p className="mt-3 text-sm leading-7 text-[var(--muted)]">{item.text}</p>
                                 </article>
                             );
                         })}
@@ -395,7 +410,7 @@ export default function Home() {
                 </div>
             </section>
 
-            <section id="journey" className="section section-rule">
+            <section id="journey" className="section section-rule relative z-10">
                 <div className="site-shell">
                     <SectionLead
                         eyebrow="Simple journey"
@@ -408,14 +423,14 @@ export default function Home() {
                         {steps.map((step) => (
                             <article key={step.number} className="surface-card reveal-on-scroll p-6 sm:p-8">
                                 <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
-                                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-[#e0b562]/28 bg-[#e0b562]/10 font-display text-xl font-bold text-[#e0b562]">
+                                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-[var(--line-strong)] bg-white/60 font-display text-xl font-bold text-[var(--berry)] shadow-sm">
                                         {step.number}
                                     </div>
                                     <div>
-                                        <h3 className="font-display text-[1.85rem] font-bold leading-tight text-white">
+                                        <h3 className="font-display text-[1.85rem] font-bold leading-tight text-[var(--text)]">
                                             {step.title}
                                         </h3>
-                                        <p className="mt-3 text-sm leading-7 text-white/58">{step.text}</p>
+                                        <p className="mt-3 text-sm leading-7 text-[var(--muted)]">{step.text}</p>
                                     </div>
                                 </div>
                             </article>
@@ -424,7 +439,7 @@ export default function Home() {
                 </div>
             </section>
 
-            <section id="plans" className="section section-rule">
+            <section id="plans" className="section section-rule relative z-10">
                 <div className="site-shell">
                     <SectionLead
                         eyebrow="Straight pricing"
@@ -443,30 +458,30 @@ export default function Home() {
                                 ].join(" ")}
                             >
                                 {plan.featured ? (
-                                    <div className="mb-5 w-fit rounded-full bg-[#e0b562] px-4 py-2 text-[11px] font-bold uppercase tracking-[0.24em] text-[#2a1712]">
+                                    <div className="mb-5 w-fit rounded-full bg-[var(--berry)] px-4 py-2 text-[11px] font-bold uppercase tracking-[0.24em] text-white shadow-md">
                                         Most popular
                                     </div>
                                 ) : null}
 
-                                <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-[#e0b562]">
+                                <div className="text-[11px] font-bold uppercase tracking-[0.24em] text-[var(--berry)]">
                                     {plan.name}
                                 </div>
-                                <div className="mt-4 flex items-end gap-2">
-                                    <span className="mb-2 text-sm font-semibold text-white/46">PKR</span>
-                                    <span className="font-display text-[3.4rem] font-bold tracking-[-0.05em] text-white">
+                                <div className="mt-4 flex items-end gap-2 text-[var(--text)]">
+                                    <span className="mb-2 text-sm font-semibold text-[var(--muted)]">PKR</span>
+                                    <span className="font-display text-[3.4rem] font-bold tracking-[-0.05em]">
                                         {plan.price}
                                     </span>
                                 </div>
-                                <div className="mt-2 text-sm text-white/54">for {plan.duration}</div>
-                                <p className="mt-5 text-sm leading-7 text-white/58">{plan.description}</p>
+                                <div className="mt-2 text-sm text-[var(--muted)] font-medium">for {plan.duration}</div>
+                                <p className="mt-5 text-sm leading-7 text-[var(--muted)]">{plan.description}</p>
 
-                                <div className="my-6 h-px bg-white/8" />
+                                <div className="my-6 h-px bg-[var(--line-strong)]" />
 
                                 <div className="flex-1 space-y-3">
                                     {plan.items.map((item) => (
-                                        <div key={item} className="flex items-start gap-3 text-sm text-white/72">
-                                            <CheckCircleIcon className="mt-0.5 h-5 w-5 shrink-0 text-[#e0b562]" />
-                                            <span>{item}</span>
+                                        <div key={item} className="flex items-start gap-3 text-sm text-[var(--muted)]">
+                                            <CheckCircleIcon className="mt-0.5 h-5 w-5 shrink-0 text-[var(--gold)]" />
+                                            <span className="font-medium">{item}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -480,7 +495,7 @@ export default function Home() {
                 </div>
             </section>
 
-            <section id="stories" className="section section-rule">
+            <section id="stories" className="section section-rule relative z-10">
                 <div className="site-shell">
                     <SectionLead
                         eyebrow="Real outcomes"
@@ -491,36 +506,36 @@ export default function Home() {
 
                     <div className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr_0.8fr]">
                         <article className="surface-card surface-card--strong reveal-on-scroll p-7 sm:p-10">
-                            <div className="mb-5 flex gap-1 text-[#e0b562]">
+                            <div className="mb-5 flex gap-1 text-[var(--gold)]">
                                 {Array.from({ length: 5 }).map((_, index) => (
                                     <StarIcon key={index} className="h-5 w-5" />
                                 ))}
                             </div>
-                            <p className="font-display text-[1.9rem] leading-[1.45] text-white sm:text-[2.2rem]">
+                            <p className="font-display text-[1.9rem] leading-[1.45] text-[var(--text)] sm:text-[2.2rem]">
                                 “The redesigned experience feels calm, private, and serious. That changes how people trust the platform.”
                             </p>
                             <div className="mt-8 flex items-center gap-3">
-                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#e0b562] text-sm font-bold text-[#2a1712]">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--berry)] text-sm font-bold text-white shadow-md">
                                     SP
                                 </div>
                                 <div>
-                                    <div className="font-semibold text-white">Shadii.pk promise</div>
-                                    <div className="text-sm text-white/52">Privacy, intent, and clean presentation</div>
+                                    <div className="font-semibold text-[var(--text)]">Shadii.pk promise</div>
+                                    <div className="text-sm text-[var(--muted)]">Privacy, intent, and clean presentation</div>
                                 </div>
                             </div>
                         </article>
 
                         {testimonials.map((story) => (
                             <article key={story.name} className="surface-card reveal-on-scroll p-6">
-                                <div className="mb-4 flex gap-1 text-[#e0b562]">
+                                <div className="mb-4 flex gap-1 text-[var(--gold)]">
                                     {Array.from({ length: 5 }).map((_, index) => (
                                         <StarIcon key={index} className="h-4 w-4" />
                                     ))}
                                 </div>
-                                <p className="text-sm leading-7 text-white/66">“{story.quote}”</p>
-                                <div className="mt-6 border-t border-white/8 pt-4">
-                                    <div className="font-semibold text-white">{story.name}</div>
-                                    <div className="text-xs text-white/48">{story.city}</div>
+                                <p className="text-sm leading-7 text-[var(--muted)] font-medium">“{story.quote}”</p>
+                                <div className="mt-6 border-t border-[var(--line)] pt-4">
+                                    <div className="font-semibold text-[var(--text)]">{story.name}</div>
+                                    <div className="text-xs text-[var(--muted)]">{story.city}</div>
                                 </div>
                             </article>
                         ))}
@@ -528,7 +543,7 @@ export default function Home() {
                 </div>
             </section>
 
-            <section id="faq" className="section section-rule">
+            <section id="faq" className="section section-rule relative z-10">
                 <div className="site-shell">
                     <SectionLead
                         eyebrow="Questions"
@@ -551,16 +566,16 @@ export default function Home() {
                 </div>
             </section>
 
-            <section id="download" className="section section-rule pb-14">
+            <section id="download" className="section section-rule pb-14 relative z-10">
                 <div className="site-shell">
                     <div className="surface-card surface-card--strong reveal-on-scroll overflow-hidden px-6 py-8 sm:px-10 sm:py-10 lg:px-14 lg:py-14">
                         <div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
                             <div>
-                                <div className="eyebrow">Ready to begin</div>
-                                <h2 className="mt-5 font-display text-[clamp(2.5rem,5vw,4.3rem)] font-bold leading-[0.98] tracking-[-0.045em] text-white">
+                                <div className="eyebrow shadow-sm">Ready to begin</div>
+                                <h2 className="mt-5 font-display text-[clamp(2.5rem,5vw,4.3rem)] font-bold leading-[0.98] tracking-[-0.045em] text-[var(--text)]">
                                     Start your journey <span className="display-accent">today</span>
                                 </h2>
-                                <p className="mt-5 max-w-2xl text-base leading-8 text-white/66">
+                                <p className="mt-5 max-w-2xl text-base leading-8 text-[var(--muted)]">
                                     This rebuild gives the website a proper premium structure. If you want, the same
                                     visual language can now be carried into the admin panel and mobile app screens.
                                 </p>
@@ -572,9 +587,9 @@ export default function Home() {
                             </div>
                         </div>
 
-                        <div className="mt-8 flex flex-wrap gap-3 text-sm text-white/56">
+                        <div className="mt-8 flex flex-wrap gap-3 text-sm text-[var(--muted)] font-medium">
                             {["Free profile setup", "Secure plans", "Private-first experience"].map((item) => (
-                                <div key={item} className="rounded-full border border-white/10 px-4 py-2">
+                                <div key={item} className="rounded-full border border-[var(--line-strong)] bg-white/60 px-4 py-2 shadow-sm">
                                     {item}
                                 </div>
                             ))}
