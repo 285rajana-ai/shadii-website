@@ -1,17 +1,17 @@
 @import "tailwindcss";
 
 :root {
-    --canvas: #fdfbf7;
-    --canvas-deep: #f7f3ea;
-    --surface: rgba(255, 255, 255, 0.85);
+    --canvas: #fbf9f4;
+    --canvas-deep: #f5ecd8;
+    --surface: rgba(255, 255, 255, 0.88);
     --surface-strong: rgba(255, 255, 255, 1);
     --line: rgba(139, 38, 62, 0.08);
-    --line-strong: rgba(194, 155, 87, 0.3);
-    --text: #2d2323;
-    --muted: rgba(45, 35, 35, 0.65);
-    --gold: #c29b57;
-    --gold-soft: #d4b478;
-    --berry: #8b263e;
+    --line-strong: rgba(194, 155, 87, 0.35);
+    --text: #2c1b1b;
+    --muted: #4e3f3f;
+    --gold: #c09950;
+    --gold-soft: #dcc394;
+    --berry: #801830;
 }
 
 @theme inline {
@@ -531,3 +531,100 @@ summary::-webkit-details-marker {
 @media (min-width: 1024px) {
     .site-shell { padding-inline: 2rem; }
 }
+
+/* Custom luxury card double-border effect */
+.luxury-card {
+    border: 1px solid var(--line-strong);
+    padding: 2.2rem;
+    border-radius: 1.8rem;
+    background: var(--surface);
+    position: relative;
+    box-shadow: 0 16px 40px rgba(122, 28, 49, 0.04);
+}
+.luxury-card::after {
+    content: "";
+    position: absolute;
+    inset: 6px;
+    border: 1px solid rgba(194, 155, 87, 0.15);
+    border-radius: 1.5rem;
+    pointer-events: none;
+}
+
+/* Realistic smartphone device mockup frame */
+.phone-frame {
+    border: 12px solid #2e2424;
+    border-radius: 3rem;
+    background: #000;
+    box-shadow: 
+        0 25px 60px -15px rgba(0, 0, 0, 0.35),
+        inset 0 0 10px rgba(255, 255, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 9 / 19.5;
+    width: 100%;
+    max-width: 290px;
+    margin-inline: auto;
+}
+.phone-notch {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 110px;
+    height: 25px;
+    background: #2e2424;
+    border-bottom-left-radius: 14px;
+    border-bottom-right-radius: 14px;
+    z-index: 10;
+}
+.phone-notch::before {
+    content: "";
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 4px;
+    background: #111;
+    border-radius: 99px;
+}
+.phone-content {
+    height: 100%;
+    width: 100%;
+    background: var(--canvas);
+    overflow-y: auto;
+    padding-top: 32px;
+    padding-bottom: 15px;
+    padding-inline: 12px;
+    scrollbar-width: none;
+}
+.phone-content::-webkit-scrollbar {
+    display: none;
+}
+
+/* Golden corner filigree style ornaments for cards */
+.corner-ornament-card {
+    position: relative;
+}
+.corner-ornament-card::before,
+.corner-ornament-card::after {
+    content: "";
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    border-color: var(--gold);
+    border-style: solid;
+    pointer-events: none;
+    opacity: 0.65;
+}
+.corner-ornament-card::before {
+    top: 14px;
+    left: 14px;
+    border-width: 1px 0 0 1px;
+}
+.corner-ornament-card::after {
+    bottom: 14px;
+    right: 14px;
+    border-width: 0 1px 1px 0;
+}
+

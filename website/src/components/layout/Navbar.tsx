@@ -37,7 +37,7 @@ export function Navbar() {
                     className={[
                         "nav-shell flex items-center justify-between gap-4 rounded-[1.6rem] border px-4 py-3 transition-all sm:px-5",
                         scrolled
-                            ? "border-[var(--line)] bg-[var(--surface)] shadow-md backdrop-blur-2xl"
+                            ? "border-[var(--gold)]/25 bg-[var(--surface)] shadow-[0_10px_30px_rgba(122,28,49,0.03)] backdrop-blur-2xl"
                             : "border-transparent bg-transparent",
                     ].join(" ")}
                 >

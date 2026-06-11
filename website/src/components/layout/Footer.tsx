@@ -36,8 +36,19 @@ export function Footer() {
     const year = new Date().getFullYear();
 
     return (
-        <footer className="section section-rule pb-10 pt-14">
+        <footer className="section pb-10 pt-8">
             <div className="site-shell">
+                {/* Filigree Ornament Divider */}
+                <div className="w-full flex items-center justify-center gap-4 py-8 text-[var(--gold)] opacity-40 mb-10 select-none pointer-events-none">
+                    <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent to-[var(--gold)]" />
+                    <svg className="w-16 h-6" viewBox="0 0 100 24" fill="currentColor">
+                        <path d="M50,12 C40,4 35,4 30,12 C25,20 20,20 10,12 C5,8 2,12 0,12 C0,12 5,16 10,12 C20,4 25,4 30,12 C35,20 40,20 50,12 Z" />
+                        <circle cx="50" cy="12" r="3" />
+                        <path d="M50,12 C60,4 65,4 70,12 C75,20 80,20 90,12 C95,8 98,12 100,12 C100,12 95,16 90,12 C80,4 75,4 70,12 C65,20 60,20 50,12 Z" />
+                    </svg>
+                    <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent to-[var(--gold)]" />
+                </div>
+
                 <div className="grid gap-12 lg:grid-cols-[1.15fr_repeat(3,minmax(0,1fr))]">
                     <div>
                         <BrandMark />
