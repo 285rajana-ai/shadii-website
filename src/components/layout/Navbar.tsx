@@ -5,16 +5,17 @@ import { useEffect, useState } from "react";
 import { BrandMark } from "../ui/BrandMark";
 
 const links = [
-    { href: "#about", label: "About" },
-    { href: "#journey", label: "Journey" },
-    { href: "#plans", label: "Plans" },
-    { href: "#stories", label: "Stories" },
+    { href: "#features", label: "Features" },
+    { href: "#how-it-works", label: "Journey" },
+    { href: "#pricing", label: "Plans" },
+    { href: "#testimonials", label: "Stories" },
     { href: "#faq", label: "FAQ" },
 ];
 
 export function Navbar() {
     const [open, setOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
+    const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:5173";
 
     useEffect(() => {
         const handleScroll = () => setScrolled(window.scrollY > 16);
@@ -61,11 +62,11 @@ export function Navbar() {
                     </nav>
  
                     <div className="hidden items-center gap-3 lg:flex">
-                        <a href="#plans" className="inline-flex items-center justify-center min-h-[2.6rem] rounded-full px-5 text-xs font-bold border border-[var(--gold)] bg-white/70 text-[var(--berry)] hover:bg-[var(--gold)]/10 transition-all">
-                            View Plans
+                        <a href={`${portalUrl}/login`} className="inline-flex items-center justify-center min-h-[2.6rem] rounded-full px-5 text-xs font-bold border border-[var(--gold)] bg-white/70 text-[var(--berry)] hover:bg-[var(--gold)]/10 transition-all">
+                            Login
                         </a>
-                        <a href="#download" className="inline-flex items-center justify-center min-h-[2.6rem] rounded-full px-5 text-xs font-bold bg-[var(--berry)] !text-white hover:bg-[#681023] transition-all" style={{ color: '#ffffff' }}>
-                            Download App
+                        <a href={`${portalUrl}/register?plan=free`} className="inline-flex items-center justify-center min-h-[2.6rem] rounded-full px-5 text-xs font-bold bg-[var(--berry)] !text-white hover:bg-[#681023] transition-all" style={{ color: '#ffffff' }}>
+                            Get Started
                         </a>
                     </div>
  
@@ -95,11 +96,11 @@ export function Navbar() {
                             ))}
                         </nav>
                         <div className="mt-4 grid gap-3 border-t border-[var(--gold)]/20 pt-4">
-                            <a href="#plans" onClick={() => setOpen(false)} className="inline-flex items-center justify-center min-h-[2.8rem] rounded-full px-5 text-sm font-bold border border-[var(--gold)] bg-transparent text-[var(--berry)] hover:bg-[var(--gold)]/10 transition-all text-center justify-center">
-                                View Plans
+                            <a href={`${portalUrl}/login`} onClick={() => setOpen(false)} className="inline-flex items-center justify-center min-h-[2.8rem] rounded-full px-5 text-sm font-bold border border-[var(--gold)] bg-transparent text-[var(--berry)] hover:bg-[var(--gold)]/10 transition-all text-center justify-center">
+                                Login
                             </a>
-                            <a href="#download" onClick={() => setOpen(false)} className="inline-flex items-center justify-center min-h-[2.8rem] rounded-full px-5 text-sm font-bold bg-[var(--berry)] !text-white hover:bg-[#681023] transition-all text-center justify-center" style={{ color: '#ffffff' }}>
-                                Download App
+                            <a href={`${portalUrl}/register?plan=free`} onClick={() => setOpen(false)} className="inline-flex items-center justify-center min-h-[2.8rem] rounded-full px-5 text-sm font-bold bg-[var(--berry)] !text-white hover:bg-[#681023] transition-all text-center justify-center" style={{ color: '#ffffff' }}>
+                                Get Started
                             </a>
                         </div>
                     </div>

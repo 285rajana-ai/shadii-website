@@ -29,6 +29,8 @@ const item = {
 };
 
 export function Hero() {
+  const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:5173";
+
   return (
     <section className="relative overflow-hidden pt-40 sm:pt-44 lg:pt-48">
       {/* Ambient background */}
@@ -69,13 +71,13 @@ export function Hero() {
             </motion.div>
 
             <motion.div variants={item} className="flex flex-col gap-4 sm:flex-row sm:items-center">
-              <a href="#download" className="button-primary w-full px-7 py-4 text-base sm:w-auto">
-                Download Free App
+              <a href={`${portalUrl}/register?plan=free`} className="button-primary w-full px-7 py-4 text-base sm:w-auto">
+                Create Free Account
                 <ArrowRightIcon className="h-5 w-5" />
               </a>
-              <a href="#how-it-works" className="button-secondary w-full px-7 py-4 text-base sm:w-auto">
+              <a href={`${portalUrl}/login`} className="button-secondary w-full px-7 py-4 text-base sm:w-auto">
                 <PlayCircleIcon className="h-5 w-5 text-[#D4AF37]" />
-                See How It Works
+                Login to Portal
               </a>
             </motion.div>
 
