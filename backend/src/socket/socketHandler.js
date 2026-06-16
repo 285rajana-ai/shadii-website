@@ -2,8 +2,26 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
 module.exports = (io) => {
-  // Store online users: userId -> socketId
+  // Store online users: userId -> Set<socketId> so multi-tab sessions stay accurate.
   const onlineUsers = new Map();
+
+  const addOnlineSocket = (userId, socketId) => {
+    const sockets = onlineUsers.get(userId) || new Set();
+    sockets.add(socketId);
+    onlineUsers.set(userId, sockets);
+    return sockets.size;
+  };
+
+  const removeOnlineSocket = (userId, socketId) => {
+    const sockets = onlineUsers.get(userId);
+    if (!sockets) return 0;
+    sockets.delete(socketId);
+    if (sockets.size === 0) {
+      onlineUsers.delete(userId);
+      return 0;
+    }
+    return sockets.size;
+  };
 
   io.use(async (socket, next) => {
     try {
@@ -23,18 +41,19 @@ module.exports = (io) => {
   });
 
   io.on('connection', async (socket) => {
-    onlineUsers.set(socket.userId, socket.id);
+    const sessionCount = addOnlineSocket(socket.userId, socket.id);
 
-    // Update online status
-    await User.findByIdAndUpdate(socket.userId, { isOnline: true, lastActive: new Date() });
-    socket.broadcast.emit('user:online', { userId: socket.userId });
+    if (sessionCount === 1) {
+      await User.findByIdAndUpdate(socket.userId, { isOnline: true, lastActive: new Date() });
+      socket.broadcast.emit('user:online', { userId: socket.userId });
+    }
 
     // Join personal room
     socket.join(socket.userId);
 
     // Send new message
     socket.on('message:send', async (data) => {
-      const { receiverId, content, conversationId } = data;
+      const { receiverId, content, conversationId, clientMessageId } = data;
 
       try {
         const Message = require('../models/Message');
@@ -91,9 +110,11 @@ module.exports = (io) => {
         });
 
         // Send to receiver if online, else send push notification
-        const receiverSocketId = onlineUsers.get(receiverId);
-        if (receiverSocketId) {
-          io.to(receiverSocketId).emit('message:receive', message);
+        const receiverSocketIds = onlineUsers.get(String(receiverId));
+        if (receiverSocketIds?.size) {
+          receiverSocketIds.forEach((socketId) => {
+            io.to(socketId).emit('message:receive', message);
+          });
           await Message.findByIdAndUpdate(message._id, { status: 'delivered' });
         } else {
           // Receiver is offline — send push notification
@@ -110,7 +131,7 @@ module.exports = (io) => {
         }
 
         // Confirm to sender
-        socket.emit('message:sent', { ...message.toJSON(), isFreeMessage });
+        socket.emit('message:sent', { ...message.toJSON(), isFreeMessage, clientMessageId });
       } catch (err) {
         socket.emit('message:error', { error: err.message });
       }
@@ -118,9 +139,11 @@ module.exports = (io) => {
 
     // Typing indicator
     socket.on('message:typing', ({ receiverId }) => {
-      const receiverSocketId = onlineUsers.get(receiverId);
-      if (receiverSocketId) {
-        io.to(receiverSocketId).emit('message:typing', { userId: socket.userId });
+      const receiverSocketIds = onlineUsers.get(String(receiverId));
+      if (receiverSocketIds?.size) {
+        receiverSocketIds.forEach((socketId) => {
+          io.to(socketId).emit('message:typing', { userId: socket.userId });
+        });
       }
     });
 
@@ -144,9 +167,11 @@ module.exports = (io) => {
     // Disconnect
     socket.on('disconnect', async () => {
       console.log(`🔌 User disconnected: ${socket.userId}`);
-      onlineUsers.delete(socket.userId);
-      await User.findByIdAndUpdate(socket.userId, { isOnline: false, lastActive: new Date() });
-      socket.broadcast.emit('user:offline', { userId: socket.userId });
+      const remainingSessions = removeOnlineSocket(socket.userId, socket.id);
+      if (remainingSessions === 0) {
+        await User.findByIdAndUpdate(socket.userId, { isOnline: false, lastActive: new Date() });
+        socket.broadcast.emit('user:offline', { userId: socket.userId });
+      }
     });
   });
 };

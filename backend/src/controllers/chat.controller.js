@@ -59,7 +59,7 @@ exports.getConversations = async (req, res) => {
             isVerified: otherUser.isVerified,
             isOnline: otherUser.isOnline,
             lastActive: otherUser.lastActive,
-            photo: otherUser.getProfilePhoto(viewerSubscribed),
+            photo: otherUser.getProfilePhoto(req.user._id),
             gender: otherUser.gender,
           },
           lastMessage: {

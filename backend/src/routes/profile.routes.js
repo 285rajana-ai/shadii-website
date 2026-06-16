@@ -145,6 +145,55 @@ router.get('/settings', protect, async (req, res) => {
   }
 });
 
+// GET /api/profile/incoming-requests — get all incoming photo + contact share requests
+// MUST be before /:id so Express does not treat "incoming-requests" as a profile id.
+router.get('/incoming-requests', protect, async (req, res) => {
+  try {
+    const me = await User.findById(req.user._id)
+      .populate('photoViewRequests', 'name photos age city')
+      .populate('contactShareRequests.fromUser', 'name photos age city');
+
+    res.json({
+      success: true,
+      photoRequests: me.photoViewRequests || [],
+      contactRequests: (me.contactShareRequests || []).filter((r) => r.status === 'pending'),
+    });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// GET /api/profile/my-contact-requests — outgoing contact requests status (for requester)
+router.get('/my-contact-requests', protect, async (req, res) => {
+  try {
+    const users = await User.find({
+      'contactShareRequests.fromUser': req.user._id,
+    })
+      .select('name photos age city contactShareRequests')
+      .lean();
+
+    const requests = users.map((u) => {
+      const req_ = u.contactShareRequests.find(
+        (r) => r.fromUser.toString() === req.user._id.toString()
+      );
+      return {
+        targetUserId: u._id,
+        targetUserName: u.name,
+        targetUserAge: u.age,
+        targetUserCity: u.city,
+        requestId: req_?._id,
+        status: req_?.status || 'pending',
+        unlockedByRequester: req_?.unlockedByRequester || false,
+        createdAt: req_?.createdAt,
+      };
+    });
+
+    res.json({ success: true, requests });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
 // GET /api/profile/:id — view profile
 router.get('/:id', protect, async (req, res) => {
   try {
@@ -498,55 +547,6 @@ router.put('/photo-requests/:userId/respond', protect, async (req, res) => {
     }
 
     res.json({ success: true });
-  } catch (e) {
-    res.status(500).json({ success: false, message: e.message });
-  }
-});
-
-// GET /api/profile/incoming-requests — get all incoming photo + contact share requests
-router.get('/incoming-requests', protect, async (req, res) => {
-  try {
-    const me = await User.findById(req.user._id)
-      .populate('photoViewRequests', 'name photos age city')
-      .populate('contactShareRequests.fromUser', 'name photos age city');
-
-    res.json({
-      success: true,
-      photoRequests: me.photoViewRequests || [],
-      contactRequests: (me.contactShareRequests || []).filter((r) => r.status === 'pending'),
-    });
-  } catch (e) {
-    res.status(500).json({ success: false, message: e.message });
-  }
-});
-
-// GET /api/profile/my-contact-requests — outgoing contact requests status (for requester)
-router.get('/my-contact-requests', protect, async (req, res) => {
-  try {
-    // Find all users that have a contact request from me
-    const users = await User.find({
-      'contactShareRequests.fromUser': req.user._id,
-    })
-      .select('name photos age city contactShareRequests')
-      .lean();
-
-    const requests = users.map((u) => {
-      const req_ = u.contactShareRequests.find(
-        (r) => r.fromUser.toString() === req.user._id.toString()
-      );
-      return {
-        targetUserId: u._id,
-        targetUserName: u.name,
-        targetUserAge: u.age,
-        targetUserCity: u.city,
-        requestId: req_?._id,
-        status: req_?.status || 'pending',
-        unlockedByRequester: req_?.unlockedByRequester || false,
-        createdAt: req_?.createdAt,
-      };
-    });
-
-    res.json({ success: true, requests });
   } catch (e) {
     res.status(500).json({ success: false, message: e.message });
   }

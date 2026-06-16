@@ -144,7 +144,7 @@ router.get('/payment-methods', protect, (req, res) => {
 // ─── POST /api/subscription/initiate ─────────────────────────────────────────
 router.post('/initiate', protect, async (req, res) => {
   try {
-    const { plan, paymentMethod } = req.body;
+    const { plan, paymentMethod, targetUserId } = req.body;
 
     if (!PLANS[plan]) {
       return res.status(400).json({ success: false, message: 'Invalid plan selected' });
@@ -177,6 +177,7 @@ router.post('/initiate', protect, async (req, res) => {
       paymentMethod,
       paymentStatus: 'awaiting_payment',
       isActive: false,
+      targetUser: plan === 'contact_unlock' ? targetUserId : undefined,
     });
 
     const paymentInstructions = paymentMethod === 'easypaisa'

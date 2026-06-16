@@ -1,0 +1,8 @@
+<svg width="480" height="600" viewBox="0 0 480 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="480" height="600" fill="#F7F1E7"/>
+  <rect x="28" y="28" width="424" height="544" fill="#FFFDF8" stroke="#E3D4B5" stroke-width="2"/>
+  <circle cx="240" cy="210" r="74" fill="#F0DFBB"/>
+  <path d="M122 435C138 352 184 312 240 312C296 312 342 352 358 435" fill="#F0DFBB"/>
+  <path d="M164 482H316" stroke="#8A1538" stroke-width="10" stroke-linecap="square"/>
+  <text x="240" y="520" text-anchor="middle" fill="#8A1538" font-family="Georgia, serif" font-size="30" font-weight="700">Shadii.pk</text>
+</svg>

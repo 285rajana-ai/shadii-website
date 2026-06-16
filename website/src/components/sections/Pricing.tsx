@@ -6,6 +6,8 @@ import { motion } from "framer-motion";
 import { SectionHeader } from "../ui/SectionHeader";
 
 export function Pricing() {
+  const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || "http://localhost:5173";
+
   return (
     <section id="pricing" className="section-block section-alt relative overflow-hidden">
       <div className="ambient-orb right-[-10rem] top-20 h-[30rem] w-[30rem] bg-[#D4AF37]/14" />
@@ -68,7 +70,7 @@ export function Pricing() {
               </ul>
 
               <a
-                href="#download"
+                href={`${portalUrl}/register?plan=${plan.name.toLowerCase() === "premium" ? "premium" : "free"}`}
                 className={
                   plan.popular
                     ? "button-primary mt-8 w-full py-4 text-sm"
