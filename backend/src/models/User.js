@@ -16,7 +16,6 @@ const userSchema = new mongoose.Schema(
     height: { type: String }, // e.g. "5'6\""
     education: {
       type: String,
-      enum: ['Matric', 'Intermediate', 'Bachelors', 'Masters', 'PhD', 'Other'],
     },
     cast: { type: String }, // Caste / Community
     country: { type: String, default: 'Pakistan' },
@@ -26,7 +25,6 @@ const userSchema = new mongoose.Schema(
     interests: [{ type: String }],
     maritalStatus: {
       type: String,
-      enum: ['Never Married', 'Divorced', 'Widowed'],
       default: 'Never Married',
     },
     motherTongue: { type: String },

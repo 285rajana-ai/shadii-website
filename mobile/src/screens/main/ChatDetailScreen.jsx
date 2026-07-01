@@ -121,12 +121,17 @@ export default function ChatDetailScreen({ route, navigation }) {
       );
     });
 
+    socket.on('message:error', ({ error }) => {
+      Alert.alert('Message Error', error || 'Failed to send message.');
+    });
+
     return () => {
       socket.off('message:receive');
       socket.off('message:sent');
       socket.off('message:flagged');
       socket.off('message:typing');
       socket.off('subscription:required');
+      socket.off('message:error');
     };
   }, [socket]);
 
