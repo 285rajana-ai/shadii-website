@@ -19,7 +19,46 @@ export default function Subscription() {
 
   useEffect(() => {
     fetchPlans();
+    checkPaymentStatus();
   }, []);
+
+  const checkPaymentStatus = async () => {
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get('status');
+    const sessionId = params.get('session_id');
+
+    if (status === 'success' && sessionId) {
+      setLoading(true);
+      setError('');
+      setSuccess('');
+      try {
+        const res = await fetch(`${API_BASE}/subscription/stripe/verify-session`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ sessionId })
+        });
+        const data = await res.json();
+        if (data.success) {
+          setSuccess('Payment Verified successfully! Your premium membership is now active.');
+          await refreshUser();
+        } else {
+          setError(data.message || 'Payment verification failed.');
+        }
+      } catch (err) {
+        setError('Error verifying payment session.');
+      } finally {
+        setLoading(false);
+        // Clear query parameters
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    } else if (status === 'cancelled') {
+      setError('Payment was cancelled.');
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  };
 
   const fetchPlans = async () => {
     try {
@@ -43,6 +82,32 @@ export default function Subscription() {
     setLoading(true);
     setError('');
     setSuccess('');
+
+    if (paymentMethod === 'credit_card') {
+      try {
+        const res = await fetch(`${API_BASE}/subscription/stripe/checkout-session`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            plan: selectedPlan.id
+          })
+        });
+        const data = await res.json();
+        if (data.success && data.paymentUrl) {
+          window.location.href = data.paymentUrl;
+        } else {
+          setError(data.message || 'Failed to initiate card checkout.');
+        }
+      } catch (err) {
+        setError('Connection failure.');
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
 
     try {
       const res = await fetch(`${API_BASE}/subscription/initiate`, {
@@ -190,9 +255,24 @@ export default function Subscription() {
               <form onSubmit={handleInitiate} className="space-y-6">
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-[#605252] mb-2">
-                    Select Manual Payment Channel
+                    Select Payment Method
                   </label>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod('credit_card')}
+                      className={`p-4 border text-left flex items-center justify-between transition-colors cursor-pointer ${
+                        paymentMethod === 'credit_card'
+                          ? 'border-[#800020] bg-[#800020]/5'
+                          : 'border-[#E5DEC9] hover:border-[#800020]'
+                      }`}
+                    >
+                      <div>
+                        <span className="block font-bold text-sm text-[#2C2121]">Credit/Debit Card</span>
+                        <span className="text-[10px] text-[#605252]">Secure pay via Visa / MasterCard</span>
+                      </div>
+                      <CreditCard className="w-5 h-5 text-[#C5A059]" />
+                    </button>
                     <button
                       type="button"
                       onClick={() => setPaymentMethod('easypaisa')}
