@@ -78,7 +78,9 @@ export default function RegisterScreen({ navigation }) {
       });
       const data = await res.json();
       if (data.success) {
-        navigation.navigate('OTPVerify', { userId: data.user.id, email: formData.email });
+        Alert.alert('Account Created! ✅', 'Your account has been registered successfully. Please sign in.', [
+          { text: 'Sign In', onPress: () => navigation.navigate('Login') }
+        ]);
       } else {
         Alert.alert('Registration Failed', data.message || 'Something went wrong. Please try again.');
       }
