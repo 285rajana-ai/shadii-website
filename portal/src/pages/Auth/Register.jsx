@@ -44,8 +44,7 @@ export default function Register() {
         age: Number(form.age),
       });
       if (data.success) {
-        // Redirect to OTP verification page
-        navigate('/verify-otp', { state: { userId: data.user.id, email: form.email } });
+        navigate('/');
       } else {
         setError(data.message || 'Registration failed. Please check the fields and try again.');
       }

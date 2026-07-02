@@ -19,13 +19,7 @@ export default function Login() {
     try {
       const data = await login(email, password);
       if (data.success) {
-        if (!data.user.isEmailVerified || !data.user.isPhoneVerified) {
-          // Redirect to OTP verification
-          navigate('/verify-otp', { state: { userId: data.user.id, email: data.user.email } });
-        } else {
-          // Go to dashboard
-          navigate('/');
-        }
+        navigate('/');
       } else {
         setError(data.message || 'Login failed. Please check your credentials.');
       }
