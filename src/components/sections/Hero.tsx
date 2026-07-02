@@ -29,7 +29,7 @@ const item = {
 };
 
 export function Hero() {
-  const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || "https://portal.shadii.pk";
+  const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || "/portal";
 
   return (
     <section className="relative overflow-hidden pt-40 sm:pt-44 lg:pt-48">
