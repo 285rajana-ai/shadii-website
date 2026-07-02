@@ -154,7 +154,7 @@ const userSchema = new mongoose.Schema(
 );
 
 // Hash password before saving
-userSchema.pre('save', async function (next) {
+userSchema.pre('save', async function () {
   if (this.isModified('password')) {
     this.password = await bcrypt.hash(this.password, 12);
   }
@@ -168,8 +168,6 @@ userSchema.pre('save', async function (next) {
     return true;
   }).length;
   this.profileCompleteness = Math.round((filledCount / fields.length) * 100);
-  
-  next();
 });
 
 // Compare password

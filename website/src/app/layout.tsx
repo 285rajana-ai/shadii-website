@@ -45,6 +45,10 @@ export const metadata: Metadata = {
     title: "Shadii.pk — Pakistan's Premium Matrimonial Platform",
     description: "Verified profiles. Smart matching. Private and safe.",
   },
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+  },
   robots: { index: true, follow: true },
 };
 
