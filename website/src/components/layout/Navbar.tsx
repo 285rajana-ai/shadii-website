@@ -15,7 +15,7 @@ const links = [
 export function Navbar() {
     const [open, setOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
-    const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || "https://shadii-portal.vercel.app";
+    const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || "https://portal.shadii.pk";
 
     useEffect(() => {
         const handleScroll = () => setScrolled(window.scrollY > 16);

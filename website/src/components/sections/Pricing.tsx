@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { SectionHeader } from "../ui/SectionHeader";
 
 export function Pricing() {
-  const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || "https://shadii-portal.vercel.app";
+  const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || "https://portal.shadii.pk";
 
   return (
     <section id="pricing" className="section-block section-alt relative overflow-hidden">

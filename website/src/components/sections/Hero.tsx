@@ -29,7 +29,7 @@ const item = {
 };
 
 export function Hero() {
-  const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || "https://shadii-portal.vercel.app";
+  const portalUrl = process.env.NEXT_PUBLIC_PORTAL_URL || "https://portal.shadii.pk";
 
   return (
     <section className="relative overflow-hidden pt-40 sm:pt-44 lg:pt-48">
