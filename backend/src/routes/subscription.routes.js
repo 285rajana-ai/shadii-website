@@ -549,6 +549,7 @@ router.post('/cancel', protect, async (req, res) => {
       success: true,
       message: 'Auto-renewal disabled. Your plan remains active until the expiry date.',
     });
+  } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 });
