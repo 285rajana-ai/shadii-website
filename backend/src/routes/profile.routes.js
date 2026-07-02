@@ -79,9 +79,11 @@ router.get('/discover', protect, async (req, res) => {
     ]);
 
     const profiles = users.map((u) => {
-      const isConnected = u.photoViewApproved?.some(
+      const isPremiumViewer = me.subscription?.isActive && me.subscription?.plan === 'premium';
+      const isConnected = isPremiumViewer || u.photoViewApproved?.some(
         (uid) => String(uid) === String(me._id)
       );
+      const mainPhoto = u.photos.find((p) => p.isMain) || u.photos[0];
       return {
         id: u._id,
         name: u.name,
@@ -98,7 +100,7 @@ router.get('/discover', protect, async (req, res) => {
         lastActive: u.lastActive,
         isBoosted: u.hasActiveBoost?.() || false,
         isPremium: u.subscription?.plan === 'premium' && u.subscription?.isActive,
-        photo: u.getProfilePhoto(me._id),
+        photo: isConnected ? (mainPhoto?.url || null) : u.getProfilePhoto(me._id),
         isPhotoBlurred: !isConnected,
         interests: u.interests?.slice(0, 3),
       };
@@ -222,7 +224,8 @@ router.get('/:id', protect, async (req, res) => {
       (r) => r.fromUser.toString() === req.user._id.toString()
     );
 
-    const isConnected = profile.photoViewApproved?.some(
+    const isPremiumViewer = req.user.subscription?.isActive && req.user.subscription?.plan === 'premium';
+    const isConnected = isPremiumViewer || profile.photoViewApproved?.some(
       (uid) => String(uid) === String(req.user._id)
     ) || String(profile._id) === String(req.user._id);
 
@@ -230,13 +233,15 @@ router.get('/:id', protect, async (req, res) => {
       (uid) => String(uid) === String(req.user._id)
     );
 
+    const mainPhoto = profile.photos.find((p) => p.isMain) || profile.photos[0];
+
     res.json({
       success: true,
       profile: {
         ...profile.toJSON(),
         // Only expose phone if contact is fully unlocked
         phone: contactUnlocked ? profile.phone : undefined,
-        photo: profile.getProfilePhoto(req.user._id),
+        photo: isConnected ? (mainPhoto?.url || null) : profile.getProfilePhoto(req.user._id),
         isPhotoBlurred: !isConnected,
         isBlocked: req.user.blockedUsers?.includes(profile._id),
         contactRequestStatus: myContactRequest?.status || null,
@@ -263,10 +268,10 @@ router.put('/update', protect, async (req, res) => {
     });
 
     // Calculate completeness
-    const user = await User.findByIdAndUpdate(req.user.id, updates, { new: true });
+    let user = await User.findByIdAndUpdate(req.user.id, updates, { new: true });
     const fields = ['name', 'age', 'height', 'education', 'cast', 'city', 'about', 'hobbies', 'interests', 'photos'];
     const completeness = Math.round((fields.filter((f) => user[f] && (Array.isArray(user[f]) ? user[f].length > 0 : true)).length / fields.length) * 100);
-    await User.findByIdAndUpdate(req.user.id, { profileCompleteness: completeness });
+    user = await User.findByIdAndUpdate(req.user.id, { profileCompleteness: completeness }, { new: true });
 
     res.json({ success: true, message: 'Profile updated', user });
   } catch (err) {

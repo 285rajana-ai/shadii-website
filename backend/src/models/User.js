@@ -154,9 +154,22 @@ const userSchema = new mongoose.Schema(
 );
 
 // Hash password before saving
-userSchema.pre('save', async function () {
-  if (!this.isModified('password')) return;
-  this.password = await bcrypt.hash(this.password, 12);
+userSchema.pre('save', async function (next) {
+  if (this.isModified('password')) {
+    this.password = await bcrypt.hash(this.password, 12);
+  }
+  
+  // Calculate profile completeness
+  const fields = ['name', 'age', 'height', 'education', 'cast', 'city', 'about', 'hobbies', 'interests', 'photos'];
+  const filledCount = fields.filter((f) => {
+    const val = this[f];
+    if (!val) return false;
+    if (Array.isArray(val)) return val.length > 0;
+    return true;
+  }).length;
+  this.profileCompleteness = Math.round((filledCount / fields.length) * 100);
+  
+  next();
 });
 
 // Compare password

@@ -1,7 +1,8 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Animated,
   Dimensions,
   ScrollView,
@@ -12,8 +13,9 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSelector } from 'react-redux';
 import colors from '../../theme/colors';
-import { SUBSCRIPTION_PLANS } from '../../utils/constants';
+import { API_BASE_URL } from '../../utils/constants';
 
 const { width } = Dimensions.get('window');
 
@@ -37,8 +39,40 @@ const ICONS = {
 
 export default function PlansScreen({ navigation }) {
   const insets = useSafeAreaInsets();
-  const [selectedPlan, setSelectedPlan] = useState(SUBSCRIPTION_PLANS[1]);
-  const scaleAnims = useRef(SUBSCRIPTION_PLANS.map(() => new Animated.Value(1))).current;
+  const { token } = useSelector((s) => s.auth);
+  const [plans, setPlans] = useState([]);
+  const [plansLoading, setPlansLoading] = useState(true);
+  const [selectedPlan, setSelectedPlan] = useState(null);
+  const scaleAnims = useRef([
+    new Animated.Value(1),
+    new Animated.Value(1),
+    new Animated.Value(1),
+  ]).current;
+
+  useEffect(() => {
+    fetchPlans();
+  }, []);
+
+  const fetchPlans = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/subscription/plans`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const data = await res.json();
+      if (data.success && data.plans) {
+        // Filter out non-membership purchases (boost, contact_unlock)
+        const filtered = data.plans.filter(p => p.id !== 'contact_unlock' && p.id !== 'boost');
+        setPlans(filtered);
+        // Default select standard plan, or first one
+        const std = filtered.find(p => p.id === 'standard') || filtered[0];
+        if (std) setSelectedPlan(std);
+      }
+    } catch (err) {
+      console.warn('Failed to fetch plans:', err.message);
+    } finally {
+      setPlansLoading(false);
+    }
+  };
 
   const handleSelect = (plan, idx) => {
     setSelectedPlan(plan);
@@ -49,12 +83,19 @@ export default function PlansScreen({ navigation }) {
   };
 
   const handleContinue = () => {
+    if (!selectedPlan) return;
     navigation.navigate('Payment', { plan: selectedPlan });
   };
 
   const monthlyRate = (plan) => {
-    const months = plan.duration === '1 Month' ? 1 : plan.duration === '3 Months' ? 3 : 6;
+    const months = plan.duration <= 30 ? 1 : plan.duration <= 90 ? 3 : 6;
     return Math.round(plan.price / months);
+  };
+
+  const planDurationLabel = (plan) => {
+    if (plan.duration <= 30) return '1 Month';
+    if (plan.duration <= 90) return '3 Months';
+    return '6 Months';
   };
 
   return (
@@ -62,7 +103,6 @@ export default function PlansScreen({ navigation }) {
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       <LinearGradient colors={['#1A000A', '#0D0509', '#0D0D0D']} style={StyleSheet.absoluteFill} />
 
-      {/* Decorative glow */}
       <View style={styles.glowOrb} />
 
       {/* Header */}
@@ -74,385 +114,196 @@ export default function PlansScreen({ navigation }) {
           <MaterialCommunityIcons name="crown" size={18} color={colors.accent} />
           <Text style={styles.headerTitle}>Premium Plans</Text>
         </View>
-        <View style={styles.closeBtn} />
+        <View style={styles.closeBtnPlaceholder} />
       </View>
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 40 }]}
-      >
-        {/* Hero */}
-        <View style={styles.hero}>
-          <LinearGradient
-            colors={['rgba(212,175,55,0.18)', 'rgba(212,175,55,0)']}
-            style={styles.heroGlow}
-          />
-          <Text style={styles.heroTitle}>Unlock Your{'\n'}Full Story</Text>
-          <Text style={styles.heroSub}>
-            View real photos, send unlimited messages, and get more matches today.
-          </Text>
+      {plansLoading ? (
+        <View style={styles.loaderWrap}>
+          <ActivityIndicator size="large" color={colors.accent} />
+          <Text style={styles.loadingText}>Fetching luxury matches plans...</Text>
         </View>
-
-        {/* Plan Cards */}
-        <View style={styles.plansRow}>
-          {SUBSCRIPTION_PLANS.map((plan, idx) => {
-            const isSelected = selectedPlan.id === plan.id;
-            const accent = PLAN_ACCENT[plan.id];
-            return (
-              <Animated.View
-                key={plan.id}
-                style={[styles.planCardWrap, { transform: [{ scale: scaleAnims[idx] }] }]}
-              >
-                <TouchableOpacity
-                  style={[styles.planCard, isSelected && { borderColor: accent }]}
-                  onPress={() => handleSelect(plan, idx)}
-                  activeOpacity={0.85}
-                >
-                  {isSelected && (
-                    <LinearGradient
-                      colors={PLAN_GRADIENTS[plan.id]}
-                      style={StyleSheet.absoluteFill}
-                    />
-                  )}
-
-                  {plan.popular && (
-                    <View style={[styles.popularBadge, { backgroundColor: accent }]}>
-                      <Text style={styles.popularText}>BEST VALUE</Text>
-                    </View>
-                  )}
-
-                  {/* Plan icon */}
-                  <View style={[styles.planIconWrap, { borderColor: accent + '40' }]}>
-                    <MaterialCommunityIcons name={ICONS[plan.id]} size={22} color={accent} />
-                  </View>
-
-                  <Text style={[styles.planName, { color: accent }]}>{plan.name}</Text>
-                  <Text style={styles.planDuration}>{plan.duration}</Text>
-
-                  <View style={styles.priceRow}>
-                    <Text style={styles.priceCurrency}>PKR</Text>
-                    <Text style={[styles.priceNum, { color: isSelected ? accent : colors.text }]}>
-                      {plan.price.toLocaleString()}
-                    </Text>
-                  </View>
-
-                  <Text style={styles.perMonth}>≈ {monthlyRate(plan).toLocaleString()}/mo</Text>
-
-                  {/* Selected check */}
-                  <View style={[styles.checkCircle, isSelected && { backgroundColor: accent, borderColor: accent }]}>
-                    {isSelected && <MaterialCommunityIcons name="check-bold" size={13} color="#fff" />}
-                  </View>
-                </TouchableOpacity>
-              </Animated.View>
-            );
-          })}
-        </View>
-
-        {/* Features Card */}
-        <View style={styles.featuresCard}>
-          <LinearGradient
-            colors={['rgba(212,175,55,0.08)', 'transparent']}
-            style={StyleSheet.absoluteFill}
-          />
-          <View style={styles.featuresHeader}>
-            <MaterialCommunityIcons name="check-decagram" size={18} color={colors.accent} />
-            <Text style={styles.featuresTitle}>What's included in {selectedPlan.name}</Text>
+      ) : (
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 40 }]}
+        >
+          {/* Hero */}
+          <View style={styles.hero}>
+            <LinearGradient
+              colors={['rgba(212,175,55,0.18)', 'rgba(212,175,55,0)']}
+              style={styles.heroGlow}
+            />
+            <Text style={styles.heroTitle}>Unlock Your{'\n'}Full Story</Text>
+            <Text style={styles.heroSub}>
+              View real photos, send unlimited messages, and get more matches today.
+            </Text>
           </View>
-          {selectedPlan.features.map((feature, idx) => (
-            <View key={idx} style={styles.featureRow}>
-              <View style={[styles.featureDot, { backgroundColor: PLAN_ACCENT[selectedPlan.id] }]} />
-              <Text style={styles.featureText}>{feature}</Text>
+
+          {/* Plan Cards */}
+          <View style={styles.plansRow}>
+            {plans.map((plan, idx) => {
+              if (idx > 2) return null; // Avoid index out of bounds for scaleAnims
+              const isSelected = selectedPlan?.id === plan.id;
+              const accent = PLAN_ACCENT[plan.id] || '#D4AF37';
+              return (
+                <Animated.View
+                  key={plan.id}
+                  style={[styles.planCardWrap, { transform: [{ scale: scaleAnims[idx] || 1 }] }]}
+                >
+                  <TouchableOpacity
+                    style={[styles.planCard, isSelected && { borderColor: accent }]}
+                    onPress={() => handleSelect(plan, idx)}
+                    activeOpacity={0.85}
+                  >
+                    {isSelected && (
+                      <LinearGradient
+                        colors={PLAN_GRADIENTS[plan.id] || ['#7A5C00', '#4A3800']}
+                        style={StyleSheet.absoluteFill}
+                      />
+                    )}
+
+                    {plan.popular && (
+                      <View style={[styles.popularBadge, { backgroundColor: accent }]}>
+                        <Text style={styles.popularText}>BEST VALUE</Text>
+                      </View>
+                    )}
+
+                    {/* Plan icon */}
+                    <View style={[styles.planIconWrap, { borderColor: accent + '40' }]}>
+                      <MaterialCommunityIcons name={ICONS[plan.id] || 'star'} size={22} color={accent} />
+                    </View>
+
+                    <Text style={[styles.planName, { color: accent }]}>{plan.name}</Text>
+                    <Text style={styles.planDuration}>{planDurationLabel(plan)}</Text>
+
+                    <View style={styles.priceRow}>
+                      <Text style={styles.priceCurrency}>PKR</Text>
+                      <Text style={[styles.priceNum, { color: isSelected ? accent : colors.text }]}>
+                        {plan.price.toLocaleString()}
+                      </Text>
+                    </View>
+
+                    <Text style={styles.perMonth}>≈ {monthlyRate(plan).toLocaleString()}/mo</Text>
+
+                    {/* Selected check */}
+                    <View style={[styles.checkCircle, isSelected && { backgroundColor: accent, borderColor: accent }]}>
+                      {isSelected && <MaterialCommunityIcons name="check-bold" size={13} color="#fff" />}
+                    </View>
+                  </TouchableOpacity>
+                </Animated.View>
+              );
+            })}
+          </View>
+
+          {/* Features Card */}
+          {selectedPlan && (
+            <View style={styles.featuresCard}>
+              <LinearGradient
+                colors={['rgba(212,175,55,0.08)', 'transparent']}
+                style={StyleSheet.absoluteFill}
+              />
+              <View style={styles.featuresHeader}>
+                <MaterialCommunityIcons name="check-decagram" size={18} color={colors.accent} />
+                <Text style={styles.featuresTitle}>What's included in {selectedPlan.name}</Text>
+              </View>
+              {selectedPlan.features?.map((feature, idx) => (
+                <View key={idx} style={styles.featureRow}>
+                  <View style={[styles.featureDot, { backgroundColor: PLAN_ACCENT[selectedPlan.id] || '#D4AF37' }]} />
+                  <Text style={styles.featureText}>{feature}</Text>
+                </View>
+              ))}
             </View>
-          ))}
-        </View>
+          )}
 
-        {/* Value badges */}
-        <View style={styles.badgeRow}>
-          {[
-            { icon: 'shield-check-outline', label: 'Secure Payment' },
-            { icon: 'refresh', label: 'Cancel Anytime' },
-            { icon: 'lock-outline', label: 'Privacy Protected' },
-          ].map((b) => (
-            <View key={b.label} style={styles.badge}>
-              <MaterialCommunityIcons name={b.icon} size={18} color={colors.accent} />
-              <Text style={styles.badgeLabel}>{b.label}</Text>
-            </View>
-          ))}
-        </View>
+          {/* Value badges */}
+          <View style={styles.badgeRow}>
+            {[
+              { icon: 'shield-check-outline', label: 'Secure Payment' },
+              { icon: 'refresh', label: 'Cancel Anytime' },
+              { icon: 'lock-outline', label: 'Privacy Protected' },
+            ].map((b) => (
+              <View key={b.label} style={styles.badge}>
+                <MaterialCommunityIcons name={b.icon} size={18} color={colors.accent} />
+                <Text style={styles.badgeLabel}>{b.label}</Text>
+              </View>
+            ))}
+          </View>
 
-        {/* CTA */}
-        <TouchableOpacity style={styles.ctaWrap} onPress={handleContinue} activeOpacity={0.85}>
-          <LinearGradient colors={['#D4AF37', '#A07C10']} style={styles.cta}>
-            <Text style={styles.ctaText}>Continue to Payment</Text>
-            <MaterialCommunityIcons name="arrow-right" size={20} color="#0D0D0D" />
-          </LinearGradient>
-        </TouchableOpacity>
+          {/* CTA */}
+          <TouchableOpacity style={styles.ctaWrap} onPress={handleContinue} activeOpacity={0.85}>
+            <LinearGradient colors={['#D4AF37', '#A07C10']} style={styles.cta}>
+              <Text style={styles.ctaText}>Continue to Payment</Text>
+              <MaterialCommunityIcons name="arrow-right" size={20} color="#0D0D0D" />
+            </LinearGradient>
+          </TouchableOpacity>
 
-        <Text style={styles.termsText}>
-          By continuing you agree to our Terms of Service &amp; Privacy Policy.{'\n'}Payments are processed securely.
-        </Text>
-      </ScrollView>
+          <Text style={styles.termsText}>
+            By continuing you agree to our Terms of Service &amp; Privacy Policy.{'\n'}Payments are processed securely.
+          </Text>
+        </ScrollView>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-
   glowOrb: {
     position: 'absolute',
-    width: 280,
-    height: 280,
-    borderRadius: 140,
+    width: 280, height: 280, borderRadius: 140,
     backgroundColor: 'rgba(92,15,49,0.35)',
-    top: -80,
-    right: -80,
+    top: -80, right: -80,
   },
-
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingBottom: 8,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 20, paddingBottom: 8,
   },
   closeBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.07)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.07)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center', justifyContent: 'center',
   },
-  headerCenter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  headerTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.accent,
-    letterSpacing: 0.5,
-  },
-
+  closeBtnPlaceholder: { width: 40, height: 40 },
+  headerCenter: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  headerTitle: { fontSize: 16, fontWeight: '700', color: colors.accent, letterSpacing: 0.5 },
+  loaderWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 },
+  loadingText: { color: colors.textSecondary, fontSize: 14 },
   scroll: { paddingHorizontal: 20 },
-
-  hero: {
-    alignItems: 'center',
-    paddingVertical: 24,
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  heroGlow: {
-    position: 'absolute',
-    width: 200,
-    height: 100,
-    borderRadius: 100,
-    top: 0,
-    alignSelf: 'center',
-  },
-  heroTitle: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: colors.text,
-    textAlign: 'center',
-    lineHeight: 40,
-    letterSpacing: -0.5,
-    marginBottom: 12,
-  },
-  heroSub: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 22,
-    paddingHorizontal: 16,
-  },
-
-  plansRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 24,
-    marginTop: 8,
-  },
+  hero: { alignItems: 'center', paddingVertical: 24, position: 'relative', overflow: 'hidden' },
+  heroGlow: { position: 'absolute', width: 200, height: 100, borderRadius: 100, top: 0, alignSelf: 'center' },
+  heroTitle: { fontSize: 32, fontWeight: '800', color: colors.text, textAlign: 'center', lineHeight: 40, letterSpacing: -0.5, marginBottom: 12 },
+  heroSub: { fontSize: 14, color: colors.textSecondary, textAlign: 'center', lineHeight: 22, paddingHorizontal: 16 },
+  plansRow: { flexDirection: 'row', gap: 12, marginBottom: 24, marginTop: 8 },
   planCardWrap: { flex: 1 },
   planCard: {
-    borderRadius: 20,
-    overflow: 'hidden',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.08)',
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    padding: 12,
-    paddingBottom: 16,
-    alignItems: 'center',
-    position: 'relative',
-    minHeight: 200,
+    borderRadius: 20, overflow: 'hidden', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: 'rgba(255,255,255,0.04)', padding: 12, paddingBottom: 16, alignItems: 'center',
+    position: 'relative', minHeight: 200,
   },
-
-  popularBadge: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    paddingVertical: 4,
-    alignItems: 'center',
-    zIndex: 1,
-  },
-  popularText: {
-    color: '#0D0D0D',
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 1.2,
-  },
-
+  popularBadge: { position: 'absolute', top: 0, left: 0, right: 0, paddingVertical: 4, alignItems: 'center', zIndex: 1 },
+  popularText: { color: '#0D0D0D', fontSize: 11, fontWeight: '800', letterSpacing: 1.2 },
   planIconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 20,
-    marginBottom: 8,
+    width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 1, alignItems: 'center', justifyContent: 'center', marginTop: 20, marginBottom: 8,
   },
-  planName: {
-    fontSize: 16,
-    fontWeight: '800',
-    marginBottom: 2,
-    textAlign: 'center',
-  },
-  planDuration: {
-    fontSize: 11,
-    color: 'rgba(245,230,200,0.45)',
-    fontWeight: '500',
-    marginBottom: 8,
-  },
-  priceRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 2,
-    marginBottom: 2,
-  },
-  priceCurrency: {
-    fontSize: 11,
-    color: 'rgba(245,230,200,0.5)',
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  priceNum: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: colors.text,
-  },
-  perMonth: {
-    fontSize: 11,
-    color: 'rgba(245,230,200,0.4)',
-    marginBottom: 12,
-  },
-  checkCircle: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.2)',
-    backgroundColor: 'transparent',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  featuresCard: {
-    borderRadius: 20,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(212,175,55,0.18)',
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    padding: 20,
-    marginBottom: 20,
-  },
-  featuresHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 16,
-  },
-  featuresTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  featureRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 8,
-  },
-  featureDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  featureText: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    flex: 1,
-    lineHeight: 20,
-  },
-
-  badgeRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 24,
-    gap: 8,
-  },
-  badge: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    borderRadius: 12,
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
-  },
-  badgeLabel: {
-    fontSize: 11,
-    color: 'rgba(245,230,200,0.55)',
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-
-  ctaWrap: {
-    borderRadius: 16,
-    overflow: 'hidden',
-    marginBottom: 16,
-    shadowColor: '#D4AF37',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 14,
-    elevation: 8,
-  },
-  cta: {
-    paddingVertical: 16,
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  ctaText: {
-    color: '#0D0D0D',
-    fontSize: 16,
-    fontWeight: '800',
-    letterSpacing: 0.3,
-  },
-
-  termsText: {
-    fontSize: 11,
-    color: 'rgba(245,230,200,0.3)',
-    textAlign: 'center',
-    lineHeight: 18,
-    paddingHorizontal: 8,
-  },
+  planName: { fontSize: 16, fontWeight: '800', marginBottom: 2, textAlign: 'center' },
+  planDuration: { fontSize: 11, color: 'rgba(245,230,200,0.45)', fontWeight: '500', marginBottom: 8 },
+  priceRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 2, marginBottom: 2 },
+  priceCurrency: { fontSize: 11, color: 'rgba(245,230,200,0.5)', fontWeight: '600', marginBottom: 4 },
+  priceNum: { fontSize: 24, fontWeight: '800', color: colors.text },
+  perMonth: { fontSize: 11, color: 'rgba(245,230,200,0.4)', marginBottom: 12 },
+  checkCircle: { width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.2)', backgroundColor: 'transparent', alignItems: 'center', justifyContent: 'center' },
+  featuresCard: { borderRadius: 20, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(212,175,55,0.18)', backgroundColor: 'rgba(255,255,255,0.04)', padding: 20, marginBottom: 20 },
+  featuresHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 },
+  featuresTitle: { fontSize: 14, fontWeight: '700', color: colors.text },
+  featureRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 },
+  featureDot: { width: 6, height: 6, borderRadius: 3 },
+  featureText: { fontSize: 14, color: colors.textSecondary, flex: 1, lineHeight: 20 },
+  badgeRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 24, gap: 8 },
+  badge: { flex: 1, alignItems: 'center', gap: 4, backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 12, paddingVertical: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)' },
+  badgeLabel: { fontSize: 11, color: 'rgba(245,230,200,0.55)', fontWeight: '600', textAlign: 'center' },
+  ctaWrap: { borderRadius: 16, overflow: 'hidden', marginBottom: 16, shadowColor: '#D4AF37', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.35, shadowRadius: 14, elevation: 8 },
+  cta: { paddingVertical: 16, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 },
+  ctaText: { color: '#0D0D0D', fontSize: 16, fontWeight: '800', letterSpacing: 0.3 },
+  termsText: { fontSize: 11, color: 'rgba(245,230,200,0.3)', textAlign: 'center', lineHeight: 18, paddingHorizontal: 8 },
 });

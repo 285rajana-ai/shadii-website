@@ -1,4 +1,5 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import Constants from 'expo-constants';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
 import { Alert, Image, Linking, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -120,7 +121,7 @@ export default function ProfileScreen({ navigation }) {
           <View style={styles.statsContainer}>
             <StatItem label="Profile Views" value={user?.profileViews ?? 0} icon="eye-outline" />
             <View style={styles.statDivider} />
-            <StatItem label="Trust Score" value={`${user?.profileCompleteness ?? 0}%`} icon="shield-check-outline" />
+            <StatItem label="Completeness" value={`${user?.profileCompleteness ?? 0}%`} icon="shield-check-outline" />
             <View style={styles.statDivider} />
             <StatItem label="Matches" value={matchCount ?? 0} icon="heart-outline" />
           </View>
@@ -191,7 +192,7 @@ export default function ProfileScreen({ navigation }) {
           </View>
         </View>
 
-        <Text style={styles.versionText}>Shadii.pk Premium • v1.2.4</Text>
+        <Text style={styles.versionText}>Shadii.pk Premium • v{Constants.expoConfig?.version || '1.0'}</Text>
         <View style={{ height: 120 }} />
       </ScrollView>
     </View>

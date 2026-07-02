@@ -549,6 +549,142 @@ router.post('/cancel', protect, async (req, res) => {
       success: true,
       message: 'Auto-renewal disabled. Your plan remains active until the expiry date.',
     });
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ─── POST /api/subscription/stripe/checkout-session ────────────────────────────
+router.post('/stripe/checkout-session', protect, async (req, res) => {
+  try {
+    const { plan, targetUserId } = req.body;
+    if (!PLANS[plan]) {
+      return res.status(400).json({ success: false, message: 'Invalid plan selected' });
+    }
+
+    const planConfig = PLANS[plan];
+    const isStripeConfigured = process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY.startsWith('sk_');
+
+    if (!isStripeConfigured) {
+      console.warn('⚠️ Stripe is not configured (STRIPE_SECRET_KEY is missing or invalid). Running in sandbox simulation mode.');
+      // Create a mock subscription for verification
+      const startDate = new Date();
+      const endDate = new Date(Date.now() + planConfig.duration * 24 * 60 * 60 * 1000);
+      const subscription = await Subscription.create({
+        user: req.user.id,
+        plan,
+        amount: planConfig.price,
+        duration: planConfig.duration,
+        startDate,
+        endDate,
+        paymentMethod: 'stripe_card',
+        paymentStatus: 'awaiting_payment',
+        isActive: false,
+        targetUser: plan === 'contact_unlock' ? targetUserId : undefined,
+      });
+
+      return res.json({
+        success: true,
+        isSimulated: true,
+        paymentUrl: `${req.headers.origin || 'http://localhost:5173'}/membership?status=success&session_id=mock_${subscription._id}`,
+        message: 'Sandbox mode: paymentUrl is generated for simulation.'
+      });
+    }
+
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+    const startDate = new Date();
+    const endDate = new Date(Date.now() + (planConfig.duration || 30) * 24 * 60 * 60 * 1000);
+    const subscription = await Subscription.create({
+      user: req.user.id,
+      plan,
+      amount: planConfig.price,
+      duration: planConfig.duration,
+      startDate,
+      endDate,
+      paymentMethod: 'stripe_card',
+      paymentStatus: 'awaiting_payment',
+      isActive: false,
+      targetUser: plan === 'contact_unlock' ? targetUserId : undefined,
+    });
+
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [{
+        price_data: {
+          currency: 'pkr',
+          product_data: {
+            name: planConfig.label,
+          },
+          unit_amount: planConfig.price * 100, // in cents
+        },
+        quantity: 1,
+      }],
+      mode: 'payment',
+      success_url: `${req.headers.origin || 'http://localhost:5173'}/membership?status=success&session_id=${subscription._id}_{CHECKOUT_SESSION_ID}`,
+      cancel_url: `${req.headers.origin || 'http://localhost:5173'}/membership?status=cancelled`,
+      metadata: {
+        subscriptionId: subscription._id.toString(),
+        userId: req.user.id,
+        plan,
+      }
+    });
+
+    res.json({
+      success: true,
+      paymentUrl: session.url,
+      isSimulated: false,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ─── POST /api/subscription/stripe/verify-session ──────────────────────────────
+router.post('/stripe/verify-session', protect, async (req, res) => {
+  try {
+    const { sessionId } = req.body;
+    if (!sessionId) {
+      return res.status(400).json({ success: false, message: 'Session ID is required' });
+    }
+
+    if (sessionId.startsWith('mock_')) {
+      const subId = sessionId.replace('mock_', '');
+      const subscription = await Subscription.findById(subId);
+      if (!subscription) return res.status(404).json({ success: false, message: 'Subscription not found' });
+      if (subscription.paymentStatus === 'completed') {
+        return res.json({ success: true, message: 'Subscription already active' });
+      }
+
+      const user = await User.findById(req.user.id);
+      await activateSubscription(subscription, `mock_txn_${Date.now()}`, user, {
+        gatewayResponse: 'Simulated Sandbox Payment Completed',
+        reviewNote: 'Approved automatically via sandbox mode'
+      });
+
+      return res.json({ success: true, message: 'Sandbox payment verified and activated!' });
+    }
+
+    // Real stripe verification
+    const [subId, stripeSessionId] = sessionId.split('_');
+    const subscription = await Subscription.findById(subId);
+    if (!subscription) return res.status(404).json({ success: false, message: 'Subscription not found' });
+    if (subscription.paymentStatus === 'completed') {
+      return res.json({ success: true, message: 'Subscription already active' });
+    }
+
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    const session = await stripe.checkout.sessions.retrieve(stripeSessionId);
+
+    if (session.payment_status === 'paid') {
+      const user = await User.findById(req.user.id);
+      await activateSubscription(subscription, session.payment_intent, user, {
+        gatewayResponse: JSON.stringify(session),
+        reviewNote: 'Approved automatically via Stripe checkout'
+      });
+      return res.json({ success: true, message: 'Stripe payment verified and activated!' });
+    } else {
+      return res.status(400).json({ success: false, message: 'Stripe session not paid yet' });
+    }
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

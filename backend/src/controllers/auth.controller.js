@@ -103,6 +103,8 @@ exports.register = async (req, res) => {
       country: sanitizedData.country || 'Pakistan',
       hobbies: sanitizedData.hobbies || [],
       interests: sanitizedData.interests || [],
+      isEmailVerified: true,
+      isPhoneVerified: true,
       otp,
       otpExpiry,
     });
