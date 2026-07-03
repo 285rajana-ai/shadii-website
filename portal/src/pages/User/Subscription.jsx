@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth, API_BASE } from '../../context/AuthContext';
-import { CreditCard, ShieldCheck, CheckCircle2, ChevronRight, Upload, AlertCircle, FileText } from 'lucide-react';
+import { CreditCard, ShieldCheck, CheckCircle2, ChevronRight, Upload, AlertCircle, FileText, Sparkles, Gem, HelpCircle, BadgePercent } from 'lucide-react';
 
 export default function Subscription() {
   const { token, user, refreshUser } = useAuth();
@@ -175,32 +175,45 @@ export default function Subscription() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      {/* Page Title */}
-      <div className="bg-white border border-[#E5DEC9] p-6 mb-8">
-        <h1 className="text-3xl font-serif font-bold text-[#800020]">Premium Memberships</h1>
-        <p className="text-sm text-[#605252] mt-1">Upgrade your account to access unified dignified messaging, profile views, and advanced matchmaking options.</p>
-      </div>
+    <div className="flex flex-col gap-6">
+      {/* Page Title Header */}
+      <section className="glass-panel p-6 md:p-8 rounded-2xl relative overflow-hidden flex items-center justify-between">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#800020]/5 to-transparent blur-3xl pointer-events-none" />
+        <div>
+          <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#D4AF37] mb-2">
+            <Gem className="h-4 w-4 text-[#D4AF37]" />
+            Shadii Premium Services
+          </div>
+          <h1 className="text-2xl md:text-3xl font-serif font-black text-[#580820] tracking-tight">
+            Premium Membership Packages
+          </h1>
+          <p className="mt-1 text-xs font-bold text-[#1F1515]/45 uppercase tracking-wider">
+            Choose a plan to communicate with matches and browse photos without blurring
+          </p>
+        </div>
+      </section>
 
       {error && (
-        <div className="bg-[#FAF2F2] border border-[#800020] text-[#800020] p-4 mb-6 text-sm">
-          {error}
+        <div className="flex items-start gap-3 border border-red-800/25 bg-red-50 p-4 text-sm rounded-xl text-red-800 shadow-sm">
+          <AlertCircle className="w-5 h-5 shrink-0 text-red-600" />
+          <span className="font-semibold">{error}</span>
         </div>
       )}
       {success && (
-        <div className="bg-[#F2FAF4] border border-[#C5A059] text-[#2C2121] p-4 mb-6 text-sm flex items-center gap-2">
-          <CheckCircle2 className="w-5 h-5 text-[#C5A059] shrink-0" />
-          <span>{success}</span>
+        <div className="flex items-start gap-3 border border-[#D4AF37]/25 bg-[#FAF8F5] p-4 text-sm rounded-xl text-[#580820] shadow-sm">
+          <CheckCircle2 className="w-5 h-5 shrink-0 text-[#D4AF37]" />
+          <span className="font-semibold">{success}</span>
         </div>
       )}
 
       {/* Active Subscription badge */}
       {user?.subscription?.isActive && (
-        <div className="bg-green-50 border border-green-200 p-6 mb-8 text-center flex flex-col items-center">
-          <CheckCircle2 className="w-12 h-12 text-green-600 mb-2" />
-          <h3 className="font-serif font-bold text-lg text-green-800">Your Premium Plan is Active</h3>
-          <p className="text-xs text-green-700 mt-1 uppercase tracking-widest font-semibold">
-            Plan: {user.subscription.plan} · Expires: {new Date(user.subscription.endDate).toLocaleDateString()}
+        <div className="glass-panel p-6 rounded-2xl border border-emerald-500/20 bg-emerald-50/50 flex flex-col items-center justify-center text-center relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 blur-2xl rounded-full" />
+          <CheckCircle2 className="w-10 h-10 text-emerald-700 mb-2.5" />
+          <h3 className="font-serif font-black text-lg text-emerald-800">Your Premium Account is Active</h3>
+          <p className="text-[10px] text-emerald-600 font-extrabold uppercase tracking-widest mt-1">
+            Tier: {user.subscription.plan} • Expires: {new Date(user.subscription.endDate).toLocaleDateString()}
           </p>
         </div>
       )}
@@ -209,119 +222,135 @@ export default function Subscription() {
         <>
           {/* Plans Grid */}
           {plansLoading ? (
-            <div className="text-center py-12 text-[#605252]">Loading subscription plans...</div>
+            <div className="glass-panel grid min-h-[20rem] place-items-center text-sm text-[#1F1515]/60 rounded-2xl">
+              <span className="inline-flex flex-col items-center gap-2">
+                <Loader2 className="h-6 w-6 animate-spin text-[#800020]" />
+                <span className="font-semibold uppercase tracking-wider text-[10px]">Loading Pricing Plans...</span>
+              </span>
+            </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-              {plans.map((plan) => (
-                <div key={plan.id} className="bg-white border border-[#E5DEC9] flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow relative">
-                  <div className="p-6">
-                    <h3 className="font-serif text-xl font-bold text-[#800020]">{plan.label}</h3>
-                    <div className="my-4">
-                      <span className="text-3xl font-serif font-bold text-[#C5A059]">PKR {plan.price.toLocaleString()}</span>
-                      <span className="text-xs text-[#605252] ml-1">/ {plan.duration} Days</span>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {plans.map((plan) => {
+                const isRecommended = plan.id === 'standard' || plan.id === 'premium';
+                return (
+                  <div 
+                    key={plan.id} 
+                    className={`glass-panel flex flex-col justify-between overflow-hidden rounded-2xl transition-all duration-300 relative ${
+                      isRecommended ? 'border-l-4 border-l-[#D4AF37] shadow-lg scale-[1.02] bg-gradient-to-b from-white/90 to-white/70' : 'bg-white/80'
+                    }`}
+                  >
+                    {isRecommended && (
+                      <div className="absolute top-3 right-3 bg-[#D4AF37] text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded shadow-sm">
+                        Recommended
+                      </div>
+                    )}
+                    <div className="p-6">
+                      <h3 className="font-serif text-xl font-black text-[#580820]">{plan.label}</h3>
+                      <div className="my-4">
+                        <span className="text-3xl font-serif font-black text-[#800020]">PKR {plan.price.toLocaleString()}</span>
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#1F1515]/40 ml-1">/ {plan.duration} Days</span>
+                      </div>
+
+                      <ul className="space-y-2.5 text-xs text-[#1F1515]/70 border-t border-[#D4AF37]/15 pt-4 mt-4 font-semibold">
+                        {plan.features?.map((feat, i) => (
+                          <li key={i} className="flex items-start gap-2">
+                            <CheckCircle2 className="w-4 h-4 text-[#D4AF37] shrink-0 mt-0.5" />
+                            <span>{feat}</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
 
-                    <ul className="space-y-2.5 text-xs text-[#605252] border-t border-[#F5EFEB] pt-4 mt-4">
-                      {plan.features?.map((feat, i) => (
-                        <li key={i} className="flex items-start gap-1.5">
-                          <CheckCircle2 className="w-4 h-4 text-[#C5A059] shrink-0 mt-0.5" />
-                          <span>{feat}</span>
-                        </li>
-                      ))}
-                    </ul>
+                    <div className="p-4 bg-[#FCFBF7]/80 border-t border-[#D4AF37]/10 flex items-center justify-center">
+                      <button
+                        onClick={() => setSelectedPlan(plan)}
+                        className="w-full btn-premium-primary py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider text-center"
+                      >
+                        Select {plan.label}
+                      </button>
+                    </div>
                   </div>
-
-                  <div className="p-6 bg-[#FCFBF7] border-t border-[#E5DEC9]">
-                    <button
-                      onClick={() => setSelectedPlan(plan)}
-                      style={{ color: '#ffffff' }}
-                      className="w-full py-2.5 bg-[#800020] text-white text-xs font-bold uppercase tracking-wider hover:bg-[#9E1B32] transition-colors cursor-pointer text-center !text-white"
-                    >
-                      Choose Plan
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 
           {/* Checkout Selection Modal-like Panel */}
           {selectedPlan && (
-            <div className="bg-white border border-[#E5DEC9] p-6 md:p-8 space-y-6">
-              <h3 className="font-serif text-lg font-bold text-[#800020] border-b border-[#E5DEC9] pb-2">
+            <div className="glass-panel p-6 md:p-8 rounded-2xl space-y-6 shadow-md border border-[#D4AF37]/20">
+              <h3 className="font-serif text-lg font-black text-[#580820] border-b border-[#D4AF37]/15 pb-3">
                 Order details: {selectedPlan.label} (PKR {selectedPlan.price.toLocaleString()})
               </h3>
 
               <form onSubmit={handleInitiate} className="space-y-6">
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-[#605252] mb-2">
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-[#1F1515]/50 mb-3">
                     Select Payment Method
                   </label>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <button
                       type="button"
                       onClick={() => setPaymentMethod('credit_card')}
-                      className={`p-4 border text-left flex items-center justify-between transition-colors cursor-pointer ${
+                      className={`p-4 border text-left flex items-center justify-between transition-all rounded-xl cursor-pointer ${
                         paymentMethod === 'credit_card'
-                          ? 'border-[#800020] bg-[#800020]/5'
-                          : 'border-[#E5DEC9] hover:border-[#800020]'
+                          ? 'border-[#800020] bg-[#800020]/5 shadow-sm'
+                          : 'border-[#D4AF37]/20 bg-white/70 hover:border-[#800020]'
                       }`}
                     >
                       <div>
-                        <span className="block font-bold text-sm text-[#2C2121]">Credit/Debit Card</span>
-                        <span className="text-[10px] text-[#605252]">Secure pay via Visa / MasterCard</span>
+                        <span className="block font-bold text-sm text-[#1F1515]">Credit/Debit Card</span>
+                        <span className="text-[10px] text-[#1F1515]/50 font-semibold mt-0.5 block">Pay securely via Stripe API</span>
                       </div>
-                      <CreditCard className="w-5 h-5 text-[#C5A059]" />
+                      <CreditCard className="w-5 h-5 text-[#D4AF37]" />
                     </button>
                     <button
                       type="button"
                       onClick={() => setPaymentMethod('easypaisa')}
-                      className={`p-4 border text-left flex items-center justify-between transition-colors cursor-pointer ${
+                      className={`p-4 border text-left flex items-center justify-between transition-all rounded-xl cursor-pointer ${
                         paymentMethod === 'easypaisa'
-                          ? 'border-[#800020] bg-[#800020]/5'
-                          : 'border-[#E5DEC9] hover:border-[#800020]'
+                          ? 'border-[#800020] bg-[#800020]/5 shadow-sm'
+                          : 'border-[#D4AF37]/20 bg-white/70 hover:border-[#800020]'
                       }`}
                     >
                       <div>
-                        <span className="block font-bold text-sm text-[#2C2121]">EasyPaisa Wallet</span>
-                        <span className="text-[10px] text-[#605252]">Transfer via mobile EasyPaisa app</span>
+                        <span className="block font-bold text-sm text-[#1F1515]">EasyPaisa Wallet</span>
+                        <span className="text-[10px] text-[#1F1515]/50 font-semibold mt-0.5 block">Transfer via Easypaisa mobile app</span>
                       </div>
-                      <ChevronRight className="w-4 h-4 text-[#C5A059]" />
+                      <ChevronRight className="w-4 h-4 text-[#D4AF37]" />
                     </button>
 
                     <button
                       type="button"
                       onClick={() => setPaymentMethod('bank_transfer')}
-                      className={`p-4 border text-left flex items-center justify-between transition-colors cursor-pointer ${
+                      className={`p-4 border text-left flex items-center justify-between transition-all rounded-xl cursor-pointer ${
                         paymentMethod === 'bank_transfer'
-                          ? 'border-[#800020] bg-[#800020]/5'
-                          : 'border-[#E5DEC9] hover:border-[#800020]'
+                          ? 'border-[#800020] bg-[#800020]/5 shadow-sm'
+                          : 'border-[#D4AF37]/20 bg-white/70 hover:border-[#800020]'
                       }`}
                     >
                       <div>
-                        <span className="block font-bold text-sm text-[#2C2121]">Direct Bank Transfer</span>
-                        <span className="text-[10px] text-[#605252]">Transfer using HBL/Allied bank or HBL app</span>
+                        <span className="block font-bold text-sm text-[#1F1515]">Bank Transfer</span>
+                        <span className="text-[10px] text-[#1F1515]/50 font-semibold mt-0.5 block">Transfer using any Pakistani bank app</span>
                       </div>
-                      <ChevronRight className="w-4 h-4 text-[#C5A059]" />
+                      <ChevronRight className="w-4 h-4 text-[#D4AF37]" />
                     </button>
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-3 border-t border-[#F5EFEB] pt-4">
+                <div className="flex justify-end gap-3 border-t border-[#D4AF37]/15 pt-5">
                   <button
                     type="button"
                     onClick={() => setSelectedPlan(null)}
-                    className="px-4 py-2 border border-[#E5DEC9] text-xs font-bold uppercase tracking-wider text-[#605252] hover:bg-gray-50 transition-colors"
+                    className="btn-premium-secondary px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={loading || !paymentMethod}
-                    style={{ color: '#ffffff' }}
-                    className="px-6 py-2 bg-[#800020] text-white text-xs font-bold uppercase tracking-wider hover:bg-[#9E1B32] transition-colors cursor-pointer !text-white"
+                    className="btn-premium-primary px-6 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider"
                   >
-                    Proceed to Payment
+                    {loading ? 'Processing...' : 'Proceed to Checkout'}
                   </button>
                 </div>
               </form>
@@ -330,61 +359,61 @@ export default function Subscription() {
         </>
       ) : (
         /* Invoice Instructions & Proof Submission Form */
-        <div className="bg-white border border-[#E5DEC9] p-6 md:p-8 space-y-6">
-          <h3 className="font-serif text-lg font-bold text-[#800020] border-b border-[#E5DEC9] pb-2">
-            Payment Instructions - Order ID: {initiationData.subscriptionId}
+        <div className="glass-panel p-6 md:p-8 rounded-2xl space-y-6 shadow-md border border-[#D4AF37]/20 bg-white/90">
+          <h3 className="font-serif text-lg font-black text-[#580820] border-b border-[#D4AF37]/15 pb-3">
+            Payment Transfer Instructions - Order ID: {initiationData.subscriptionId}
           </h3>
 
-          <div className="bg-[#FCFBF7] border border-[#E5DEC9] p-6 space-y-4 text-sm">
-            <p className="font-semibold text-[#2C2121]">Please send exactly <strong className="text-[#800020]">PKR {initiationData.amount}</strong> to the following account details:</p>
+          <div className="bg-[#FAF8F5] border border-[#D4AF37]/15 p-6 rounded-xl space-y-4 text-sm font-medium text-[#1F1515]/85">
+            <p className="font-bold text-[#1F1515]">Please send exactly <strong className="text-[#800020]">PKR {initiationData.amount}</strong> to the following account:</p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <span className="block text-[10px] uppercase font-bold text-[#605252]">Account Title</span>
-                <span className="font-serif font-bold text-md text-[#2C2121]">{initiationData.paymentInstructions.accountTitle}</span>
+                <span className="block text-[9px] uppercase font-extrabold text-[#1F1515]/40 tracking-wider">Account Title</span>
+                <span className="font-serif font-black text-md text-[#580820]">{initiationData.paymentInstructions.accountTitle}</span>
               </div>
               <div>
-                <span className="block text-[10px] uppercase font-bold text-[#605252]">Account Number / Mobile</span>
-                <span className="font-mono font-bold text-md text-[#2C2121]">{initiationData.paymentInstructions.accountNumber}</span>
+                <span className="block text-[9px] uppercase font-extrabold text-[#1F1515]/40 tracking-wider">Account / Mobile Number</span>
+                <span className="font-mono font-black text-md text-[#800020]">{initiationData.paymentInstructions.accountNumber}</span>
               </div>
               {initiationData.paymentInstructions.bankName && (
                 <div>
-                  <span className="block text-[10px] uppercase font-bold text-[#605252]">Bank Name</span>
-                  <span className="font-bold text-md text-[#2C2121]">{initiationData.paymentInstructions.bankName}</span>
+                  <span className="block text-[9px] uppercase font-extrabold text-[#1F1515]/40 tracking-wider">Bank Name</span>
+                  <span className="font-bold text-md text-[#1F1515]">{initiationData.paymentInstructions.bankName}</span>
                 </div>
               )}
               <div>
-                <span className="block text-[10px] uppercase font-bold text-[#605252]">Order Reference Code</span>
-                <span className="font-mono font-bold text-md text-[#800020]">{initiationData.paymentInstructions.reference}</span>
+                <span className="block text-[9px] uppercase font-extrabold text-[#1F1515]/40 tracking-wider">Order Memo Reference</span>
+                <span className="font-mono font-bold text-md text-[#B5902B]">{initiationData.paymentInstructions.reference}</span>
               </div>
             </div>
             
-            <p className="text-xs text-[#605252] border-t border-[#E5DEC9] pt-3">
-              * Note: Please include the Order Reference Code in the description/memo of the transaction.
+            <p className="text-[10px] text-[#1F1515]/50 font-bold uppercase tracking-wider border-t border-[#D4AF37]/15 pt-3">
+              * Note: Please write the Order Memo Reference in the transfer memo box.
             </p>
           </div>
 
           <form onSubmit={handleUploadProof} className="space-y-6">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-[#605252] mb-1">
-                Transaction Reference ID (optional)
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-[#1F1515]/65 mb-1.5">
+                Transaction ID (TRX ID)
               </label>
               <input
                 type="text"
                 value={paymentRef}
                 onChange={(e) => setPaymentRef(e.target.value)}
-                placeholder="e.g. TRX-123456789"
-                className="w-full px-3 py-2 border border-[#E5DEC9] bg-[#FCFBF7] text-sm"
+                placeholder="e.g. TRX123456789"
+                className="w-full border border-[#D4AF37]/20 bg-white/70 focus:bg-white focus:border-[#800020] focus:ring-1 focus:ring-[#800020] transition-all px-3 py-2.5 text-sm text-[#1F1515] rounded-lg outline-none font-medium placeholder-[#1F1515]/30"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-[#605252] mb-1">
-                Upload Receipt Screenshot
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-[#1F1515]/65 mb-1.5">
+                Upload Proof Receipt Screen
               </label>
-              <div className="border border-dashed border-[#E5DEC9] bg-[#FCFBF7] p-8 text-center flex flex-col items-center">
-                <FileText className="w-10 h-10 text-[#C5A059] mb-2" />
-                <p className="text-xs font-bold text-[#2C2121] mb-2">Upload payment transfer verification screenshot</p>
+              <div className="border-2 border-dashed border-[#D4AF37]/35 bg-[#FAF8F5] p-8 text-center flex flex-col items-center justify-center rounded-xl relative aspect-[1.5/1]">
+                <FileText className="w-8 h-8 text-[#D4AF37] mb-2" />
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[#1F1515]/60 mb-3">Drag or select receipt transfer screenshot</p>
                 <input
                   type="file"
                   accept="image/*"
@@ -394,29 +423,27 @@ export default function Subscription() {
                 />
                 <label
                   htmlFor="receipt-file-upload"
-                  className="px-4 py-2 border border-[#C5A059] text-[#C5A059] text-xs font-bold uppercase tracking-wider hover:bg-[#C5A059] hover:text-white transition-colors cursor-pointer inline-flex items-center gap-1"
+                  className="btn-premium-secondary px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider"
                 >
-                  <Upload className="w-3.5 h-3.5" />
                   {receiptFile ? receiptFile.name : 'Choose Screenshot'}
                 </label>
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 border-t border-[#F5EFEB] pt-4">
+            <div className="flex justify-end gap-3 border-t border-[#D4AF37]/15 pt-5">
               <button
                 type="button"
                 onClick={() => setInitiationData(null)}
-                className="px-4 py-2 border border-[#E5DEC9] text-xs font-bold uppercase tracking-wider text-[#605252] hover:bg-gray-50 transition-colors"
+                className="btn-premium-secondary px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg"
               >
                 Go Back
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                style={{ color: '#ffffff' }}
-                className="px-6 py-2 bg-[#800020] text-white text-xs font-bold uppercase tracking-wider hover:bg-[#9E1B32] transition-colors cursor-pointer !text-white"
+                className="btn-premium-primary px-6 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider"
               >
-                {loading ? 'Submitting...' : 'Submit Payment Verification'}
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Submit Payment Screenshot'}
               </button>
             </div>
           </form>

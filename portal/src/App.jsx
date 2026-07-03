@@ -39,12 +39,14 @@ function ProtectedRoute({ children }) {
   }
 
   return (
-    <>
+    <div className="min-h-screen bg-[#FAF8F5] text-[#1F1515]">
       <Navbar />
-      <div className="pb-20 md:pb-8">
-        {children}
-      </div>
-    </>
+      <main className="md:pl-64 pt-16 md:pt-0 pb-20 md:pb-8 min-h-screen transition-all duration-300">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
+          {children}
+        </div>
+      </main>
+    </div>
   );
 }
 
@@ -68,12 +70,14 @@ function AdminRoute({ children }) {
   }
 
   return (
-    <>
+    <div className="min-h-screen bg-[#FAF8F5] text-[#1F1515]">
       <Navbar />
-      <div className="pb-20 md:pb-8">
-        {children}
-      </div>
-    </>
+      <main className="md:pl-64 pt-16 md:pt-0 pb-20 md:pb-8 min-h-screen transition-all duration-300">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
+          {children}
+        </div>
+      </main>
+    </div>
   );
 }
 
