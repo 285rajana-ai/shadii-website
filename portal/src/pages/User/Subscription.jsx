@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth, API_BASE } from '../../context/AuthContext';
-import { CreditCard, ShieldCheck, CheckCircle2, ChevronRight, Upload, AlertCircle, FileText, Sparkles, Gem, HelpCircle, BadgePercent } from 'lucide-react';
+import { CreditCard, ShieldCheck, CheckCircle2, ChevronRight, Upload, AlertCircle, FileText, Sparkles, Gem, HelpCircle, BadgePercent, Loader2 } from 'lucide-react';
 
 export default function Subscription() {
   const { token, user, refreshUser } = useAuth();
