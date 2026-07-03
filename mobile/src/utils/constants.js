@@ -64,8 +64,11 @@ export const PAKISTAN_CITIES = [
 ];
 
 export const CAST_OPTIONS = [
-  'Arain', 'Jatt', 'Rajput', 'Awan', 'Sheikh', 'Syed', 'Mughal',
-  'Baloch', 'Pathan', 'Gujjar', 'Ansari', 'Chaudhry', 'Other',
+  'Abbasi', 'Ansari', 'Arain', 'Awan', 'Baloch', 'Bhatti', 'Bosan', 'Butt',
+  'Chaudhry', 'Dogar', 'Farooqi', 'Gakhar', 'Gill', 'Gujjar', 'Hashmi', 'Janjua',
+  'Jatt', 'Joya', 'Kakazai', 'Khan', 'Kharal', 'Khokhar', 'Malik', 'Memon',
+  'Mughal', 'Naqvi', 'Pathan', 'Qureshi', 'Rajput', 'Siddiqui', 'Sheikh',
+  'Syed', 'Tarar', 'Tiwana', 'Warraich', 'Wattoo', 'Yousafzai', 'Other',
 ];
 
 export const INTERESTS = [

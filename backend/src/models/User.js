@@ -40,6 +40,7 @@ const userSchema = new mongoose.Schema(
         isMain: { type: Boolean, default: false },
       },
     ],
+    hidePhotos: { type: Boolean, default: false },
 
     // Verification
     isVerified: { type: Boolean, default: false }, // blue tick
@@ -189,13 +190,18 @@ userSchema.methods.hasActiveBoost = function () {
   return this.boost.isActive && this.boost.endDate && new Date() < new Date(this.boost.endDate);
 };
 
-// Get main profile photo (blurred unless viewer is owner or approved)
+// Get main profile photo (blurred unless viewer is owner or approved or photos not hidden)
 userSchema.methods.getProfilePhoto = function (viewerId = null) {
   const mainPhoto = this.photos.find((p) => p.isMain) || this.photos[0];
   if (!mainPhoto) return null;
 
   // If viewing own photo, always unblurred
   if (viewerId && String(this._id) === String(viewerId)) {
+    return mainPhoto.url;
+  }
+
+  // If photos are NOT hidden/private, always unblurred
+  if (!this.hidePhotos) {
     return mainPhoto.url;
   }
 

@@ -20,7 +20,7 @@ router.get('/today', protect, async (req, res) => {
       matchDoc = await generateDailyMatches(req.user.id);
       matchDoc = await Match.findById(matchDoc._id).populate(
         'matches.matchedUser',
-        'name age city country education cast interests photos isVerified isOnline lastActive subscription boost gender photoViewApproved'
+        'name age city country education cast interests photos isVerified isOnline lastActive subscription boost gender photoViewApproved hidePhotos'
       );
     }
 
@@ -30,6 +30,7 @@ router.get('/today', protect, async (req, res) => {
       const isConnected = u.photoViewApproved?.some(
         (uid) => String(uid) === String(req.user.id)
       );
+      const mainPhoto = u.photos.find((p) => p.isMain) || u.photos[0];
       return {
         id: u._id,
         name: u.name,
@@ -38,8 +39,8 @@ router.get('/today', protect, async (req, res) => {
         education: u.education,
         isVerified: u.isVerified,
         isOnline: u.isOnline,
-        photo: u.getProfilePhoto(req.user.id),
-        isPhotoBlurred: !isConnected,
+        photo: (u.hidePhotos === false || isConnected) ? (mainPhoto?.url || null) : u.getProfilePhoto(req.user.id),
+        isPhotoBlurred: u.hidePhotos ? !isConnected : false,
         interests: u.interests?.slice(0, 3),
         matchScore: m.score,
         matchReasons: m.reasons,

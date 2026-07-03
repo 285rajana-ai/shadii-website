@@ -24,6 +24,7 @@ export default function ProfileWizard() {
     maritalStatus: user?.maritalStatus || 'Never Married',
     motherTongue: user?.motherTongue || '',
     sect: user?.sect || '',
+    hidePhotos: user?.hidePhotos || false,
     preferencesNote: ''
   });
 
@@ -369,6 +370,23 @@ export default function ProfileWizard() {
               placeholder="Desired education, age range, location, and qualities in partner."
               className="w-full px-3 py-2.5 border border-[#E5DEC9] bg-[#FCFBF7] text-[#2C2121] focus:ring-1 focus:ring-[#800020] focus:border-[#800020] text-sm"
             />
+          </div>
+
+          <div className="flex items-start mt-4 p-4 bg-[#FCFBF7] border border-[#E5DEC9]">
+            <div className="flex items-center h-5">
+              <input
+                id="hidePhotos"
+                name="hidePhotos"
+                type="checkbox"
+                checked={details.hidePhotos}
+                onChange={(e) => setDetails(prev => ({ ...prev, hidePhotos: e.target.checked }))}
+                className="focus:ring-[#800020] h-4 w-4 text-[#800020] border-[#E5DEC9] rounded cursor-pointer"
+              />
+            </div>
+            <div className="ml-3 text-sm">
+              <label htmlFor="hidePhotos" className="font-semibold text-[#2c2121] select-none cursor-pointer">Private Profile Pictures</label>
+              <p className="text-xs text-[#605252] mt-0.5">Hide your photos from free members (requires connection approval)</p>
+            </div>
           </div>
 
           <div className="flex justify-end">

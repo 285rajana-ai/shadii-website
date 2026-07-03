@@ -57,6 +57,7 @@ const buildUserPayload = (user) => ({
   photos: user.photos,
   verificationStatus: user.verificationStatus,
   boost: user.boost,
+  hidePhotos: user.hidePhotos,
 });
 
 // ─── REGISTER ─────────────────────────────────────────────────────────────────

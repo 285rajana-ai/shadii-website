@@ -181,6 +181,14 @@ exports.sendMessage = async (req, res) => {
     // Scan message for contact info
     const { isViolation, type, label } = scanMessage(content);
 
+    if (isViolation && !req.user.hasActiveSubscription()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Sharing contact details (phone, email, WhatsApp, or social handles) is blocked for free accounts. Please upgrade to a premium plan.',
+        code: 'CONTACT_SHARING_RESTRICTED',
+      });
+    }
+
     let message;
     let violationResult;
 

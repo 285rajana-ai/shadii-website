@@ -5,7 +5,7 @@ import { useState } from 'react';
 import {
   Alert, FlatList, Image, KeyboardAvoidingView, Modal,
   Platform, ScrollView, StyleSheet, Text, TextInput,
-  TouchableOpacity, View, ActivityIndicator,
+  TouchableOpacity, View, ActivityIndicator, Switch,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
@@ -52,6 +52,7 @@ export default function EditProfileScreen({ navigation }) {
     maritalStatus: user?.maritalStatus || 'Never Married',
     motherTongue: user?.motherTongue || '',
     sect: user?.sect || '',
+    hidePhotos: user?.hidePhotos || false,
   });
 
   const [selectedInterests, setSelectedInterests] = useState(user?.interests || []);
@@ -78,6 +79,16 @@ export default function EditProfileScreen({ navigation }) {
   const selectOption = (value) => {
     updateForm(pickerField, value);
     closePicker();
+  };
+
+  const handleHeightSearchChange = (text) => {
+    const clean = text.replace(/[^0-9]/g, '');
+    if (clean.length > 0) {
+      const ft = clean[0];
+      setHeightSearch(`${ft}'`);
+    } else {
+      setHeightSearch('');
+    }
   };
 
   const getPickerOptions = () => {
@@ -219,6 +230,20 @@ export default function EditProfileScreen({ navigation }) {
                 <Text style={styles.changePhotoText}>📷 Change Photo</Text>
               )}
             </TouchableOpacity>
+
+            {/* Privacy toggle row */}
+            <View style={styles.privacyToggleRow}>
+              <View style={{ flex: 1, marginRight: 16 }}>
+                <Text style={styles.privacyLabel}>Private Profile Pictures</Text>
+                <Text style={styles.privacyDesc}>Hide photos from free members (requires connection approval)</Text>
+              </View>
+              <Switch
+                value={formData.hidePhotos}
+                onValueChange={(val) => updateForm('hidePhotos', val)}
+                trackColor={{ false: '#2C2A29', true: colors.accent }}
+                thumbColor={formData.hidePhotos ? colors.text : '#7C7A79'}
+              />
+            </View>
           </View>
 
           {/* Form Fields */}
@@ -338,45 +363,101 @@ export default function EditProfileScreen({ navigation }) {
               </TouchableOpacity>
             </View>
 
-            {pickerField === 'height' && (
-              <View style={styles.searchBox}>
-                <MaterialCommunityIcons name="magnify" size={18} color={colors.textMuted} />
-                <TextInput
-                  style={styles.searchInput}
-                  placeholder="Type 5 or 6 to filter"
-                  placeholderTextColor={colors.textMuted}
-                  value={heightSearch}
-                  onChangeText={setHeightSearch}
-                  keyboardType="numeric"
-                  maxLength={1}
-                />
-              </View>
-            )}
+            {/* Height custom selector */}
+            {pickerField === 'height' ? (
+              <View style={styles.heightPickerContainer}>
+                <View style={styles.searchBox}>
+                  <MaterialCommunityIcons name="human-height" size={18} color={colors.accent} />
+                  <TextInput
+                    style={styles.searchInput}
+                    placeholder="Enter feet (e.g. 5 or 6)"
+                    placeholderTextColor={colors.textMuted}
+                    value={heightSearch}
+                    onChangeText={handleHeightSearchChange}
+                    keyboardType="numeric"
+                    maxLength={2}
+                  />
+                </View>
 
-            <FlatList
-              data={getPickerOptions()}
-              keyExtractor={(item) => item}
-              showsVerticalScrollIndicator={false}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={[
-                    styles.optionRow,
-                    formData[pickerField] === item && styles.optionRowSelected,
-                  ]}
-                  onPress={() => selectOption(item)}
-                >
-                  {formData[pickerField] === item && (
-                    <MaterialCommunityIcons name="check-circle" size={18} color={colors.accent} style={{ marginRight: 8 }} />
+                <ScrollView contentContainerStyle={styles.suggestionsScroll} showsVerticalScrollIndicator={false}>
+                  {!heightSearch ? (
+                    <View style={styles.quickStartContainer}>
+                      <Text style={styles.quickStartTitle}>Tap to select feet:</Text>
+                      <View style={styles.quickStartButtons}>
+                        {['4\'', '5\'', '6\''].map(ft => (
+                          <TouchableOpacity
+                            key={ft}
+                            style={styles.quickStartBtn}
+                            onPress={() => setHeightSearch(ft)}
+                          >
+                            <Text style={styles.quickStartBtnText}>{ft}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </View>
+                  ) : (
+                    <View style={styles.chipsContainer}>
+                      <Text style={styles.chipsTitle}>Choose inches for {heightSearch}:</Text>
+                      <View style={styles.chipsGrid}>
+                        {Array.from({ length: 12 }).map((_, inch) => {
+                          const option = `${heightSearch}${inch}"`;
+                          const isSelected = formData.height === option;
+                          return (
+                            <TouchableOpacity
+                              key={inch}
+                              style={[styles.inchChip, isSelected && styles.inchChipSelected]}
+                              onPress={() => selectOption(option)}
+                            >
+                              <Text style={[styles.inchChipText, isSelected && styles.inchChipTextSelected]}>
+                                {option}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                    </View>
                   )}
-                  <Text style={[
-                    styles.optionText,
-                    formData[pickerField] === item && styles.optionTextSelected,
-                  ]}>
-                    {item}
-                  </Text>
-                </TouchableOpacity>
-              )}
-            />
+                </ScrollView>
+              </View>
+            ) : (
+              <>
+                <View style={styles.searchBox}>
+                  <MaterialCommunityIcons name="magnify" size={18} color={colors.textMuted} />
+                  <TextInput
+                    style={styles.searchInput}
+                    placeholder={`Search ${getPickerTitle().toLowerCase()}...`}
+                    placeholderTextColor={colors.textMuted}
+                    value={heightSearch}
+                    onChangeText={setHeightSearch}
+                    autoCapitalize="none"
+                  />
+                </View>
+                <FlatList
+                  data={getPickerOptions()}
+                  keyExtractor={(item) => item}
+                  showsVerticalScrollIndicator={false}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      style={[
+                        styles.optionRow,
+                        formData[pickerField] === item && styles.optionRowSelected,
+                      ]}
+                      onPress={() => selectOption(item)}
+                    >
+                      {formData[pickerField] === item && (
+                        <MaterialCommunityIcons name="check-circle" size={18} color={colors.accent} style={{ marginRight: 8 }} />
+                      )}
+                      <Text style={[
+                        styles.optionText,
+                        formData[pickerField] === item && styles.optionTextSelected,
+                      ]}>
+                        {item}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                />
+              </>
+            )}
           </View>
         </View>
       </Modal>
@@ -447,11 +528,12 @@ const styles = StyleSheet.create({
   modalOverlay: { flex: 1, justifyContent: 'flex-end' },
   modalBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.6)' },
   modalSheet: {
-    backgroundColor: '#1A0A0A', borderTopLeftRadius: 24, borderTopRightRadius: 24,
-    maxHeight: '75%', paddingBottom: 40,
+    backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24,
+    maxHeight: '75%', paddingBottom: 24,
     borderWidth: 1, borderColor: 'rgba(212,175,55,0.15)',
+    width: '100%',
   },
-  modalHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.15)', alignSelf: 'center', marginTop: 12, marginBottom: 4 },
+  modalHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.15)', alignSelf: 'center', marginTop: 12, marginBottom: 16 },
   modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' },
   modalTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
   searchBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceLight, marginHorizontal: 16, marginTop: 12, borderRadius: 12, paddingHorizontal: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.07)' },
@@ -460,4 +542,101 @@ const styles = StyleSheet.create({
   optionRowSelected: { backgroundColor: 'rgba(212,175,55,0.08)' },
   optionText: { fontSize: 16, color: colors.textSecondary },
   optionTextSelected: { color: colors.accent, fontWeight: '700' },
+
+  // Privacy toggle styles (NEW)
+  privacyToggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 20,
+    width: '100%',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.06)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.06)',
+  },
+  privacyLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  privacyDesc: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    marginTop: 2,
+    lineHeight: 14,
+  },
+  heightPickerContainer: {
+    minHeight: 250,
+    width: '100%',
+  },
+  suggestionsScroll: {
+    paddingVertical: 12,
+  },
+  quickStartContainer: {
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  quickStartTitle: {
+    color: colors.textSecondary,
+    fontSize: 14,
+    marginBottom: 12,
+  },
+  quickStartButtons: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  quickStartBtn: {
+    width: 64,
+    height: 48,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  quickStartBtnText: {
+    color: colors.accent,
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  chipsContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  chipsTitle: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    marginBottom: 12,
+  },
+  chipsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  inchChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: 'rgba(255,255,255,0.02)',
+    minWidth: '22%',
+    alignItems: 'center',
+  },
+  inchChipSelected: {
+    borderColor: colors.accent,
+    backgroundColor: 'rgba(212,175,55,0.1)',
+  },
+  inchChipText: {
+    color: colors.textSecondary,
+    fontSize: 13,
+  },
+  inchChipTextSelected: {
+    color: colors.accent,
+    fontWeight: '700',
+  },
 });

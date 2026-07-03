@@ -71,7 +71,7 @@ router.get('/discover', protect, async (req, res) => {
     const skip = (Number(page) - 1) * Number(limit);
     const [users, total] = await Promise.all([
       User.find(filter)
-        .select('name age city country education cast maritalStatus motherTongue sect interests hobbies photos isVerified isOnline lastActive subscription boost gender photoViewApproved')
+        .select('name age city country education cast maritalStatus motherTongue sect interests hobbies photos isVerified isOnline lastActive subscription boost gender photoViewApproved hidePhotos')
         .sort(sortObj)
         .skip(skip)
         .limit(Number(limit)),
@@ -100,8 +100,8 @@ router.get('/discover', protect, async (req, res) => {
         lastActive: u.lastActive,
         isBoosted: u.hasActiveBoost?.() || false,
         isPremium: u.subscription?.plan === 'premium' && u.subscription?.isActive,
-        photo: isConnected ? (mainPhoto?.url || null) : u.getProfilePhoto(me._id),
-        isPhotoBlurred: !isConnected,
+        photo: (u.hidePhotos === false || isConnected) ? (mainPhoto?.url || null) : u.getProfilePhoto(me._id),
+        isPhotoBlurred: u.hidePhotos ? !isConnected : false,
         interests: u.interests?.slice(0, 3),
       };
     });
@@ -241,8 +241,8 @@ router.get('/:id', protect, async (req, res) => {
         ...profile.toJSON(),
         // Only expose phone if contact is fully unlocked
         phone: contactUnlocked ? profile.phone : undefined,
-        photo: isConnected ? (mainPhoto?.url || null) : profile.getProfilePhoto(req.user._id),
-        isPhotoBlurred: !isConnected,
+        photo: (profile.hidePhotos === false || isConnected) ? (mainPhoto?.url || null) : profile.getProfilePhoto(req.user._id),
+        isPhotoBlurred: profile.hidePhotos ? !isConnected : false,
         isBlocked: req.user.blockedUsers?.includes(profile._id),
         contactRequestStatus: myContactRequest?.status || null,
         contactUnlocked: Boolean(contactUnlocked),
@@ -259,7 +259,7 @@ router.put('/update', protect, async (req, res) => {
   try {
     const allowedFields = [
       'name', 'age', 'height', 'education', 'cast', 'country', 'city',
-      'about', 'hobbies', 'interests', 'maritalStatus', 'motherTongue', 'sect', 'preferences',
+      'about', 'hobbies', 'interests', 'maritalStatus', 'motherTongue', 'sect', 'preferences', 'hidePhotos',
     ];
 
     const updates = {};
