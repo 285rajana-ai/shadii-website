@@ -125,13 +125,17 @@ export default function Discover() {
       });
       const data = await res.json();
       if (data.success) {
-        setSuccess(data.message === 'Already requested' ? 'Photo unlock already requested.' : 'Photo unlock request sent.');
+        const isFree = !user?.subscription?.isActive;
+        const successMsg = isFree 
+          ? 'Connection request sent! Free accounts can send exactly 1 message request once approved. Upgrade to premium for unlimited chatting.'
+          : 'Connection request sent successfully! You will be notified once they approve.';
+        setSuccess(data.message === 'Already requested' ? 'Connection request already sent.' : successMsg);
         fetchBrowse();
       } else {
-        setError(data.message || 'Failed to request photo unlock.');
+        setError(data.message || 'Failed to request connection.');
       }
     } catch {
-      setError('Error sending request.');
+      setError('Error sending connection request.');
     }
   };
 
@@ -435,12 +439,8 @@ function ProfileCard({ profile, onPhotoRequest, onContactRequest }) {
           <Info label="Status" value={profile.maritalStatus || 'Never Married'} />
         </dl>
 
-        <div className="mt-auto grid grid-cols-2 gap-2 pt-4">
-          <button onClick={onContactRequest} className="button-secondary inline-flex items-center justify-center gap-2 px-3 py-2.5 text-[11px] font-bold uppercase">
-            <PhoneCall className="h-4 w-4" />
-            Phone
-          </button>
-          <button onClick={onPhotoRequest} className="button-primary inline-flex items-center justify-center gap-2 px-3 py-2.5 text-[11px] font-bold uppercase">
+        <div className="mt-auto pt-4">
+          <button onClick={onPhotoRequest} className="w-full button-primary inline-flex items-center justify-center gap-2 px-3 py-2.5 text-[11px] font-bold uppercase">
             <MessageSquare className="h-4 w-4" />
             Connect
           </button>

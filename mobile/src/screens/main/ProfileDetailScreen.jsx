@@ -132,13 +132,6 @@ export default function ProfileDetailScreen({ route, navigation }) {
   };
 
   const handlePhotoViewRequest = async () => {
-    if (!user?.subscription?.isActive) {
-      Alert.alert('Subscription Required', 'You need an active subscription to request connection.', [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'View Plans', onPress: () => navigation.navigate('Plans') }
-      ]);
-      return;
-    }
     setRequestingPhoto(true);
     try {
       const res = await fetch(`${API_BASE_URL}/profile/${userId}/request-photo`, {
@@ -149,12 +142,16 @@ export default function ProfileDetailScreen({ route, navigation }) {
       if (data.success) {
         setPhotoViewRequested(true);
         setProfile(prev => prev ? { ...prev, photoRequestStatus: 'pending' } : null);
-        Alert.alert('Request Sent ✓', 'Your connection request has been sent. You will be notified when they accept.');
+        const isFree = !user?.subscription?.isActive;
+        const msg = isFree 
+          ? 'Your connection request has been sent! Free accounts can send exactly 1 message request once connected. Upgrade to premium for unlimited chatting.'
+          : 'Your connection request has been sent! You will be notified when they accept.';
+        Alert.alert('Request Sent ✓', msg);
       } else {
         Alert.alert('Already Requested', data.message || 'You have already sent a connection request.');
       }
-    } catch (_) {
-      Alert.alert('Error', 'Could not send request. Please try again.');
+    } catch (err) {
+      Alert.alert('Error', 'Unable to send connection request. Please try again.');
     } finally {
       setRequestingPhoto(false);
     }
@@ -302,85 +299,7 @@ export default function ProfileDetailScreen({ route, navigation }) {
             </TouchableOpacity>
           </View>
 
-          {/* Contact Share / Unlock Flow */}
-          {profile.contactUnlocked && profile.phone ? (
-            // ── Contact fully unlocked: show phone ──────────────────────────
-            <View style={styles.contactUnlockedCard}>
-              <LinearGradient
-                colors={['rgba(5,205,153,0.15)', 'rgba(5,205,153,0.05)']}
-                style={StyleSheet.absoluteFill}
-                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-              />
-              <MaterialCommunityIcons name="phone-check" size={20} color={colors.success} />
-              <View style={{ flex: 1, marginLeft: 12 }}>
-                <Text style={styles.contactUnlockedLabel}>Contact Unlocked</Text>
-                <Text style={styles.contactUnlockedPhone}>{profile.phone}</Text>
-              </View>
-              <TouchableOpacity
-                onPress={() => {
-                  Clipboard.setString(profile.phone);
-                  Alert.alert('Copied!', 'Phone number copied to clipboard.');
-                }}
-                activeOpacity={0.7}
-              >
-                <MaterialCommunityIcons name="content-copy" size={18} color={colors.accent} />
-              </TouchableOpacity>
-            </View>
-          ) : profile.contactRequestStatus === 'accepted' || unlockPending ? (
-            // ── Request accepted: prompt to pay PKR 299 ─────────────────────
-            <TouchableOpacity
-              style={[styles.contactShareBtn, { borderColor: 'rgba(212,175,55,0.4)' }]}
-              onPress={handleUnlockContact}
-              disabled={unlockLoading || (!isAndroidPlayBilling && unlockPending)}
-              activeOpacity={0.8}
-            >
-              {unlockLoading ? (
-                <ActivityIndicator size="small" color={colors.accent} />
-              ) : (
-                <>
-                  <MaterialCommunityIcons
-                    name={!isAndroidPlayBilling && unlockPending ? 'clock-outline' : 'lock-open-outline'}
-                    size={18}
-                    color={!isAndroidPlayBilling && unlockPending ? colors.textMuted : colors.accent}
-                  />
-                  <View style={{ flex: 1, marginLeft: 8 }}>
-                    <Text style={[styles.contactShareText, (isAndroidPlayBilling || !unlockPending) && { color: colors.accent }]}>
-                      {!isAndroidPlayBilling && unlockPending ? 'Contact Unlock Pending Review' : 'Unlock Contact — PKR 299'}
-                    </Text>
-                    <Text style={styles.contactUnlockSub}>
-                      {!isAndroidPlayBilling && unlockPending
-                        ? 'Your payment is being reviewed by admin'
-                        : isAndroidPlayBilling
-                          ? `${profile.name} accepted your request! Pay securely with Google Play to view contact`
-                          : `${profile.name} accepted your request! Pay PKR 299 to view contact`}
-                    </Text>
-                  </View>
-                </>
-              )}
-            </TouchableOpacity>
-          ) : profile.contactRequestStatus === 'rejected' ? (
-            // ── Request was rejected ──────────────────────────────────────
-            <View style={[styles.contactShareBtn, { opacity: 0.5 }]}>
-              <MaterialCommunityIcons name="phone-off" size={18} color={colors.error} />
-              <Text style={[styles.contactShareText, { color: colors.error }]}>Contact Request Declined</Text>
-            </View>
-          ) : contactShareRequested ? (
-            // ── Request sent, waiting ────────────────────────────────────
-            <View style={[styles.contactShareBtn, styles.contactShareBtnDone]}>
-              <MaterialCommunityIcons name="check-circle" size={18} color={colors.success} />
-              <Text style={[styles.contactShareText, { color: colors.success }]}>Contact Request Sent</Text>
-            </View>
-          ) : (
-            // ── Not yet requested ────────────────────────────────────────
-            <TouchableOpacity
-              style={styles.contactShareBtn}
-              onPress={handleContactShareRequest}
-              activeOpacity={0.8}
-            >
-              <MaterialCommunityIcons name="phone-forward" size={18} color={colors.accent} />
-              <Text style={styles.contactShareText}>Request Contact Share (PKR 299)</Text>
-            </TouchableOpacity>
-          )}
+          {/* Contact Share / Unlock Flow removed */}
 
           {/* Contact Unlock Payment Modal */}
           {!isAndroidPlayBilling && (

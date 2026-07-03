@@ -2,12 +2,26 @@ import React, { useState } from 'react';
 import { useAuth, API_BASE } from '../../context/AuthContext';
 import { User, Image, ShieldCheck, Save, Upload, Check, AlertCircle } from 'lucide-react';
 
+const CAST_OPTIONS = [
+  'Abbasi', 'Ansari', 'Arain', 'Awan', 'Baloch', 'Bhatti', 'Bosan', 'Butt',
+  'Chaudhry', 'Dogar', 'Farooqi', 'Gakhar', 'Gill', 'Gujjar', 'Hashmi', 'Janjua',
+  'Jatt', 'Joya', 'Kakazai', 'Khan', 'Kharal', 'Khokhar', 'Malik', 'Memon',
+  'Mughal', 'Naqvi', 'Pathan', 'Qureshi', 'Rajput', 'Siddiqui', 'Sheikh',
+  'Syed', 'Tarar', 'Tiwana', 'Warraich', 'Wattoo', 'Yousafzai', 'Other'
+];
+
+const SECT_OPTIONS = [
+  'Sunni', 'Shia', 'Wahabi', 'Deobandi', 'Barelvi', 'Ahl-e-Hadith', 'Other'
+];
+
 export default function ProfileWizard() {
   const { user, token, updateProfile, refreshUser } = useAuth();
   const [activeTab, setActiveTab] = useState('details'); // 'details' | 'photos' | 'verification'
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showCasteDropdown, setShowCasteDropdown] = useState(false);
+  const [showSectDropdown, setShowSectDropdown] = useState(false);
 
   // Details Form State
   const [details, setDetails] = useState({
@@ -37,7 +51,18 @@ export default function ProfileWizard() {
   });
 
   const handleDetailsChange = (e) => {
-    setDetails({ ...details, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    if (name === 'height') {
+      const clean = value.replace(/[^0-9']/g, '');
+      if (clean.length > 0) {
+        const ft = clean[0];
+        setDetails(prev => ({ ...prev, height: `${ft}'` }));
+      } else {
+        setDetails(prev => ({ ...prev, height: '' }));
+      }
+    } else {
+      setDetails({ ...details, [name]: value });
+    }
   };
 
   const saveDetails = async (e) => {
@@ -104,8 +129,8 @@ export default function ProfileWizard() {
 
   const uploadVerificationDocs = async (e) => {
     e.preventDefault();
-    if (!verificationFiles.cnicFront || !verificationFiles.cnicBack || !verificationFiles.livePhoto) {
-      setError('Please select CNIC Front, CNIC Back, and a Live Selfie photo.');
+    if (!verificationFiles.cnicFront || !verificationFiles.cnicBack) {
+      setError('Please select both CNIC Front and CNIC Back images.');
       return;
     }
     setLoading(true);
@@ -115,7 +140,9 @@ export default function ProfileWizard() {
     const formData = new FormData();
     formData.append('cnicFront', verificationFiles.cnicFront);
     formData.append('cnicBack', verificationFiles.cnicBack);
-    formData.append('livePhoto', verificationFiles.livePhoto);
+    if (verificationFiles.livePhoto) {
+      formData.append('livePhoto', verificationFiles.livePhoto);
+    }
 
     try {
       const res = await fetch(`${API_BASE}/profile/verify`, {
@@ -227,7 +254,7 @@ export default function ProfileWizard() {
                 className="w-full px-3 py-2.5 border border-[#E5DEC9] bg-[#FCFBF7] text-[#2C2121] focus:ring-1 focus:ring-[#800020] focus:border-[#800020] text-sm"
               />
             </div>
-            <div>
+            <div className="relative">
               <label className="block text-xs font-semibold uppercase tracking-wider text-[#605252] mb-1">Height (e.g. 5'6")</label>
               <input
                 type="text"
@@ -237,6 +264,24 @@ export default function ProfileWizard() {
                 placeholder="5'4"
                 className="w-full px-3 py-2.5 border border-[#E5DEC9] bg-[#FCFBF7] text-[#2C2121] focus:ring-1 focus:ring-[#800020] focus:border-[#800020] text-sm"
               />
+              {/* Inline Height Suggestions (NEW) */}
+              {details.height && details.height.endsWith("'") && (
+                <div className="absolute z-10 left-0 right-0 mt-1 p-3 bg-white border border-[#E5DEC9] shadow-lg max-h-48 overflow-y-auto grid grid-cols-4 gap-2">
+                  {Array.from({ length: 12 }).map((_, inch) => {
+                    const opt = `${details.height}${inch}"`;
+                    return (
+                      <button
+                        type="button"
+                        key={inch}
+                        onClick={() => setDetails(prev => ({ ...prev, height: opt }))}
+                        className="px-2 py-1.5 text-xs border border-[#E5DEC9] bg-white hover:bg-[#800020] hover:text-white transition-colors rounded text-center cursor-pointer text-[#2C2121]"
+                      >
+                        {opt}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-[#605252] mb-1">Education</label>
@@ -255,27 +300,59 @@ export default function ProfileWizard() {
                 <option value="Other">Other</option>
               </select>
             </div>
-            <div>
+            <div className="relative">
               <label className="block text-xs font-semibold uppercase tracking-wider text-[#605252] mb-1">Caste / Cast</label>
               <input
                 type="text"
                 name="cast"
                 value={details.cast}
                 onChange={handleDetailsChange}
+                onFocus={() => setShowCasteDropdown(true)}
+                onBlur={() => setTimeout(() => setShowCasteDropdown(false), 200)}
                 placeholder="Arain, Rajput, Syed"
                 className="w-full px-3 py-2.5 border border-[#E5DEC9] bg-[#FCFBF7] text-[#2C2121] focus:ring-1 focus:ring-[#800020] focus:border-[#800020] text-sm"
               />
+              {showCasteDropdown && (
+                <div className="absolute z-20 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-[#E5DEC9] shadow-lg">
+                  {CAST_OPTIONS.filter(c => c.toLowerCase().includes((details.cast || '').toLowerCase())).map(c => (
+                    <button
+                      type="button"
+                      key={c}
+                      onMouseDown={() => setDetails(prev => ({ ...prev, cast: c }))}
+                      className="w-full text-left px-4 py-2 text-sm text-[#2C2121] hover:bg-[#800020] hover:text-white transition-colors cursor-pointer"
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-            <div>
+            <div className="relative">
               <label className="block text-xs font-semibold uppercase tracking-wider text-[#605252] mb-1">Sect</label>
               <input
                 type="text"
                 name="sect"
                 value={details.sect}
                 onChange={handleDetailsChange}
+                onFocus={() => setShowSectDropdown(true)}
+                onBlur={() => setTimeout(() => setShowSectDropdown(false), 200)}
                 placeholder="Sunni, Shia"
                 className="w-full px-3 py-2.5 border border-[#E5DEC9] bg-[#FCFBF7] text-[#2C2121] focus:ring-1 focus:ring-[#800020] focus:border-[#800020] text-sm"
               />
+              {showSectDropdown && (
+                <div className="absolute z-20 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-[#E5DEC9] shadow-lg">
+                  {SECT_OPTIONS.filter(s => s.toLowerCase().includes((details.sect || '').toLowerCase())).map(s => (
+                    <button
+                      type="button"
+                      key={s}
+                      onMouseDown={() => setDetails(prev => ({ ...prev, sect: s }))}
+                      className="w-full text-left px-4 py-2 text-sm text-[#2C2121] hover:bg-[#800020] hover:text-white transition-colors cursor-pointer"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-[#605252] mb-1">Marital Status</label>
@@ -554,8 +631,8 @@ export default function ProfileWizard() {
                 {/* Live Selfie */}
                 <div className="border border-[#E5DEC9] p-4 bg-[#FCFBF7] flex flex-col items-center text-center">
                   <span className="text-2xl mb-1">📸</span>
-                  <p className="text-xs font-bold uppercase text-[#2C2121]">Live Selfie Photo</p>
-                  <p className="text-[10px] text-[#605252] mt-0.5 mb-4">Take a selfie photo holding your CNIC card</p>
+                  <p className="text-xs font-bold uppercase text-[#2C2121]">Live Selfie Photo (Optional)</p>
+                  <p className="text-[10px] text-[#605252] mt-0.5 mb-4">Take a selfie photo holding your CNIC card (if requested)</p>
                   <input
                     type="file"
                     accept="image/*"

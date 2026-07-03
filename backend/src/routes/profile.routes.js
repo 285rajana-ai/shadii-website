@@ -340,8 +340,8 @@ router.post('/photo', protect, upload.single('photo'), async (req, res) => {
 router.post('/verify', protect, upload.fields([{ name: 'cnicFront' }, { name: 'cnicBack' }, { name: 'livePhoto' }]), async (req, res) => {
   try {
     const { files } = req;
-    if (!files?.cnicFront || !files?.cnicBack || !files?.livePhoto) {
-      return res.status(400).json({ success: false, message: 'Please upload CNIC front, back, and live photo' });
+    if (!files?.cnicFront || !files?.cnicBack) {
+      return res.status(400).json({ success: false, message: 'Please upload both CNIC front and back images' });
     }
 
     const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp'];
@@ -355,14 +355,18 @@ router.post('/verify', protect, upload.fields([{ name: 'cnicFront' }, { name: 'c
 
     const cnicFrontUri = toDataUri(files.cnicFront);
     const cnicBackUri = toDataUri(files.cnicBack);
-    const livePhotoUri = toDataUri(files.livePhoto);
+    const livePhotoUri = files.livePhoto ? toDataUri(files.livePhoto) : undefined;
 
-    await User.findByIdAndUpdate(req.user.id, {
+    const updateData = {
       cnicFront: cnicFrontUri,
       cnicBack: cnicBackUri,
-      livePhoto: livePhotoUri,
       verificationStatus: 'pending',
-    });
+    };
+    if (livePhotoUri) {
+      updateData.livePhoto = livePhotoUri;
+    }
+
+    await User.findByIdAndUpdate(req.user.id, updateData);
 
     res.json({ success: true, message: 'Verification submitted! Our team will review within 24-48 hours.' });
   } catch (err) {
