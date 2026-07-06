@@ -1,42 +1,65 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Animated, Dimensions, FlatList, Image, Modal, RefreshControl, ScrollView, StatusBar, Switch, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Dimensions,
+  FlatList,
+  Image,
+  Modal,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
+import PrimaryButton from '../../components/ui/PrimaryButton';
+import { AppBackground, Card, Chip, EmptyState, SelectField, TrustBadge } from '../../components/ui/LightPrimitives';
 import colors from '../../theme/colors';
-import { spacing } from '../../theme/spacing';
-import { API_BASE_URL, CAST_OPTIONS, EDUCATION_LEVELS, PAKISTAN_CITIES } from '../../utils/constants';
+import { radius, spacing } from '../../theme/spacing';
+import {
+  API_BASE_URL,
+  CAST_OPTIONS,
+  EDUCATION_LEVELS,
+  MARITAL_STATUS_OPTIONS,
+  MOTHER_TONGUE_OPTIONS,
+  PAKISTAN_CITIES,
+  PAKISTAN_REGIONS,
+  SECT_OPTIONS,
+} from '../../utils/constants';
+
+const { width } = Dimensions.get('window');
+const COLUMN_WIDTH = (width - spacing.lg * 2 - spacing.sm) / 2;
 
 const FILTERS = [
   { id: 'all', label: 'All', icon: 'account-group-outline' },
   { id: 'online', label: 'Online', icon: 'circle' },
-  { id: 'verified', label: 'Verified', icon: 'check-decagram' },
-  { id: 'premium', label: 'Premium', icon: 'crown' },
-  { id: 'new', label: 'New', icon: 'star-outline' },
-];
-
-const MARITAL_STATUS_OPTIONS = ['Never Married', 'Divorced', 'Widowed'];
-const SECT_OPTIONS = ['Sunni', 'Shia', 'Deobandi', 'Barelvi', 'Ahmadiyya', 'Other'];
-const SORT_OPTIONS = [
-  { id: 'newest', label: 'Newest Profiles' },
-  { id: 'active', label: 'Recently Active' },
-  { id: 'premium', label: 'Premium First' },
-  { id: 'nearby', label: 'Nearby (Same City)' },
-  { id: 'verified', label: 'Verified First' },
+  { id: 'nearby', label: 'Nearby', icon: 'map-marker-radius-outline' },
+  { id: 'verified', label: 'Verified', icon: 'check-decagram-outline' },
+  { id: 'boosted', label: 'Boosted', icon: 'rocket-launch-outline' },
+  { id: 'premium', label: 'Premium', icon: 'crown-outline' },
+  { id: 'new', label: 'New', icon: 'star-four-points-outline' },
 ];
 
 const DEFAULT_ADV_FILTERS = {
-  ageMin: '', ageMax: '',
-  city: '', education: '', cast: '',
-  maritalStatus: '', sect: '',
-  verifiedOnly: false, withPhotoOnly: true,
+  ageMin: '',
+  ageMax: '',
+  region: '',
+  city: '',
+  education: '',
+  cast: '',
+  maritalStatus: '',
+  sect: '',
+  motherTongue: '',
+  verifiedOnly: false,
+  withPhotoOnly: true,
   sort: 'newest',
 };
-
-const { width } = Dimensions.get('window');
-const COLUMN_WIDTH = (width - spacing.lg * 3) / 2;
 
 export default function DiscoverScreen({ navigation }) {
   const { token } = useSelector((s) => s.auth);
@@ -50,36 +73,29 @@ export default function DiscoverScreen({ navigation }) {
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [advFilters, setAdvFilters] = useState(DEFAULT_ADV_FILTERS);
   const [draftFilters, setDraftFilters] = useState(DEFAULT_ADV_FILTERS);
-  const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  const countActiveFilters = () => {
-    let n = 0;
-    if (advFilters.ageMin || advFilters.ageMax) n++;
-    if (advFilters.city) n++;
-    if (advFilters.education) n++;
-    if (advFilters.cast) n++;
-    if (advFilters.maritalStatus) n++;
-    if (advFilters.sect) n++;
-    if (advFilters.verifiedOnly) n++;
-    if (!advFilters.withPhotoOnly) n++; // default is true, so toggling off counts
-    if (advFilters.sort !== 'newest') n++;
-    return n;
-  };
+  const activeFilterCount = Object.entries(advFilters).reduce((count, [key, value]) => {
+    if (key === 'withPhotoOnly') return count + (value ? 0 : 1);
+    if (key === 'sort') return count + (value !== 'newest' ? 1 : 0);
+    return count + (value ? 1 : 0);
+  }, 0);
 
   const buildUrl = (pageNum, chipFilter, filters) => {
     let url = `${API_BASE_URL}/profile/discover?page=${pageNum}`;
-    // Chip filters
     if (chipFilter === 'online') url += '&sort=active';
+    else if (chipFilter === 'nearby') url += '&sort=nearby';
+    else if (chipFilter === 'boosted') url += '&sort=boosted';
     else if (chipFilter === 'premium') url += '&sort=premium';
     else if (filters.sort && chipFilter === 'all') url += `&sort=${filters.sort}`;
-    // Advanced filters
     if (filters.ageMin) url += `&ageMin=${filters.ageMin}`;
     if (filters.ageMax) url += `&ageMax=${filters.ageMax}`;
+    if (filters.region) url += `&region=${encodeURIComponent(filters.region)}`;
     if (filters.city) url += `&city=${encodeURIComponent(filters.city)}`;
     if (filters.education) url += `&education=${encodeURIComponent(filters.education)}`;
     if (filters.cast) url += `&cast=${encodeURIComponent(filters.cast)}`;
     if (filters.maritalStatus) url += `&maritalStatus=${encodeURIComponent(filters.maritalStatus)}`;
     if (filters.sect) url += `&sect=${encodeURIComponent(filters.sect)}`;
+    if (filters.motherTongue) url += `&motherTongue=${encodeURIComponent(filters.motherTongue)}`;
     if (filters.verifiedOnly) url += '&verifiedOnly=true';
     if (filters.withPhotoOnly) url += '&withPhotoOnly=true';
     return url;
@@ -87,16 +103,16 @@ export default function DiscoverScreen({ navigation }) {
 
   const fetchProfiles = async (pageNum = 1, isRefresh = false, chipFilter = activeFilter, filters = advFilters) => {
     try {
-      const url = buildUrl(pageNum, chipFilter, filters);
-      const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(buildUrl(pageNum, chipFilter, filters), {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const data = await res.json();
       if (data.success) {
         let result = data.profiles || [];
-        if (chipFilter === 'verified') result = result.filter(p => p.isVerified);
+        if (chipFilter === 'verified') result = result.filter((p) => p.isVerified);
         if (chipFilter === 'new') result = result.slice(0, 10);
-        if (isRefresh) setProfiles(result);
-        else setProfiles(prev => [...prev, ...result]);
-        setHasMore(data.hasMore);
+        setProfiles((prev) => (isRefresh ? result : [...prev, ...result]));
+        setHasMore(Boolean(data.hasMore));
         setPage(pageNum);
       }
     } catch (_) {
@@ -107,9 +123,7 @@ export default function DiscoverScreen({ navigation }) {
   };
 
   useEffect(() => {
-    setLoading(true);
-    fetchProfiles(1);
-    Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }).start();
+    fetchProfiles(1, true);
   }, []);
 
   const onFilterChange = (filterId) => {
@@ -119,11 +133,9 @@ export default function DiscoverScreen({ navigation }) {
     fetchProfiles(1, true, filterId, advFilters);
   };
 
-  const onRefresh = () => { setRefreshing(true); fetchProfiles(1, true); };
-
-  const openFilterModal = () => {
-    setDraftFilters({ ...advFilters });
-    setShowFilterModal(true);
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchProfiles(1, true);
   };
 
   const applyFilters = () => {
@@ -134,523 +146,493 @@ export default function DiscoverScreen({ navigation }) {
     fetchProfiles(1, true, activeFilter, draftFilters);
   };
 
-  const resetFilters = () => {
-    setDraftFilters({ ...DEFAULT_ADV_FILTERS });
-  };
-
-  const renderProfile = ({ item, index }) => (
-    <ProfileCard item={item} navigation={navigation} index={index} />
-  );
-
-  const activeFilterCount = countActiveFilters();
-
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-      <LinearGradient colors={['#1A000A', '#0D0509', '#0D0D0D']} style={StyleSheet.absoluteFill} />
-      <View style={styles.orb} />
-
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+    <AppBackground>
+      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
+      <View style={[styles.header, { paddingTop: insets.top + 14 }]}>
         <View>
-          <Text style={styles.headerSubtitle}>Explore & Connect</Text>
-          <Text style={styles.headerTitle}>Discover</Text>
+          <Text style={styles.eyebrow}>Browse respectfully</Text>
+          <Text style={styles.title}>Discover</Text>
         </View>
-        <TouchableOpacity style={styles.iconButton} activeOpacity={0.7} onPress={openFilterModal}>
-          <MaterialCommunityIcons name="tune-variant" size={22} color={activeFilterCount > 0 ? '#fff' : colors.accent} />
-          {activeFilterCount > 0 && (
-            <View style={styles.filterBadge}>
-              <Text style={styles.filterBadgeText}>{activeFilterCount}</Text>
-            </View>
-          )}
-        </TouchableOpacity>
+        <Pressable
+          style={[styles.filterButton, activeFilterCount > 0 && styles.filterButtonActive]}
+          onPress={() => {
+            setDraftFilters({ ...advFilters });
+            setShowFilterModal(true);
+          }}
+        >
+          <MaterialCommunityIcons name="tune-variant" size={22} color={activeFilterCount > 0 ? '#FFFFFF' : colors.primary} />
+          {activeFilterCount > 0 ? <Text style={styles.filterCount}>{activeFilterCount}</Text> : null}
+        </Pressable>
       </View>
 
-      {/* Advanced Filter Modal */}
+      <View style={styles.insightRow}>
+        <View style={styles.insightPill}>
+          <MaterialCommunityIcons name="map-marker-outline" size={15} color={colors.primary} />
+          <Text style={styles.insightText}>{advFilters.city || 'All Pakistan'}</Text>
+        </View>
+        <View style={styles.insightPill}>
+          <MaterialCommunityIcons name="shield-check-outline" size={15} color={colors.success} />
+          <Text style={styles.insightText}>Verified-first browsing</Text>
+        </View>
+      </View>
+
+      <ScrollView horizontal style={styles.filterScroll} showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
+        {FILTERS.map((f) => (
+          <Chip key={f.id} label={f.label} icon={f.icon} active={activeFilter === f.id} onPress={() => onFilterChange(f.id)} />
+        ))}
+      </ScrollView>
+
+      {loading && page === 1 ? (
+        <View style={styles.skeletonWrap}>
+          {[0, 1, 2, 3].map((i) => <SkeletonCard key={i} />)}
+          <View style={styles.loader}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.loaderText}>Finding profiles...</Text>
+          </View>
+        </View>
+      ) : (
+        <FlatList
+          data={profiles}
+          keyExtractor={(item) => String(item.id || item._id)}
+          numColumns={2}
+          columnWrapperStyle={profiles.length ? styles.column : undefined}
+          contentContainerStyle={[styles.list, profiles.length === 0 && { flex: 1 }]}
+          renderItem={({ item }) => <ProfileCard item={item} navigation={navigation} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} colors={[colors.primary]} />}
+          onEndReached={() => hasMore && !loading && fetchProfiles(page + 1)}
+          onEndReachedThreshold={0.45}
+          ListEmptyComponent={
+            <EmptyState
+              icon="account-search-outline"
+              title="No profiles found"
+              body="Try relaxing filters or checking back after your profile is complete."
+            />
+          }
+          ListFooterComponent={hasMore && profiles.length > 0 ? <ActivityIndicator style={{ margin: 18 }} color={colors.primary} /> : <View style={{ height: 112 }} />}
+        />
+      )}
+
       <FilterModal
         visible={showFilterModal}
         draft={draftFilters}
         setDraft={setDraftFilters}
         onApply={applyFilters}
-        onReset={resetFilters}
+        onReset={() => setDraftFilters(DEFAULT_ADV_FILTERS)}
         onClose={() => setShowFilterModal(false)}
         insets={insets}
       />
+    </AppBackground>
+  );
+}
 
-      {/* Filter Chips */}
-      <ScrollView
-        horizontal showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.filterRow}
-        style={styles.filterScroll}
-      >
-        {FILTERS.map(f => (
-          <TouchableOpacity
-            key={f.id}
-            style={[styles.filterChip, activeFilter === f.id && styles.filterChipActive]}
-            onPress={() => onFilterChange(f.id)}
-            activeOpacity={0.75}
-          >
-            {activeFilter === f.id && (
-              <LinearGradient
-                colors={[colors.rose, colors.maroon]}
-                style={StyleSheet.absoluteFill}
-                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                borderRadius={20}
-              />
-            )}
-            <MaterialCommunityIcons
-              name={f.icon}
-              size={13}
-              color={activeFilter === f.id ? '#fff' : colors.textSecondary}
-            />
-            <Text style={[styles.filterLabel, activeFilter === f.id && styles.filterLabelActive]}>
-              {f.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-
-      {loading && page === 1 ? (
-        <DiscoverSkeleton />
-      ) : (
-        <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
-          <FlatList
-            data={profiles}
-            keyExtractor={(item) => String(item.id || item._id)}
-            renderItem={renderProfile}
-            numColumns={2}
-            contentContainerStyle={[styles.listContent, profiles.length === 0 && { flex: 1 }]}
-            columnWrapperStyle={profiles.length > 0 ? styles.columnWrapper : undefined}
-            refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh}
-                tintColor={colors.accent} colors={[colors.accent]} />
-            }
-            onEndReached={() => hasMore && fetchProfiles(page + 1)}
-            onEndReachedThreshold={0.5}
-            ListEmptyComponent={
-              <View style={styles.emptyContainer}>
-                <MaterialCommunityIcons name="account-heart-outline" size={72} color={colors.textMuted} />
-                <Text style={styles.emptyTitle}>No Profiles Found</Text>
-                <Text style={styles.emptyText}>Try a different filter or check back later</Text>
-              </View>
-            }
-            ListFooterComponent={hasMore && page > 1
-              ? <ActivityIndicator style={{ margin: 20 }} color={colors.accent} />
-              : <View style={{ height: 110 }} />}
-          />
-        </Animated.View>
-      )}
+function SkeletonCard() {
+  return (
+    <View style={styles.skeletonCard}>
+      <View style={styles.skeletonPhoto} />
+      <View style={styles.skeletonLineWide} />
+      <View style={styles.skeletonLine} />
     </View>
   );
 }
 
-function ProfileCard({ item, navigation, index }) {
-  const scaleAnim = useRef(new Animated.Value(0.95)).current;
-  useEffect(() => {
-    Animated.spring(scaleAnim, {
-      toValue: 1, delay: Math.min(index * 40, 200),
-      useNativeDriver: true, tension: 80, friction: 8
-    }).start();
-  }, []);
-
+function ProfileCard({ item, navigation }) {
+  const userId = item.id || item._id;
   return (
-    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-      <TouchableOpacity
-        style={styles.card}
-        activeOpacity={0.88}
-        onPress={() => navigation.navigate('ProfileDetail', { userId: item.id || item._id })}
-      >
-        <Image
-          source={{ uri: item.photo }}
-          style={styles.cardImage}
-          resizeMode="cover"
-        />
-        {!item.photo && (
-          <LinearGradient colors={colors.gradients.royal} style={StyleSheet.absoluteFill} />
-        )}
-        {/* Blur overlay for female photos — non-subscriber view */}
-        {item.isPhotoBlurred && item.photo && (
-          <BlurView intensity={85} tint="dark" style={StyleSheet.absoluteFill}>
-            <View style={styles.blurContent}>
-              <MaterialCommunityIcons name="lock" size={22} color="rgba(255,255,255,0.9)" />
-              <Text style={styles.blurText}>Connect to view</Text>
-            </View>
-          </BlurView>
-        )}
-        {/* Dark gradient overlay */}
-        <LinearGradient
-          colors={['transparent', 'rgba(0,0,0,0.3)', 'rgba(0,0,0,0.88)']}
-          style={StyleSheet.absoluteFill}
-          start={{ x: 0, y: 0.3 }} end={{ x: 0, y: 1 }}
-        />
-        {/* Top badges */}
-        <View style={styles.cardTopRow}>
-          {item.isPremium && (
-            <LinearGradient colors={colors.gradients.gold} style={styles.goldBadge}>
-              <MaterialCommunityIcons name="crown" size={11} color={colors.maroon} />
-              <Text style={styles.goldText}>GOLD</Text>
-            </LinearGradient>
-          )}
-          <View style={{ flex: 1 }} />
-          {item.isOnline && <View style={styles.onlineDot} />}
-        </View>
-        {/* Bottom info */}
-        <View style={styles.cardInfo}>
-          <View style={styles.cardNameRow}>
-            <Text style={styles.cardName} numberOfLines={1}>
-              {item.name}, {item.age}
-            </Text>
-            {item.isVerified && (
-              <MaterialCommunityIcons name="check-decagram" size={14} color={colors.accent} />
-            )}
+    <Pressable style={styles.card} onPress={() => navigation.navigate('ProfileDetail', { userId })}>
+      <View style={styles.photoWrap}>
+        {item.photo ? (
+          <Image source={{ uri: item.photo }} style={styles.photo} />
+        ) : (
+          <View style={styles.photoFallback}>
+            <Text style={styles.initial}>{item.name?.[0] || '?'}</Text>
           </View>
-          <Text style={styles.cardCity} numberOfLines={1}>
-            <MaterialCommunityIcons name="map-marker" size={11} color="rgba(255,255,255,0.6)" /> {item.city}
-          </Text>
-        </View>
-      </TouchableOpacity>
-    </Animated.View>
-  );
-}
-
-// ── FilterModal ─────────────────────────────────────────────────────────────
-function FilterModal({ visible, draft, setDraft, onApply, onReset, onClose, insets }) {
-  const slideAnim = useRef(new Animated.Value(400)).current;
-
-  useEffect(() => {
-    if (visible) {
-      Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true, tension: 65, friction: 11 }).start();
-    } else {
-      slideAnim.setValue(400);
-    }
-  }, [visible]);
-
-  const setField = (key, val) => setDraft(prev => ({ ...prev, [key]: val }));
-
-  const ChipGroup = ({ label, options, field }) => (
-    <View style={fStyles.section}>
-      <Text style={fStyles.sectionLabel}>{label}</Text>
-      <View style={fStyles.chipRow}>
-        <TouchableOpacity
-          style={[fStyles.chip, !draft[field] && fStyles.chipActive]}
-          onPress={() => setField(field, '')}
-        >
-          <Text style={[fStyles.chipText, !draft[field] && fStyles.chipTextActive]}>Any</Text>
-        </TouchableOpacity>
-        {options.map(opt => (
-          <TouchableOpacity
-            key={opt}
-            style={[fStyles.chip, draft[field] === opt && fStyles.chipActive]}
-            onPress={() => setField(field, draft[field] === opt ? '' : opt)}
-          >
-            <Text style={[fStyles.chipText, draft[field] === opt && fStyles.chipTextActive]}>{opt}</Text>
-          </TouchableOpacity>
-        ))}
+        )}
+        {item.isPhotoBlurred && item.photo ? (
+          <View style={styles.privateLayer}>
+            <MaterialCommunityIcons name="lock-outline" size={20} color={colors.primary} />
+            <Text style={styles.privateLabel}>Private</Text>
+          </View>
+        ) : null}
+        {item.isOnline ? <View style={styles.onlineDot} /> : null}
       </View>
-    </View>
+      <View style={styles.cardBody}>
+        <View style={styles.nameRow}>
+          <Text style={styles.name} numberOfLines={1}>{item.name}, {item.age}</Text>
+          {item.isVerified ? <MaterialCommunityIcons name="check-decagram" size={15} color={colors.success} /> : null}
+        </View>
+        <Text style={styles.meta} numberOfLines={1}>{item.city || 'Pakistan'}</Text>
+        <Text style={styles.meta} numberOfLines={1}>{item.education || 'Education not added'}</Text>
+      </View>
+    </Pressable>
   );
+}
+
+function FilterModal({ visible, draft, setDraft, onApply, onReset, onClose, insets }) {
+  const [picker, setPicker] = useState(null);
+  const options =
+    picker === 'region' ? PAKISTAN_REGIONS :
+      picker === 'city' ? PAKISTAN_CITIES :
+        picker === 'education' ? EDUCATION_LEVELS :
+          picker === 'cast' ? CAST_OPTIONS :
+            picker === 'maritalStatus' ? MARITAL_STATUS_OPTIONS :
+              picker === 'sect' ? SECT_OPTIONS :
+                picker === 'motherTongue' ? MOTHER_TONGUE_OPTIONS : [];
+  const set = (key, value) => setDraft((prev) => ({ ...prev, [key]: value }));
 
   return (
-    <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
-      <TouchableOpacity style={fStyles.backdrop} activeOpacity={1} onPress={onClose} />
-      <Animated.View style={[fStyles.sheet, { paddingBottom: insets.bottom + 16, transform: [{ translateY: slideAnim }] }]}>
-        {/* Handle */}
-        <View style={fStyles.handle} />
-        {/* Title row */}
-        <View style={fStyles.titleRow}>
-          <Text style={fStyles.title}>Advanced Filters</Text>
-          <TouchableOpacity onPress={onReset} style={fStyles.resetBtn}>
-            <Text style={fStyles.resetText}>Reset All</Text>
-          </TouchableOpacity>
-        </View>
-
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
-
-          {/* Age Range */}
-          <View style={fStyles.section}>
-            <Text style={fStyles.sectionLabel}>Age Range</Text>
-            <View style={fStyles.ageRow}>
-              <View style={fStyles.ageInput}>
-                <Text style={fStyles.ageLabel}>Min Age</Text>
-                <TextInput
-                  style={fStyles.ageField}
-                  value={draft.ageMin}
-                  onChangeText={v => setField('ageMin', v.replace(/[^0-9]/g, ''))}
-                  placeholder="18" placeholderTextColor={colors.textMuted}
-                  keyboardType="number-pad" maxLength={2}
-                />
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <Pressable style={styles.modalOverlay} onPress={onClose} />
+      <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 18) }]}>
+        <View style={styles.sheetHandle} />
+        {!picker ? (
+          <>
+            <View style={styles.sheetHeader}>
+              <Text style={styles.sheetTitle}>Refine matches</Text>
+              <Pressable onPress={onReset}><Text style={styles.reset}>Reset</Text></Pressable>
+            </View>
+            <View style={styles.ageRow}>
+              <View style={styles.ageField}>
+                <Text style={styles.filterLabel}>Min age</Text>
+                <TextInput value={draft.ageMin} onChangeText={(v) => set('ageMin', v)} placeholder="18" keyboardType="numeric" placeholderTextColor={colors.textPlaceholder} style={styles.ageInput} />
               </View>
-              <View style={fStyles.ageSeparator}><Text style={fStyles.ageDash}>—</Text></View>
-              <View style={fStyles.ageInput}>
-                <Text style={fStyles.ageLabel}>Max Age</Text>
-                <TextInput
-                  style={fStyles.ageField}
-                  value={draft.ageMax}
-                  onChangeText={v => setField('ageMax', v.replace(/[^0-9]/g, ''))}
-                  placeholder="60" placeholderTextColor={colors.textMuted}
-                  keyboardType="number-pad" maxLength={2}
-                />
+              <View style={styles.ageField}>
+                <Text style={styles.filterLabel}>Max age</Text>
+                <TextInput value={draft.ageMax} onChangeText={(v) => set('ageMax', v)} placeholder="35" keyboardType="numeric" placeholderTextColor={colors.textPlaceholder} style={styles.ageInput} />
               </View>
             </View>
-          </View>
-
-          {/* City */}
-          <View style={fStyles.section}>
-            <Text style={fStyles.sectionLabel}>City</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={fStyles.chipRow}>
-              <TouchableOpacity
-                style={[fStyles.chip, !draft.city && fStyles.chipActive]}
-                onPress={() => setField('city', '')}
-              >
-                <Text style={[fStyles.chipText, !draft.city && fStyles.chipTextActive]}>Any City</Text>
-              </TouchableOpacity>
-              {PAKISTAN_CITIES.map(c => (
-                <TouchableOpacity
-                  key={c}
-                  style={[fStyles.chip, draft.city === c && fStyles.chipActive]}
-                  onPress={() => setField('city', draft.city === c ? '' : c)}
-                >
-                  <Text style={[fStyles.chipText, draft.city === c && fStyles.chipTextActive]}>{c}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-
-          {/* Marital Status */}
-          <ChipGroup label="Marital Status" options={MARITAL_STATUS_OPTIONS} field="maritalStatus" />
-
-          {/* Education */}
-          <ChipGroup label="Education" options={EDUCATION_LEVELS} field="education" />
-
-          {/* Cast */}
-          <View style={fStyles.section}>
-            <Text style={fStyles.sectionLabel}>Cast / Community</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={fStyles.chipRow}>
-              <TouchableOpacity
-                style={[fStyles.chip, !draft.cast && fStyles.chipActive]}
-                onPress={() => setField('cast', '')}
-              >
-                <Text style={[fStyles.chipText, !draft.cast && fStyles.chipTextActive]}>Any Cast</Text>
-              </TouchableOpacity>
-              {CAST_OPTIONS.map(c => (
-                <TouchableOpacity
-                  key={c}
-                  style={[fStyles.chip, draft.cast === c && fStyles.chipActive]}
-                  onPress={() => setField('cast', draft.cast === c ? '' : c)}
-                >
-                  <Text style={[fStyles.chipText, draft.cast === c && fStyles.chipTextActive]}>{c}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-
-          {/* Sect */}
-          <ChipGroup label="Sect" options={SECT_OPTIONS} field="sect" />
-
-          {/* Sort By */}
-          <View style={fStyles.section}>
-            <Text style={fStyles.sectionLabel}>Sort By</Text>
-            <View style={fStyles.chipRow}>
-              {SORT_OPTIONS.map(s => (
-                <TouchableOpacity
-                  key={s.id}
-                  style={[fStyles.chip, draft.sort === s.id && fStyles.chipActive]}
-                  onPress={() => setField('sort', s.id)}
-                >
-                  <Text style={[fStyles.chipText, draft.sort === s.id && fStyles.chipTextActive]}>{s.label}</Text>
-                </TouchableOpacity>
-              ))}
+            <SelectField label="Region" value={draft.region} placeholder="Any region" onPress={() => setPicker('region')} />
+            <SelectField label="City" value={draft.city} placeholder="Any city" onPress={() => setPicker('city')} />
+            <SelectField label="Education" value={draft.education} placeholder="Any education" onPress={() => setPicker('education')} />
+            <SelectField label="Cast / community" value={draft.cast} placeholder="Any community" onPress={() => setPicker('cast')} />
+            <SelectField label="Marital status" value={draft.maritalStatus} placeholder="Any status" onPress={() => setPicker('maritalStatus')} />
+            <SelectField label="Sect" value={draft.sect} placeholder="Any sect" onPress={() => setPicker('sect')} />
+            <SelectField label="Mother tongue" value={draft.motherTongue} placeholder="Any language" onPress={() => setPicker('motherTongue')} />
+            <ToggleRow label="Verified only" value={draft.verifiedOnly} onValueChange={(v) => set('verifiedOnly', v)} />
+            <ToggleRow label="With photos only" value={draft.withPhotoOnly} onValueChange={(v) => set('withPhotoOnly', v)} />
+            <PrimaryButton label="Apply filters" icon="check" onPress={onApply} style={{ marginTop: spacing.md }} />
+          </>
+        ) : (
+          <>
+            <View style={styles.sheetHeader}>
+              <Pressable onPress={() => setPicker(null)}><Text style={styles.reset}>Back</Text></Pressable>
+              <Text style={styles.sheetTitle}>Select {picker}</Text>
+              <View style={{ width: 38 }} />
             </View>
-          </View>
-
-          {/* Toggles */}
-          <View style={fStyles.section}>
-            <Text style={fStyles.sectionLabel}>Show Only</Text>
-            <View style={fStyles.toggleRow}>
-              <View style={fStyles.toggleItem}>
-                <View>
-                  <Text style={fStyles.toggleLabel}>Verified Profiles</Text>
-                  <Text style={fStyles.toggleSub}>Only show ID-verified users</Text>
-                </View>
-                <Switch
-                  value={draft.verifiedOnly}
-                  onValueChange={v => setField('verifiedOnly', v)}
-                  trackColor={{ false: 'rgba(255,255,255,0.1)', true: colors.rose }}
-                  thumbColor="#fff"
-                />
-              </View>
-              <View style={[fStyles.toggleItem, { marginTop: 12 }]}>
-                <View>
-                  <Text style={fStyles.toggleLabel}>With Profile Photo</Text>
-                  <Text style={fStyles.toggleSub}>Hide profiles without photos</Text>
-                </View>
-                <Switch
-                  value={draft.withPhotoOnly}
-                  onValueChange={v => setField('withPhotoOnly', v)}
-                  trackColor={{ false: 'rgba(255,255,255,0.1)', true: colors.rose }}
-                  thumbColor="#fff"
-                />
-              </View>
-            </View>
-          </View>
-        </ScrollView>
-
-        {/* Apply Button */}
-        <TouchableOpacity style={fStyles.applyBtn} onPress={onApply} activeOpacity={0.85}>
-          <LinearGradient colors={[colors.rose, colors.maroon]} style={fStyles.applyGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
-            <MaterialCommunityIcons name="check-circle-outline" size={20} color="#fff" />
-            <Text style={fStyles.applyText}>Apply Filters</Text>
-          </LinearGradient>
-        </TouchableOpacity>
-      </Animated.View>
+            <FlatList
+              data={options}
+              keyExtractor={(item) => String(item)}
+              renderItem={({ item }) => (
+                <Pressable
+                  style={styles.option}
+                  onPress={() => {
+                    set(picker, item);
+                    setPicker(null);
+                  }}
+                >
+                  <Text style={styles.optionText}>{item}</Text>
+                  {draft[picker] === item ? <MaterialCommunityIcons name="check" size={20} color={colors.primary} /> : null}
+                </Pressable>
+              )}
+            />
+          </>
+        )}
+      </View>
     </Modal>
   );
 }
 
-const fStyles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)' },
-  sheet: {
-    position: 'absolute', bottom: 0, left: 0, right: 0,
-    backgroundColor: '#1A0A10',
-    borderTopLeftRadius: 28, borderTopRightRadius: 28,
-    paddingHorizontal: spacing.lg, paddingTop: 12,
-    maxHeight: '88%',
-    borderTopWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
-  },
-  handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.2)', alignSelf: 'center', marginBottom: 16 },
-  titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  title: { fontSize: 20, fontWeight: '800', color: colors.text },
-  resetBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.07)' },
-  resetText: { color: colors.textSecondary, fontSize: 13, fontWeight: '600' },
-  section: { marginBottom: 20 },
-  sectionLabel: { color: colors.textSecondary, fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 10 },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: {
-    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
-  },
-  chipActive: { backgroundColor: 'rgba(139,26,74,0.35)', borderColor: colors.rose },
-  chipText: { color: colors.textSecondary, fontSize: 13, fontWeight: '600' },
-  chipTextActive: { color: '#fff', fontWeight: '700' },
-  ageRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  ageInput: { flex: 1, backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 14, padding: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
-  ageLabel: { color: colors.textMuted, fontSize: 11, fontWeight: '600', textTransform: 'uppercase', marginBottom: 4 },
-  ageField: { color: colors.text, fontSize: 22, fontWeight: '800', padding: 0 },
-  ageSeparator: { paddingTop: 18 },
-  ageDash: { color: colors.textMuted, fontSize: 20 },
-  toggleRow: { backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.07)' },
-  toggleItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  toggleLabel: { color: colors.text, fontSize: 14, fontWeight: '700', marginBottom: 2 },
-  toggleSub: { color: colors.textMuted, fontSize: 12 },
-  applyBtn: { borderRadius: 16, overflow: 'hidden', marginTop: 12 },
-  applyGradient: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 16 },
-  applyText: { color: '#fff', fontSize: 16, fontWeight: '800', letterSpacing: 0.3 },
-});
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  orb: { position: 'absolute', width: width * 0.7, height: width * 0.7, borderRadius: width * 0.35, top: -width * 0.15, right: -width * 0.2, backgroundColor: 'rgba(139,26,74,0.1)' },
-  header: {
-    paddingBottom: 12, paddingHorizontal: spacing.lg,
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end',
-  },
-  headerSubtitle: { color: colors.textSecondary, fontSize: 12, letterSpacing: 1.5, textTransform: 'uppercase', fontWeight: '600' },
-  headerTitle: { fontSize: 32, fontWeight: '900', color: colors.text, marginTop: 2, letterSpacing: -0.5 },
-  iconButton: {
-    width: 44, height: 44, borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.07)',
-    alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
-  },
-  filterBadge: {
-    position: 'absolute', top: -4, right: -4,
-    width: 18, height: 18, borderRadius: 9,
-    backgroundColor: colors.rose, alignItems: 'center', justifyContent: 'center',
-    borderWidth: 2, borderColor: colors.background,
-  },
-  filterBadgeText: { color: '#fff', fontSize: 10, fontWeight: '900' },
-  filterScroll: { maxHeight: 52, marginBottom: 12 },
-  filterRow: { paddingHorizontal: spacing.lg, gap: 8, alignItems: 'center' },
-  filterChip: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    paddingHorizontal: 12, paddingVertical: 8,
-    borderRadius: 20, overflow: 'hidden',
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
-  },
-  filterChipActive: { borderColor: colors.rose },
-  filterLabel: { color: colors.textSecondary, fontSize: 12, fontWeight: '600' },
-  filterLabelActive: { color: '#fff', fontWeight: '700' },
-  listContent: { paddingHorizontal: spacing.lg, paddingBottom: 112 },
-  columnWrapper: { justifyContent: 'space-between', marginBottom: 12 },
-  card: {
-    width: COLUMN_WIDTH, height: COLUMN_WIDTH * 1.55,
-    borderRadius: 22, overflow: 'hidden',
-    backgroundColor: colors.surface,
-  },
-  cardImage: { width: '100%', height: '100%', position: 'absolute' },
-  blurContent: {
-    flex: 1, alignItems: 'center', justifyContent: 'center', gap: 6,
-  },
-  blurText: {
-    color: 'rgba(255,255,255,0.85)', fontSize: 11, fontWeight: '700',
-    letterSpacing: 0.4, textAlign: 'center',
-  },
-  cardTopRow: {
-    position: 'absolute', top: 10, left: 10, right: 10,
-    flexDirection: 'row', alignItems: 'center',
-  },
-  goldBadge: {
-    flexDirection: 'row', alignItems: 'center', gap: 3,
-    paddingHorizontal: 8, paddingVertical: 3,
-    borderRadius: 8,
-  },
-  goldText: { color: colors.maroon, fontSize: 11, fontWeight: '900', letterSpacing: 0.4 },
-  onlineDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.online, borderWidth: 2, borderColor: 'rgba(0,0,0,0.5)' },
-  cardInfo: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 12 },
-  cardNameRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  cardName: { fontSize: 14, fontWeight: '800', color: '#fff', flex: 1 },
-  cardCity: { color: 'rgba(255,255,255,0.72)', fontSize: 12, marginTop: 3 },
-  emptyContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 56, paddingHorizontal: 40 },
-  emptyTitle: { color: colors.text, fontSize: 20, fontWeight: '800', marginTop: 16 },
-  emptyText: { color: colors.textSecondary, fontSize: 14, textAlign: 'center', marginTop: 8, lineHeight: 22 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
-  loadingText: { color: colors.textSecondary, fontSize: 14, fontWeight: '500', letterSpacing: 0.3 },
-
-  // Skeleton
-  skeletonGrid: { paddingHorizontal: spacing.lg, flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  skeletonCard: { width: COLUMN_WIDTH, height: COLUMN_WIDTH * 1.55, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.06)', overflow: 'hidden' },
-  skeletonBar: { backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 8 },
-  skeletonFooter: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 12, gap: 8 },
-});
-
-function DiscoverSkeleton() {
-  const shimmer = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(shimmer, { toValue: 1, duration: 900, useNativeDriver: true }),
-        Animated.timing(shimmer, { toValue: 0, duration: 900, useNativeDriver: true }),
-      ])
-    ).start();
-    return () => shimmer.stopAnimation();
-  }, []);
-  const opacity = shimmer.interpolate({ inputRange: [0, 1], outputRange: [0.4, 0.85] });
+function ToggleRow({ label, value, onValueChange }) {
   return (
-    <Animated.View style={[styles.skeletonGrid, { opacity }]}>
-      {[0, 1, 2, 3, 4, 5].map((i) => (
-        <View key={i} style={styles.skeletonCard}>
-          <LinearGradient
-            colors={['rgba(255,255,255,0.04)', 'rgba(255,255,255,0.08)', 'rgba(255,255,255,0.04)']}
-            style={StyleSheet.absoluteFill}
-          />
-          <View style={styles.skeletonFooter}>
-            <View style={[styles.skeletonBar, { height: 14, width: '70%' }]} />
-            <View style={[styles.skeletonBar, { height: 11, width: '45%' }]} />
-          </View>
-        </View>
-      ))}
-    </Animated.View>
+    <View style={styles.toggleRow}>
+      <Text style={styles.toggleLabel}>{label}</Text>
+      <Switch
+        value={value}
+        onValueChange={onValueChange}
+        trackColor={{ false: colors.borderStrong, true: colors.accentLight }}
+        thumbColor={value ? colors.primary : '#FFFFFF'}
+      />
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.md,
+  },
+  eyebrow: {
+    color: colors.primary,
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  title: {
+    color: colors.text,
+    fontSize: 32,
+    fontWeight: '900',
+  },
+  filterButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  filterButtonActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  filterCount: {
+    position: 'absolute',
+    top: 6,
+    right: 7,
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '900',
+  },
+  insightRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.sm,
+  },
+  insightPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: radius.full,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  insightText: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  filterScroll: {
+    flexGrow: 0,
+    maxHeight: 48,
+  },
+  filterRow: {
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.md,
+  },
+  list: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: 120,
+  },
+  column: {
+    gap: spacing.sm,
+  },
+  card: {
+    width: COLUMN_WIDTH,
+    marginBottom: spacing.sm,
+    borderRadius: radius.xl,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    overflow: 'hidden',
+  },
+  photoWrap: {
+    height: 184,
+    backgroundColor: colors.surfaceLight,
+  },
+  photo: {
+    width: '100%',
+    height: '100%',
+  },
+  photoFallback: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primaryLightBg,
+  },
+  initial: {
+    color: colors.primary,
+    fontSize: 36,
+    fontWeight: '900',
+  },
+  privateLayer: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    backgroundColor: colors.blur,
+  },
+  privateLabel: {
+    color: colors.primary,
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  onlineDot: {
+    position: 'absolute',
+    right: 10,
+    top: 10,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: colors.online,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+  cardBody: {
+    padding: spacing.sm,
+    gap: 4,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  name: {
+    flex: 1,
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: '900',
+  },
+  meta: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  loader: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingTop: spacing.md,
+  },
+  loaderText: {
+    color: colors.textSecondary,
+    fontWeight: '700',
+  },
+  skeletonWrap: {
+    flex: 1,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+  },
+  skeletonCard: {
+    width: COLUMN_WIDTH,
+    height: 248,
+    borderRadius: radius.xl,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.sm,
+    gap: spacing.sm,
+  },
+  skeletonPhoto: {
+    height: 176,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surfaceLight,
+  },
+  skeletonLineWide: {
+    height: 14,
+    width: '76%',
+    borderRadius: radius.full,
+    backgroundColor: colors.surfaceLight,
+  },
+  skeletonLine: {
+    height: 12,
+    width: '52%',
+    borderRadius: radius.full,
+    backgroundColor: colors.surfaceLight,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(32,33,36,0.36)',
+  },
+  sheet: {
+    maxHeight: '78%',
+    gap: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: radius.xxl,
+    borderTopRightRadius: radius.xxl,
+  },
+  sheetHandle: {
+    width: 44,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: colors.borderStrong,
+    alignSelf: 'center',
+  },
+  sheetHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  sheetTitle: {
+    color: colors.text,
+    fontSize: 21,
+    fontWeight: '900',
+  },
+  reset: {
+    color: colors.primary,
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  ageRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  ageField: {
+    flex: 1,
+    gap: 7,
+  },
+  filterLabel: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  ageInput: {
+    height: 52,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: 14,
+    color: colors.text,
+    fontSize: 16,
+    backgroundColor: colors.surface,
+  },
+  toggleRow: {
+    minHeight: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderBottomWidth: 1,
+    borderBottomColor: colors.divider,
+  },
+  toggleLabel: {
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  option: {
+    minHeight: 54,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderBottomWidth: 1,
+    borderBottomColor: colors.divider,
+  },
+  optionText: {
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: '700',
+  },
+});

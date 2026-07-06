@@ -67,7 +67,7 @@ export default function IncomingRequestsScreen({ navigation }) {
                 Alert.alert(
                     action === 'accept' ? 'Photos Shared ✓' : 'Request Declined',
                     action === 'accept'
-                        ? 'They can now view your profile photos.'
+                        ? 'They can now receive your reply and continue the Rishta introduction.'
                         : 'The request has been declined.',
                     [{ text: 'OK' }]
                 );
@@ -136,7 +136,7 @@ export default function IncomingRequestsScreen({ navigation }) {
                         <Text style={styles.cardSub}>{item.age} yrs · {item.city || 'Pakistan'}</Text>
                         <View style={styles.requestTypeBadge}>
                             <MaterialCommunityIcons name="eye-outline" size={12} color={colors.accent} />
-                            <Text style={styles.requestTypeText}>Photo View Request</Text>
+                            <Text style={styles.requestTypeText}>Rishta Intro Request</Text>
                         </View>
                     </View>
                 </View>
@@ -223,8 +223,8 @@ export default function IncomingRequestsScreen({ navigation }) {
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="light-content" />
-            <LinearGradient colors={['#1A000A', '#0D0D0D']} style={StyleSheet.absoluteFill} />
+            <StatusBar barStyle="dark-content" />
+            <LinearGradient colors={colors.gradients.hero} style={StyleSheet.absoluteFill} />
 
             <ScreenHeader
                 title="Incoming Requests"
@@ -245,7 +245,7 @@ export default function IncomingRequestsScreen({ navigation }) {
                         color={tab === 'photos' ? colors.accent : colors.textMuted}
                     />
                     <Text style={[styles.tabText, tab === 'photos' && styles.tabTextActive]}>
-                        Photo Requests {photoRequests.length > 0 ? `(${photoRequests.length})` : ''}
+                        Rishta Requests {photoRequests.length > 0 ? `(${photoRequests.length})` : ''}
                     </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -271,14 +271,14 @@ export default function IncomingRequestsScreen({ navigation }) {
             ) : activeData.length === 0 ? (
                 <View style={styles.emptyState}>
                     <MaterialCommunityIcons
-                        name={tab === 'photos' ? 'eye-off-outline' : 'phone-off-outline'}
+                        name={tab === 'photos' ? 'heart-search' : 'phone-off-outline'}
                         size={72}
                         color={colors.textMuted}
                     />
                     <Text style={styles.emptyTitle}>No Pending Requests</Text>
                     <Text style={styles.emptySub}>
                         {tab === 'photos'
-                            ? 'When someone requests to view your photos, they will appear here.'
+                            ? 'When someone sends an intro message, their request appears here for approval.'
                             : 'When someone requests your contact, they will appear here.'}
                     </Text>
                 </View>
@@ -320,9 +320,9 @@ const styles = StyleSheet.create({
         gap: 6,
         paddingVertical: 10,
         borderRadius: 12,
-        backgroundColor: 'rgba(255,255,255,0.05)',
+        backgroundColor: colors.surface,
         borderWidth: 1,
-        borderColor: 'transparent',
+        borderColor: colors.border,
     },
     tabPillActive: {
         backgroundColor: 'rgba(212,175,55,0.1)',
@@ -332,10 +332,10 @@ const styles = StyleSheet.create({
     tabTextActive: { color: colors.accent },
     list: { paddingHorizontal: 16, paddingBottom: 40 },
     card: {
-        backgroundColor: 'rgba(255,255,255,0.05)',
+        backgroundColor: colors.surface,
         borderRadius: 16,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.08)',
+        borderColor: colors.border,
         padding: 14,
         flexDirection: 'row',
         alignItems: 'center',
@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-    avatarText: { fontSize: 20, fontWeight: '700', color: '#fff', zIndex: 1 },
+    avatarText: { fontSize: 20, fontWeight: '700', color: '#FFFFFF', zIndex: 1 },
     cardName: { fontSize: 15, fontWeight: '700', color: colors.text, marginBottom: 2 },
     cardSub: { fontSize: 12, color: colors.textMuted, marginBottom: 4 },
     requestTypeBadge: {

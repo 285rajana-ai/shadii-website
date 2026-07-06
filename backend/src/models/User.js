@@ -19,6 +19,7 @@ const userSchema = new mongoose.Schema(
     },
     cast: { type: String }, // Caste / Community
     country: { type: String, default: 'Pakistan' },
+    region: { type: String },
     city: { type: String },
     about: { type: String, maxlength: 500 },
     hobbies: [{ type: String }],
@@ -41,6 +42,16 @@ const userSchema = new mongoose.Schema(
       },
     ],
     hidePhotos: { type: Boolean, default: false },
+    profilePhotoVisibility: {
+      type: String,
+      enum: ['everyone', 'registered', 'connected'],
+      default: 'registered',
+    },
+    photoVisibility: {
+      type: String,
+      enum: ['everyone', 'registered', 'connected'],
+      default: 'connected',
+    },
 
     // Verification
     isVerified: { type: Boolean, default: false }, // blue tick
@@ -99,6 +110,7 @@ const userSchema = new mongoose.Schema(
       education: [{ type: String }],
       cast: [{ type: String }],
       city: [{ type: String }],
+      region: [{ type: String }],
       country: [{ type: String }],
     },
 
@@ -161,7 +173,7 @@ userSchema.pre('save', async function () {
   }
   
   // Calculate profile completeness
-  const fields = ['name', 'age', 'height', 'education', 'cast', 'city', 'about', 'hobbies', 'interests', 'photos'];
+  const fields = ['name', 'age', 'height', 'education', 'cast', 'region', 'city', 'about', 'hobbies', 'interests', 'photos'];
   const filledCount = fields.filter((f) => {
     const val = this[f];
     if (!val) return false;
@@ -200,8 +212,10 @@ userSchema.methods.getProfilePhoto = function (viewerId = null) {
     return mainPhoto.url;
   }
 
-  // If photos are NOT hidden/private, always unblurred
-  if (!this.hidePhotos) {
+  const visibility = this.profilePhotoVisibility || this.photoVisibility || (this.hidePhotos ? 'connected' : 'everyone');
+
+  // If photos are public to all signed-in users, show unblurred.
+  if (!this.hidePhotos || visibility === 'everyone' || visibility === 'registered') {
     return mainPhoto.url;
   }
 

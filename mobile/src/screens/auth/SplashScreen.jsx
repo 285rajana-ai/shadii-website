@@ -39,12 +39,12 @@ export default function SplashScreen({ navigation }) {
 
   return (
     <LinearGradient
-      colors={[colors.gradients.primaryFull[0], colors.gradients.primaryFull[2], colors.gradients.primaryFull[3]]}
+      colors={colors.gradients.hero}
       style={styles.container}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
     >
-      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
 
       {/* Decorative circles */}
       <View style={[styles.circle, styles.circle1]} />
@@ -58,7 +58,7 @@ export default function SplashScreen({ navigation }) {
             key={i} 
             name={icon}
             size={24}
-            color="rgba(255,255,255,0.6)"
+            color="rgba(138,21,56,0.22)"
             style={[styles.petal, { left: (i * 70) + 20, top: i % 2 === 0 ? 80 : 120 }]}
           />
         ))}
@@ -91,36 +91,32 @@ const styles = StyleSheet.create({
     position: 'absolute',
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
+    borderColor: colors.border,
   },
-  circle1: { width: 300, height: 300, top: -80, right: -80, backgroundColor: 'rgba(255,255,255,0.05)' },
-  circle2: { width: 200, height: 200, bottom: 100, left: -60, backgroundColor: 'rgba(255,255,255,0.04)' },
-  circle3: { width: 150, height: 150, bottom: -40, right: 40, backgroundColor: 'rgba(255,255,255,0.03)' },
+  circle1: { width: 300, height: 300, top: -80, right: -80, backgroundColor: '#FCE8EF' },
+  circle2: { width: 200, height: 200, bottom: 100, left: -60, backgroundColor: '#EEF7F2' },
+  circle3: { width: 150, height: 150, bottom: -40, right: 40, backgroundColor: colors.surface },
   petalsContainer: { position: 'absolute', top: 60, left: 0, right: 0 },
   petal: { position: 'absolute', opacity: 0.6 },
   logoContainer: { alignItems: 'center', marginBottom: 24 },
   logoIcon: {
     width: 104, height: 104, borderRadius: 32,
-    backgroundColor: 'rgba(212,175,55,0.8)',
-    borderWidth: 2, borderColor: 'rgba(255,255,255,0.3)',
+    backgroundColor: colors.surface,
+    borderWidth: 1, borderColor: colors.border,
     alignItems: 'center', justifyContent: 'center',
     marginBottom: 16,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3, shadowRadius: 20,
   },
   appName: {
-    fontSize: 40, fontWeight: '800', color: '#FFFFFF',
+    fontSize: 40, fontWeight: '800', color: colors.text,
     letterSpacing: -1,
-    textShadowColor: 'rgba(0,0,0,0.3)', textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 8,
   },
   taglineUrdu: {
-    fontSize: 16, color: 'rgba(255,255,255,0.90)',
+    fontSize: 16, color: colors.textSecondary,
     textAlign: 'center', marginTop: 8, fontWeight: '500',
     writingDirection: 'rtl',
   },
   taglineEn: {
-    fontSize: 12, color: 'rgba(255,255,255,0.65)',
+    fontSize: 12, color: colors.textMuted,
     textAlign: 'center', marginTop: 4, letterSpacing: 0.5, lineHeight: 20,
   },
 });

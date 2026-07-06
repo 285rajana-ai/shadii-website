@@ -13,7 +13,7 @@ const upload = multer({ dest: '/tmp/', limits: { fileSize: 5 * 1024 * 1024 } });
 router.get('/discover', protect, async (req, res) => {
   try {
     const {
-      gender, ageMin, ageMax, city, country, education, cast,
+      gender, ageMin, ageMax, city, region, country, education, cast,
       maritalStatus, sect, motherTongue,
       verifiedOnly, withPhotoOnly,
       sort = 'newest', page = 1, limit = 20,
@@ -37,6 +37,7 @@ router.get('/discover', protect, async (req, res) => {
 
     // ── Location ──────────────────────────────────────────────────────────
     if (city) filter.city = new RegExp(city, 'i');
+    if (region) filter.region = new RegExp(region, 'i');
     if (country) filter.country = new RegExp(country, 'i');
 
     // ── Education ─────────────────────────────────────────────────────────
@@ -71,7 +72,7 @@ router.get('/discover', protect, async (req, res) => {
     const skip = (Number(page) - 1) * Number(limit);
     const [users, total] = await Promise.all([
       User.find(filter)
-        .select('name age city country education cast maritalStatus motherTongue sect interests hobbies photos isVerified isOnline lastActive subscription boost gender photoViewApproved hidePhotos')
+        .select('name age city region country education cast maritalStatus motherTongue sect interests hobbies photos isVerified isOnline lastActive subscription boost gender photoViewApproved hidePhotos profilePhotoVisibility photoVisibility')
         .sort(sortObj)
         .skip(skip)
         .limit(Number(limit)),
@@ -84,11 +85,13 @@ router.get('/discover', protect, async (req, res) => {
         (uid) => String(uid) === String(me._id)
       );
       const mainPhoto = u.photos.find((p) => p.isMain) || u.photos[0];
+      const profilePhotoVisibility = u.profilePhotoVisibility || (u.hidePhotos ? 'connected' : 'registered');
       return {
         id: u._id,
         name: u.name,
         age: u.age,
         city: u.city,
+        region: u.region,
         country: u.country,
         education: u.education,
         cast: u.cast,
@@ -100,8 +103,10 @@ router.get('/discover', protect, async (req, res) => {
         lastActive: u.lastActive,
         isBoosted: u.hasActiveBoost?.() || false,
         isPremium: u.subscription?.plan === 'premium' && u.subscription?.isActive,
-        photo: (u.hidePhotos === false || isConnected) ? (mainPhoto?.url || null) : u.getProfilePhoto(me._id),
-        isPhotoBlurred: u.hidePhotos ? !isConnected : false,
+        photo: (!u.hidePhotos || profilePhotoVisibility !== 'connected' || isConnected) ? (mainPhoto?.url || null) : u.getProfilePhoto(me._id),
+        isPhotoBlurred: profilePhotoVisibility === 'connected' || u.hidePhotos ? !isConnected : false,
+        photoVisibility: u.photoVisibility,
+        profilePhotoVisibility,
         interests: u.interests?.slice(0, 3),
       };
     });
@@ -234,6 +239,7 @@ router.get('/:id', protect, async (req, res) => {
     );
 
     const mainPhoto = profile.photos.find((p) => p.isMain) || profile.photos[0];
+    const profilePhotoVisibility = profile.profilePhotoVisibility || (profile.hidePhotos ? 'connected' : 'registered');
 
     res.json({
       success: true,
@@ -241,8 +247,10 @@ router.get('/:id', protect, async (req, res) => {
         ...profile.toJSON(),
         // Only expose phone if contact is fully unlocked
         phone: contactUnlocked ? profile.phone : undefined,
-        photo: (profile.hidePhotos === false || isConnected) ? (mainPhoto?.url || null) : profile.getProfilePhoto(req.user._id),
-        isPhotoBlurred: profile.hidePhotos ? !isConnected : false,
+        photo: (!profile.hidePhotos || profilePhotoVisibility !== 'connected' || isConnected) ? (mainPhoto?.url || null) : profile.getProfilePhoto(req.user._id),
+        isPhotoBlurred: profilePhotoVisibility === 'connected' || profile.hidePhotos ? !isConnected : false,
+        profilePhotoVisibility,
+        photoVisibility: profile.photoVisibility || (profile.hidePhotos ? 'connected' : 'registered'),
         isBlocked: req.user.blockedUsers?.includes(profile._id),
         contactRequestStatus: myContactRequest?.status || null,
         contactUnlocked: Boolean(contactUnlocked),
@@ -259,7 +267,7 @@ router.put('/update', protect, async (req, res) => {
   try {
     const allowedFields = [
       'name', 'age', 'height', 'education', 'cast', 'country', 'city',
-      'about', 'hobbies', 'interests', 'maritalStatus', 'motherTongue', 'sect', 'preferences', 'hidePhotos',
+      'about', 'hobbies', 'interests', 'maritalStatus', 'motherTongue', 'sect', 'region', 'preferences', 'hidePhotos', 'profilePhotoVisibility', 'photoVisibility',
     ];
 
     const updates = {};
@@ -269,7 +277,7 @@ router.put('/update', protect, async (req, res) => {
 
     // Calculate completeness
     let user = await User.findByIdAndUpdate(req.user.id, updates, { new: true });
-    const fields = ['name', 'age', 'height', 'education', 'cast', 'city', 'about', 'hobbies', 'interests', 'photos'];
+    const fields = ['name', 'age', 'height', 'education', 'cast', 'region', 'city', 'about', 'hobbies', 'interests', 'photos'];
     const completeness = Math.round((fields.filter((f) => user[f] && (Array.isArray(user[f]) ? user[f].length > 0 : true)).length / fields.length) * 100);
     user = await User.findByIdAndUpdate(req.user.id, { profileCompleteness: completeness }, { new: true });
 

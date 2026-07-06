@@ -58,6 +58,10 @@ const buildUserPayload = (user) => ({
   verificationStatus: user.verificationStatus,
   boost: user.boost,
   hidePhotos: user.hidePhotos,
+  region: user.region,
+  city: user.city,
+  profilePhotoVisibility: user.profilePhotoVisibility,
+  photoVisibility: user.photoVisibility,
 });
 
 // ─── REGISTER ─────────────────────────────────────────────────────────────────

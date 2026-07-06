@@ -32,7 +32,7 @@ export async function registerForPushNotificationsAsync() {
   }
 
   if (finalStatus !== 'granted') {
-    console.log('Failed to get push token for push notification!');
+    if (__DEV__) console.warn('Failed to get push token for push notification.');
     return null;
   }
 
@@ -50,11 +50,9 @@ export async function registerPushTokenWithBackend(authToken) {
   try {
     const fcmToken = await registerForPushNotificationsAsync();
     if (!fcmToken) {
-      console.log('No FCM token obtained; skipping backend registration.');
+      if (__DEV__) console.warn('No FCM token obtained; skipping backend registration.');
       return;
     }
-
-    console.log('Registering FCM Token with backend:', fcmToken);
 
     const res = await fetch(`${API_BASE_URL}/auth/fcm-token`, {
       method: 'POST',
@@ -67,7 +65,7 @@ export async function registerPushTokenWithBackend(authToken) {
 
     const data = await res.json();
     if (data.success) {
-      console.log('FCM Token registered with backend successfully.');
+      if (__DEV__) console.log('FCM Token registered with backend successfully.');
     } else {
       console.error('Failed to register FCM token with backend:', data.message);
     }

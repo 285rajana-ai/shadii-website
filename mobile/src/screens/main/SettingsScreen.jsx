@@ -172,8 +172,8 @@ export default function SettingsScreen({ navigation }) {
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="light-content" />
-            <LinearGradient colors={['#1A000A', '#0D0D0D']} style={StyleSheet.absoluteFill} />
+            <StatusBar barStyle="dark-content" />
+            <LinearGradient colors={colors.gradients.hero} style={StyleSheet.absoluteFill} />
 
             <ScreenHeader title="Settings" onBack={() => navigation.goBack()} insetsTop={insets.top} />
 
@@ -399,7 +399,7 @@ const styles = StyleSheet.create({
     accountCard: { flexDirection: 'row', alignItems: 'center', padding: 16, marginBottom: 8 },
     accountAvatar: { position: 'relative' },
     avatarGrad: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center' },
-    avatarInitial: { fontSize: 20, fontWeight: '800', color: '#FFF' },
+    avatarInitial: { fontSize: 20, fontWeight: '800', color: '#FFFFFF' },
     verifiedDot: { position: 'absolute', bottom: -2, right: -2 },
     accountName: { fontSize: 16, fontWeight: '700', color: colors.text },
     accountEmail: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
@@ -418,7 +418,7 @@ const styles = StyleSheet.create({
     toggleLabel: { fontSize: 14, fontWeight: '600', color: colors.text },
     toggleSub: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
 
-    rowDivider: { height: 1, backgroundColor: 'rgba(255,255,255,0.06)', marginHorizontal: 16 },
+    rowDivider: { height: 1, backgroundColor: colors.divider, marginHorizontal: 16 },
 
     menuItem: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 },
     menuIconBg: {

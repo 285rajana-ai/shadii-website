@@ -440,8 +440,8 @@ export default function PaymentScreen({ route, navigation }) {
 
     return (
         <View style={styles.root}>
-            <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-            <LinearGradient colors={['#1A000A', '#0D0509', '#0D0D0D']} style={StyleSheet.absoluteFill} />
+            <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
+            <LinearGradient colors={colors.gradients.hero} style={StyleSheet.absoluteFill} />
 
             <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} activeOpacity={0.7}>
@@ -574,14 +574,14 @@ export default function PaymentScreen({ route, navigation }) {
                             value={paymentReference}
                             onChangeText={setPaymentReference}
                             placeholder="Transaction reference / receipt number"
-                            placeholderTextColor="rgba(255,255,255,0.35)"
+                            placeholderTextColor={colors.textMuted}
                         />
                         <TextInput
                             style={[styles.input, styles.textArea]}
                             value={paymentNote}
                             onChangeText={setPaymentNote}
                             placeholder="Optional note"
-                            placeholderTextColor="rgba(255,255,255,0.35)"
+                            placeholderTextColor={colors.textMuted}
                             multiline
                         />
 
@@ -605,13 +605,13 @@ export default function PaymentScreen({ route, navigation }) {
                 <TouchableOpacity style={styles.btnWrap} onPress={handlePayment} disabled={isBusy} activeOpacity={0.85}>
                     <LinearGradient colors={['#D4AF37', '#A07C10']} style={styles.btn}>
                         {isBusy ? (
-                            <ActivityIndicator color="#0D0D0D" />
+                            <ActivityIndicator color="#FFFFFF" />
                         ) : (
                             <>
                                 <MaterialCommunityIcons
                                     name={isAndroidPlayBilling ? 'google-play' : isManualPayment ? 'bank-transfer' : 'lock-outline'}
                                     size={18}
-                                    color="#0D0D0D"
+                                    color="#FFFFFF"
                                 />
                                 <Text style={styles.btnText}>
                                     {isAndroidPlayBilling
@@ -660,9 +660,9 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: 'rgba(255,255,255,0.06)',
+        backgroundColor: colors.surface,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.1)',
+        borderColor: colors.border,
     },
     headerTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
 
@@ -672,8 +672,8 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         overflow: 'hidden',
         borderWidth: 1,
-        borderColor: 'rgba(212,175,55,0.2)',
-        backgroundColor: 'rgba(255,255,255,0.05)',
+        borderColor: colors.border,
+        backgroundColor: colors.surface,
         padding: 20,
         marginBottom: 24,
     },
@@ -688,7 +688,7 @@ const styles = StyleSheet.create({
     planName: { fontSize: 16, fontWeight: '700', color: colors.text },
     planPrice: { fontSize: 16, fontWeight: '700', color: colors.text },
     duration: { fontSize: 12, color: colors.textSecondary, marginTop: 4 },
-    divider: { height: 1, backgroundColor: 'rgba(255,255,255,0.08)', marginVertical: 16 },
+    divider: { height: 1, backgroundColor: colors.divider, marginVertical: 16 },
     totalText: { fontSize: 16, fontWeight: '600', color: colors.textSecondary },
     totalPrice: { fontSize: 24, fontWeight: '800', color: colors.accent },
 
@@ -711,7 +711,7 @@ const styles = StyleSheet.create({
         marginBottom: 18,
         padding: 16,
         borderRadius: 16,
-        backgroundColor: 'rgba(255,255,255,0.05)',
+        backgroundColor: colors.surface,
         borderWidth: 1,
         borderColor: 'rgba(52,168,83,0.18)',
     },
@@ -719,7 +719,7 @@ const styles = StyleSheet.create({
         marginBottom: 18,
         padding: 16,
         borderRadius: 16,
-        backgroundColor: 'rgba(255,255,255,0.05)',
+        backgroundColor: colors.surface,
         borderWidth: 1,
         borderColor: 'rgba(212,175,55,0.15)',
     },
@@ -730,7 +730,7 @@ const styles = StyleSheet.create({
         marginBottom: 18,
         padding: 16,
         borderRadius: 16,
-        backgroundColor: 'rgba(255,255,255,0.05)',
+        backgroundColor: colors.surface,
         borderWidth: 1,
         borderColor: 'rgba(155,89,182,0.22)',
     },
@@ -738,9 +738,9 @@ const styles = StyleSheet.create({
         marginBottom: 20,
         padding: 16,
         borderRadius: 16,
-        backgroundColor: 'rgba(255,255,255,0.05)',
+        backgroundColor: colors.surface,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.08)',
+        borderColor: colors.border,
     },
     instructionsTitle: { fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 10 },
     instructionsText: { fontSize: 13, color: colors.textSecondary, marginBottom: 6 },
@@ -748,21 +748,21 @@ const styles = StyleSheet.create({
     methodCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.04)',
+        backgroundColor: colors.surface,
         padding: 16,
         borderRadius: 16,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.07)',
+        borderColor: colors.border,
         overflow: 'hidden',
         gap: 12,
     },
     methodSelected: { borderColor: 'rgba(139,26,74,0.5)' },
     methodDisabled: { opacity: 0.45 },
     input: {
-        backgroundColor: 'rgba(255,255,255,0.06)',
+        backgroundColor: colors.surfaceAlt,
         borderRadius: 14,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.09)',
+        borderColor: colors.border,
         color: colors.text,
         paddingHorizontal: 14,
         paddingVertical: 14,
@@ -797,13 +797,13 @@ const styles = StyleSheet.create({
     methodName: { flex: 1, fontSize: 14, fontWeight: '600', color: colors.text },
     methodNameDisabled: { color: colors.textMuted },
     methodHint: { fontSize: 11, color: colors.textMuted, marginTop: 4, lineHeight: 16 },
-    methodHintDisabled: { color: 'rgba(255,255,255,0.32)' },
+    methodHintDisabled: { color: colors.textMuted },
     radio: {
         width: 22,
         height: 22,
         borderRadius: 11,
         borderWidth: 2,
-        borderColor: 'rgba(255,255,255,0.25)',
+        borderColor: colors.borderStrong,
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -827,7 +827,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         gap: 8,
     },
-    btnText: { color: '#0D0D0D', fontSize: 16, fontWeight: '800' },
+    btnText: { color: '#FFFFFF', fontSize: 16, fontWeight: '800' },
     secondaryBtnWrap: { borderRadius: 14, overflow: 'hidden' },
     secondaryBtn: { paddingVertical: 14, alignItems: 'center', justifyContent: 'center' },
     secondaryBtnText: { color: '#FFFFFF', fontSize: 14, fontWeight: '700' },
@@ -840,9 +840,9 @@ const styles = StyleSheet.create({
         borderRadius: 14,
         borderWidth: 1,
         borderColor: 'rgba(212,175,55,0.2)',
-        backgroundColor: 'rgba(255,255,255,0.04)',
+        backgroundColor: colors.surface,
         marginBottom: 16,
     },
     checkBtnText: { color: colors.accent, fontSize: 14, fontWeight: '700' },
-    secureText: { textAlign: 'center', fontSize: 12, color: 'rgba(245,230,200,0.35)', lineHeight: 18 },
+    secureText: { textAlign: 'center', fontSize: 12, color: colors.textMuted, lineHeight: 18 },
 });

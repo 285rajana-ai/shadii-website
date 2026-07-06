@@ -31,8 +31,8 @@ export default function CNICUploadScreen({ navigation }) {
   };
 
   return (
-    <LinearGradient colors={['#1A000A', '#0D0509', '#0D0D0D']} style={styles.container}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+    <LinearGradient colors={colors.gradients.hero} style={styles.container}>
+      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <MaterialCommunityIcons name="chevron-left" size={26} color={colors.accent} />
@@ -87,14 +87,14 @@ export default function CNICUploadScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { paddingBottom: 16, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center' },
-  backBtn: { width: 40, height: 40, borderRadius: 20, marginRight: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  backBtn: { width: 40, height: 40, borderRadius: 20, marginRight: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
   headerTitle: { fontSize: 20, fontWeight: '700', color: colors.text },
   content: { padding: 24, flex: 1 },
   title: { fontSize: 24, fontWeight: '800', color: colors.text, marginBottom: 8 },
   subtitle: { fontSize: 14, color: colors.textSecondary, marginBottom: 32, lineHeight: 22 },
   uploadCards: { gap: 16, marginBottom: 32 },
   uploadCard: {
-    height: 140, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.7)',
+    height: 140, borderRadius: 16, backgroundColor: colors.surface,
     borderWidth: 2, borderColor: colors.border, borderStyle: 'dashed',
     alignItems: 'center', justifyContent: 'center', overflow: 'hidden'
   },

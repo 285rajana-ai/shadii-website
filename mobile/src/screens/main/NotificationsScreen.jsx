@@ -119,8 +119,8 @@ export default function NotificationsScreen({ navigation }) {
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="light-content" />
-            <LinearGradient colors={['#1A000A', '#0D0D0D']} style={StyleSheet.absoluteFill} />
+            <StatusBar barStyle="dark-content" />
+            <LinearGradient colors={colors.gradients.hero} style={StyleSheet.absoluteFill} />
 
             <ScreenHeader
                 title="Notifications"
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
     filterRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 20, paddingBottom: 12 },
     filterPill: {
         paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20,
-        backgroundColor: colors.glass, borderWidth: 1, borderColor: colors.glassBorderLight,
+        backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
     },
     filterPillActive: { backgroundColor: 'rgba(212,175,55,0.15)', borderColor: 'rgba(212,175,55,0.4)' },
     filterPillText: { fontSize: 12, fontWeight: '600', color: colors.textSecondary },
@@ -213,8 +213,8 @@ const styles = StyleSheet.create({
 
     notifCard: {
         flexDirection: 'row', alignItems: 'flex-start', padding: 12,
-        backgroundColor: colors.glassMedium, borderRadius: 18,
-        borderWidth: 1, borderColor: colors.glassBorderLight, overflow: 'hidden',
+        backgroundColor: colors.surface, borderRadius: 18,
+        borderWidth: 1, borderColor: colors.border, overflow: 'hidden',
         position: 'relative',
     },
     notifCardUnread: { borderColor: 'rgba(212,175,55,0.25)' },

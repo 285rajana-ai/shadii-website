@@ -1,10 +1,11 @@
 import { StyleSheet, Text, View } from 'react-native';
+import colors from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
-import { type } from '../../theme/typography';
 import IconButton from './IconButton';
 
 export default function ScreenHeader({
   title,
+  subtitle,
   onBack,
   insetsTop = 0,
   right,
@@ -12,8 +13,11 @@ export default function ScreenHeader({
 }) {
   return (
     <View style={[styles.header, { paddingTop: insetsTop + spacing.sm }]}>
-      <IconButton icon="arrow-left" onPress={onBack} />
-      <Text style={styles.title} numberOfLines={1}>{title}</Text>
+      {onBack ? <IconButton icon="arrow-left" onPress={onBack} /> : <View style={styles.placeholder} />}
+      <View style={styles.copy}>
+        {subtitle ? <Text style={styles.subtitle} numberOfLines={1}>{subtitle}</Text> : null}
+        <Text style={styles.title} numberOfLines={1}>{title}</Text>
+      </View>
       <View style={[styles.rightSlot, { width: rightWidth }]}>{right || <View style={styles.placeholder} />}</View>
     </View>
   );
@@ -27,11 +31,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.md,
   },
-  title: {
-    ...type.h3,
+  copy: {
     flex: 1,
-    textAlign: 'center',
     marginHorizontal: spacing.sm,
+    alignItems: 'center',
+  },
+  subtitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.textMuted,
+    letterSpacing: 0.4,
+  },
+  title: {
+    fontSize: 20,
+    lineHeight: 26,
+    fontWeight: '800',
+    color: colors.text,
   },
   rightSlot: {
     width: 44,

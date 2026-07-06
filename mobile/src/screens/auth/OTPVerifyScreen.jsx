@@ -134,8 +134,8 @@ export default function OTPVerifyScreen({ route, navigation }) {
 
   return (
     <View style={styles.root}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-      <LinearGradient colors={['#1A000A', '#0D0509', '#0D0D0D']} style={StyleSheet.absoluteFill} />
+      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
+      <LinearGradient colors={colors.gradients.hero} style={StyleSheet.absoluteFill} />
       <View style={styles.glowOrb} />
 
       <KeyboardAvoidingView
@@ -197,11 +197,11 @@ export default function OTPVerifyScreen({ route, navigation }) {
               activeOpacity={0.85}
             >
               <LinearGradient
-                colors={otp.length === OTP_LENGTH ? ['#D4AF37', '#A07C10'] : ['rgba(255,255,255,0.08)', 'rgba(255,255,255,0.05)']}
+                colors={otp.length === OTP_LENGTH ? colors.gradients.primary : ['#E8DFD2', '#E8DFD2']}
                 style={styles.btn}
               >
                 {loading
-                  ? <ActivityIndicator color={otp.length === OTP_LENGTH ? '#0D0D0D' : colors.textMuted} />
+                  ? <ActivityIndicator color={otp.length === OTP_LENGTH ? '#FFFFFF' : colors.textMuted} />
                   : <Text style={[styles.btnText, otp.length < OTP_LENGTH && styles.btnTextDisabled]}>
                     Verify &amp; Continue
                   </Text>
@@ -262,9 +262,9 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -299,17 +299,22 @@ const styles = StyleSheet.create({
   },
   card: {
     width: '100%',
-    borderRadius: 20,
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
     padding: 24,
     marginBottom: 24,
+    shadowColor: '#2A1118',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
+    elevation: 4,
   },
   btnWrap: { borderRadius: 14, overflow: 'hidden' },
   btnDisabled: { opacity: 0.6 },
   btn: { paddingVertical: 16, alignItems: 'center' },
-  btnText: { color: '#0D0D0D', fontSize: 16, fontWeight: '800' },
+  btnText: { color: '#FFFFFF', fontSize: 16, fontWeight: '800' },
   btnTextDisabled: { color: colors.textMuted },
 
   otpRow: {
@@ -323,8 +328,8 @@ const styles = StyleSheet.create({
     height: 58,
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.1)',
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceAlt,
     textAlign: 'center',
     fontSize: 24,
     fontWeight: '700',
@@ -349,7 +354,7 @@ const styles = StyleSheet.create({
 
   hint: {
   fontSize: 12,
-  color: 'rgba(245,230,200,0.3)',
+  color: colors.textMuted,
   textAlign: 'center',
   lineHeight: 18,
   paddingHorizontal: 24,

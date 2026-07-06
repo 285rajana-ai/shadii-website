@@ -1,50 +1,62 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import {
-  Alert, FlatList, Image, KeyboardAvoidingView, Modal,
-  Platform, ScrollView, StyleSheet, Text, TextInput,
-  TouchableOpacity, View, ActivityIndicator, Switch,
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Image,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 import PrimaryButton from '../../components/ui/PrimaryButton';
+import ScreenHeader from '../../components/ui/ScreenHeader';
+import { AppBackground, Card, Chip, Field, SelectField, TrustBadge } from '../../components/ui/LightPrimitives';
 import { updateUser } from '../../store/slices/authSlice';
 import colors from '../../theme/colors';
-import { radius } from '../../theme/spacing';
+import { radius, spacing } from '../../theme/spacing';
 import {
-  API_BASE_URL, INTERESTS, PAKISTAN_CITIES,
-  EDUCATION_LEVELS, CAST_OPTIONS,
+  API_BASE_URL,
+  CAST_OPTIONS,
+  EDUCATION_LEVELS,
+  INTERESTS,
+  MARITAL_STATUS_OPTIONS,
+  MOTHER_TONGUE_OPTIONS,
+  PAKISTAN_REGIONS,
+  PAKISTAN_CITIES,
+  PHOTO_VISIBILITY_OPTIONS,
+  SECT_OPTIONS,
 } from '../../utils/constants';
 
-const MARITAL_STATUS_OPTIONS = ['Never Married', 'Divorced', 'Widowed'];
-const SECT_OPTIONS = ['Sunni', 'Shia', 'Deobandi', 'Barelvi', 'Other'];
-
-// Generate height options 4'6" to 6'6"
 const HEIGHT_OPTIONS = [];
 for (let ft = 4; ft <= 6; ft++) {
   const maxIn = ft === 6 ? 6 : 11;
-  for (let inch = ft === 4 ? 6 : 0; inch <= maxIn; inch++) {
-    HEIGHT_OPTIONS.push(`${ft}'${inch}"`);
-  }
+  for (let inch = ft === 4 ? 6 : 0; inch <= maxIn; inch++) HEIGHT_OPTIONS.push(`${ft}'${inch}"`);
 }
 
 export default function EditProfileScreen({ navigation }) {
   const { token, user } = useSelector((s) => s.auth);
   const dispatch = useDispatch();
   const insets = useSafeAreaInsets();
-
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [pickerVisible, setPickerVisible] = useState(false);
   const [pickerField, setPickerField] = useState(null);
-  const [heightSearch, setHeightSearch] = useState('');
-
+  const [errors, setErrors] = useState({});
   const [formData, setFormData] = useState({
     name: user?.name || '',
     age: user?.age?.toString() || '',
     height: user?.height || '',
+    region: user?.region || '',
     city: user?.city || '',
     education: user?.education || '',
     cast: user?.cast || '',
@@ -53,97 +65,39 @@ export default function EditProfileScreen({ navigation }) {
     motherTongue: user?.motherTongue || '',
     sect: user?.sect || '',
     hidePhotos: user?.hidePhotos || false,
+    profilePhotoVisibility: user?.profilePhotoVisibility || (user?.hidePhotos ? 'connected' : 'registered'),
+    photoVisibility: user?.photoVisibility || (user?.hidePhotos ? 'connected' : 'registered'),
   });
-
   const [selectedInterests, setSelectedInterests] = useState(user?.interests || []);
 
-  const getProfileImage = () => {
-    if (user?.photos && user.photos.length > 0) {
-      const main = user.photos.find(p => p.isMain) || user.photos[0];
+  const updateForm = (key, val) => {
+    setFormData((prev) => ({ ...prev, [key]: val }));
+    setErrors((prev) => ({ ...prev, [key]: '' }));
+  };
+
+  const profileImage = () => {
+    if (user?.photos?.length > 0) {
+      const main = user.photos.find((p) => p.isMain) || user.photos[0];
       return main.url;
     }
     return null;
   };
 
-  const openPicker = (field) => {
-    setPickerField(field);
-    setHeightSearch('');
-    setPickerVisible(true);
-  };
-
-  const closePicker = () => {
-    setPickerVisible(false);
-    setPickerField(null);
-  };
-
-  const selectOption = (value) => {
-    updateForm(pickerField, value);
-    closePicker();
-  };
-
-  const handleHeightSearchChange = (text) => {
-    const clean = text.replace(/[^0-9]/g, '');
-    if (clean.length > 0) {
-      const ft = clean[0];
-      setHeightSearch(`${ft}'`);
-    } else {
-      setHeightSearch('');
-    }
-  };
-
-  const getPickerOptions = () => {
-    switch (pickerField) {
-      case 'city': return PAKISTAN_CITIES;
-      case 'education': return EDUCATION_LEVELS;
-      case 'cast': return CAST_OPTIONS;
-      case 'height':
-        if (!heightSearch) return HEIGHT_OPTIONS;
-        return HEIGHT_OPTIONS.filter(h => h.startsWith(heightSearch.trim()));
-      default: return [];
-    }
-  };
-
-  const getPickerTitle = () => {
-    switch (pickerField) {
-      case 'city': return 'Select City';
-      case 'education': return 'Select Education';
-      case 'cast': return 'Select Cast / Community';
-      case 'height': return 'Select Height';
-      default: return 'Select';
-    }
-  };
-
-  const handleUpdate = async () => {
-    setLoading(true);
-    try {
-      const payload = { ...formData, age: Number(formData.age), interests: selectedInterests };
-      const res = await fetch(`${API_BASE_URL}/profile/update`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      if (data.success) {
-        dispatch(updateUser(data.user));
-        Alert.alert('✅ Profile Updated', 'Your profile has been saved successfully.');
-        navigation.goBack();
-      } else {
-        Alert.alert('Error', data.message || 'Failed to update profile');
-      }
-    } catch (e) {
-      Alert.alert('Error', 'Failed to update profile. Please check your connection.');
-    } finally {
-      setLoading(false);
-    }
+  const options = () => {
+    if (pickerField === 'city') return PAKISTAN_CITIES;
+    if (pickerField === 'region') return PAKISTAN_REGIONS;
+    if (pickerField === 'education') return EDUCATION_LEVELS;
+    if (pickerField === 'cast') return CAST_OPTIONS;
+    if (pickerField === 'height') return HEIGHT_OPTIONS;
+    if (pickerField === 'motherTongue') return MOTHER_TONGUE_OPTIONS;
+    return [];
   };
 
   const pickImage = async () => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) {
-      return Alert.alert('Permission Required', 'Please allow photo access to upload a photo.');
+      Alert.alert('Permission required', 'Please allow photo access to upload a profile picture.');
+      return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -151,9 +105,7 @@ export default function EditProfileScreen({ navigation }) {
       aspect: [1, 1],
       quality: 0.8,
     });
-    if (!result.canceled && result.assets[0]) {
-      uploadPhoto(result.assets[0].uri);
-    }
+    if (!result.canceled && result.assets?.[0]) uploadPhoto(result.assets[0].uri);
   };
 
   const uploadPhoto = async (uri) => {
@@ -168,16 +120,14 @@ export default function EditProfileScreen({ navigation }) {
       });
       const data = await res.json();
       if (data.success) {
-        const userRes = await fetch(`${API_BASE_URL}/auth/me`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const userRes = await fetch(`${API_BASE_URL}/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
         const userData = await userRes.json();
         if (userData.success) dispatch(updateUser(userData.user));
-        Alert.alert('✅ Photo Uploaded', 'Your profile photo has been updated.');
+        Alert.alert('Photo uploaded', 'Your profile photo has been updated.');
       } else {
-        Alert.alert('Upload Failed', data.message || 'Failed to upload photo.');
+        Alert.alert('Upload failed', data.message || 'Failed to upload photo.');
       }
-    } catch (e) {
+    } catch (_) {
       Alert.alert('Error', 'Failed to upload photo. Please try again.');
     } finally {
       setUploading(false);
@@ -186,457 +136,365 @@ export default function EditProfileScreen({ navigation }) {
 
   const toggleInterest = (interest) => {
     if (selectedInterests.includes(interest)) {
-      setSelectedInterests(selectedInterests.filter(i => i !== interest));
-    } else {
-      if (selectedInterests.length >= 10)
-        return Alert.alert('Limit Reached', 'You can select up to 10 interests');
-      setSelectedInterests([...selectedInterests, interest]);
+      setSelectedInterests(selectedInterests.filter((i) => i !== interest));
+      return;
+    }
+    if (selectedInterests.length >= 10) {
+      Alert.alert('Limit reached', 'You can select up to 10 interests.');
+      return;
+    }
+    setSelectedInterests([...selectedInterests, interest]);
+  };
+
+  const handleUpdate = async () => {
+    const nextErrors = {};
+    const age = Number(formData.age);
+    if (!formData.name.trim()) nextErrors.name = 'Full name is required.';
+    if (!age || age < 18 || age > 80) nextErrors.age = 'Age must be between 18 and 80.';
+    if (!formData.height) nextErrors.height = 'Height is required.';
+    if (!formData.region) nextErrors.region = 'Region is required.';
+    if (!formData.city) nextErrors.city = 'City is required.';
+    if (!formData.education) nextErrors.education = 'Education is required.';
+    if (formData.about?.length > 500) nextErrors.about = 'About section must be under 500 characters.';
+    if (Object.keys(nextErrors).length) {
+      setErrors(nextErrors);
+      Alert.alert('Check profile details', 'Please fix the highlighted fields before saving.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const payload = {
+        ...formData,
+        age,
+        interests: selectedInterests,
+        hidePhotos: formData.photoVisibility === 'connected' || formData.profilePhotoVisibility === 'connected',
+      };
+      const res = await fetch(`${API_BASE_URL}/profile/update`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (data.success) {
+        dispatch(updateUser(data.user));
+        Alert.alert('Profile updated', 'Your profile has been saved successfully.');
+        navigation.goBack();
+      } else {
+        Alert.alert('Error', data.message || 'Failed to update profile.');
+      }
+    } catch (_) {
+      Alert.alert('Error', 'Failed to update profile. Please check your connection.');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const updateForm = (key, val) => setFormData(prev => ({ ...prev, [key]: val }));
-
   return (
-    <View style={styles.container}>
-      <LinearGradient colors={[colors.background, '#1A000A']} style={StyleSheet.absoluteFill} />
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <MaterialCommunityIcons name="chevron-left" size={26} color={colors.accent} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Edit Profile</Text>
-      </View>
-
+    <AppBackground>
+      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
+      <ScreenHeader title="Edit Profile" subtitle="Improve matches" onBack={() => navigation.goBack()} insetsTop={insets.top} />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
-        <ScrollView
-          contentContainerStyle={styles.scroll}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* Photo */}
-          <View style={styles.photoSection}>
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <Card style={styles.photoCard}>
             <View style={styles.avatarWrap}>
-              {getProfileImage() ? (
-                <Image source={{ uri: getProfileImage() }} style={styles.avatar} />
+              {profileImage() ? (
+                <Image source={{ uri: profileImage() }} style={styles.avatar} />
               ) : (
-                <View style={styles.placeholder}>
-                  <Text style={styles.initials}>{formData.name[0] || '?'}</Text>
+                <View style={styles.avatarFallback}>
+                  <Text style={styles.avatarInitial}>{formData.name?.[0] || '?'}</Text>
                 </View>
               )}
             </View>
-            <TouchableOpacity style={styles.changePhotoBtn} onPress={pickImage} disabled={uploading}>
-              {uploading ? (
-                <ActivityIndicator size="small" color={colors.accent} />
-              ) : (
-                <Text style={styles.changePhotoText}>📷 Change Photo</Text>
-              )}
-            </TouchableOpacity>
-
-            {/* Privacy toggle row */}
-            <View style={styles.privacyToggleRow}>
-              <View style={{ flex: 1, marginRight: 16 }}>
-                <Text style={styles.privacyLabel}>Private Profile Pictures</Text>
-                <Text style={styles.privacyDesc}>Hide photos from free members (requires connection approval)</Text>
-              </View>
-              <Switch
-                value={formData.hidePhotos}
-                onValueChange={(val) => updateForm('hidePhotos', val)}
-                trackColor={{ false: '#2C2A29', true: colors.accent }}
-                thumbColor={formData.hidePhotos ? colors.text : '#7C7A79'}
-              />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.cardTitle}>Profile photo</Text>
+              <Text style={styles.cardText}>Use a clear, respectful photo. Private mode protects it until approval.</Text>
+              <Pressable style={styles.photoButton} onPress={pickImage} disabled={uploading}>
+                {uploading ? <ActivityIndicator color={colors.primary} /> : <Text style={styles.photoButtonText}>Change photo</Text>}
+              </Pressable>
             </View>
-          </View>
+          </Card>
 
-          {/* Form Fields */}
-          <View style={styles.form}>
-            <InputField label="Full Name" value={formData.name} onChangeText={(v) => updateForm('name', v)} autoCapitalize="words" />
+          <Card style={styles.section}>
+            <TrustBadge icon="lock-check-outline" label="Privacy" tone="trust" />
+            <PrivacyChoice
+              title="Profile picture visibility"
+              value={formData.profilePhotoVisibility}
+              onChange={(value) => updateForm('profilePhotoVisibility', value)}
+            />
+            <PrivacyChoice
+              title="Gallery visibility"
+              value={formData.photoVisibility}
+              onChange={(value) => {
+                updateForm('photoVisibility', value);
+                updateForm('hidePhotos', value === 'connected');
+              }}
+            />
+          </Card>
 
+          <Card style={styles.section}>
+            <Text style={styles.cardTitle}>Basic details</Text>
+            <Field label="Full name" value={formData.name} onChangeText={(v) => updateForm('name', v)} placeholder="Full name" error={errors.name} />
             <View style={styles.row}>
-              <InputField label="Age" value={formData.age} onChangeText={(v) => updateForm('age', v)} keyboardType="numeric" style={{ flex: 1, marginRight: 8 }} />
-              {/* Height picker */}
-              <View style={{ flex: 1, marginLeft: 8 }}>
-                <Text style={styles.label}>Height</Text>
-                <TouchableOpacity style={styles.pickerField} onPress={() => openPicker('height')}>
-                  <Text style={[styles.pickerFieldText, formData.height && { color: colors.text }]}>
-                    {formData.height || "Select"}
-                  </Text>
-                  <MaterialCommunityIcons name="chevron-down" size={18} color={colors.textMuted} />
-                </TouchableOpacity>
-              </View>
+              <Field label="Age" value={formData.age} onChangeText={(v) => updateForm('age', v.replace(/\D/g, ''))} keyboardType="numeric" placeholder="25" style={styles.rowItem} error={errors.age} />
+              <SelectField label="Height" value={formData.height} placeholder="Select" onPress={() => { setPickerField('height'); setPickerVisible(true); }} style={styles.rowItem} />
             </View>
+            {errors.height ? <Text style={styles.errorText}>{errors.height}</Text> : null}
+            <SelectField label="Region" value={formData.region} placeholder="Select region" onPress={() => { setPickerField('region'); setPickerVisible(true); }} />
+            {errors.region ? <Text style={styles.errorText}>{errors.region}</Text> : null}
+            <SelectField label="City" value={formData.city} placeholder="Select city" onPress={() => { setPickerField('city'); setPickerVisible(true); }} />
+            {errors.city ? <Text style={styles.errorText}>{errors.city}</Text> : null}
+            <SelectField label="Education" value={formData.education} placeholder="Select education" onPress={() => { setPickerField('education'); setPickerVisible(true); }} />
+            {errors.education ? <Text style={styles.errorText}>{errors.education}</Text> : null}
+            <SelectField label="Cast / community" value={formData.cast} placeholder="Optional" onPress={() => { setPickerField('cast'); setPickerVisible(true); }} />
+            <SelectField label="Mother tongue" value={formData.motherTongue} placeholder="Select mother tongue" onPress={() => { setPickerField('motherTongue'); setPickerVisible(true); }} />
+            <Field label="About me" value={formData.about} onChangeText={(v) => updateForm('about', v)} placeholder="Write a short introduction..." multiline maxLength={500} inputStyle={styles.aboutInput} error={errors.about} />
+          </Card>
 
-            {/* City picker */}
-            <Text style={styles.label}>City</Text>
-            <TouchableOpacity style={styles.pickerField} onPress={() => openPicker('city')}>
-              <Text style={[styles.pickerFieldText, formData.city && { color: colors.text }]}>
-                {formData.city || "Select City"}
-              </Text>
-              <MaterialCommunityIcons name="chevron-down" size={18} color={colors.textMuted} />
-            </TouchableOpacity>
+          <Card style={styles.section}>
+            <Text style={styles.cardTitle}>Marital status</Text>
+            <View style={styles.chips}>
+              {MARITAL_STATUS_OPTIONS.map((opt) => <Chip key={opt} label={opt} active={formData.maritalStatus === opt} onPress={() => updateForm('maritalStatus', opt)} />)}
+            </View>
+            <Text style={styles.cardTitle}>Sect</Text>
+            <View style={styles.chips}>
+              {SECT_OPTIONS.map((opt) => <Chip key={opt} label={opt} active={formData.sect === opt} onPress={() => updateForm('sect', opt)} />)}
+            </View>
+          </Card>
 
-            {/* Education picker */}
-            <Text style={styles.label}>Education</Text>
-            <TouchableOpacity style={styles.pickerField} onPress={() => openPicker('education')}>
-              <Text style={[styles.pickerFieldText, formData.education && { color: colors.text }]}>
-                {formData.education || "Select Education Level"}
-              </Text>
-              <MaterialCommunityIcons name="chevron-down" size={18} color={colors.textMuted} />
-            </TouchableOpacity>
-
-            {/* Cast picker */}
-            <Text style={styles.label}>Cast / Community</Text>
-            <TouchableOpacity style={styles.pickerField} onPress={() => openPicker('cast')}>
-              <Text style={[styles.pickerFieldText, formData.cast && { color: colors.text }]}>
-                {formData.cast || "Select Cast (Optional)"}
-              </Text>
-              <MaterialCommunityIcons name="chevron-down" size={18} color={colors.textMuted} />
-            </TouchableOpacity>
-
-            <InputField label="About Me" value={formData.about} onChangeText={(v) => updateForm('about', v)} multiline placeholder="Write a few words about yourself..." />
-            <InputField label="Mother Tongue" value={formData.motherTongue} onChangeText={(v) => updateForm('motherTongue', v)} placeholder="e.g. Punjabi, Urdu, Sindhi" />
-          </View>
-
-          {/* Marital Status */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Marital Status</Text>
-            <View style={styles.tagsContainer}>
-              {MARITAL_STATUS_OPTIONS.map((opt) => (
-                <TouchableOpacity
-                  key={opt}
-                  style={[styles.tag, formData.maritalStatus === opt && styles.tagSelected]}
-                  onPress={() => updateForm('maritalStatus', opt)}
-                >
-                  <Text style={[styles.tagText, formData.maritalStatus === opt && styles.tagTextSelected]}>{opt}</Text>
-                </TouchableOpacity>
+          <Card style={styles.section}>
+            <Text style={styles.cardTitle}>Interests</Text>
+            <Text style={styles.cardText}>Choose up to 10. These make conversations easier to start.</Text>
+            <View style={styles.chips}>
+              {INTERESTS.map((interest) => (
+                <Chip key={interest} label={interest} active={selectedInterests.includes(interest)} onPress={() => toggleInterest(interest)} />
               ))}
             </View>
-          </View>
+          </Card>
 
-          {/* Sect */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Sect</Text>
-            <View style={styles.tagsContainer}>
-              {SECT_OPTIONS.map((opt) => (
-                <TouchableOpacity
-                  key={opt}
-                  style={[styles.tag, formData.sect === opt && styles.tagSelected]}
-                  onPress={() => updateForm('sect', opt)}
-                >
-                  <Text style={[styles.tagText, formData.sect === opt && styles.tagTextSelected]}>{opt}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          {/* Interests */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Interests ({selectedInterests.length}/10)</Text>
-            <View style={styles.tagsContainer}>
-              {INTERESTS.map((interest) => {
-                const isSelected = selectedInterests.includes(interest);
-                return (
-                  <TouchableOpacity
-                    key={interest}
-                    style={[styles.tag, isSelected && styles.tagSelected]}
-                    onPress={() => toggleInterest(interest)}
-                  >
-                    <Text style={[styles.tagText, isSelected && styles.tagTextSelected]}>{interest}</Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
-
-          <PrimaryButton label="Save Changes" onPress={handleUpdate} loading={loading} disabled={loading} />
+          <PrimaryButton label="Save profile" icon="check" loading={loading} onPress={handleUpdate} />
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* Picker Modal */}
-      <Modal visible={pickerVisible} transparent animationType="slide" onRequestClose={closePicker}>
-        <View style={styles.modalOverlay}>
-          <TouchableOpacity style={styles.modalBackdrop} onPress={closePicker} />
-          <View style={styles.modalSheet}>
-            <View style={styles.modalHandle} />
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{getPickerTitle()}</Text>
-              <TouchableOpacity onPress={closePicker}>
-                <MaterialCommunityIcons name="close" size={22} color={colors.textMuted} />
-              </TouchableOpacity>
-            </View>
-
-            {/* Height custom selector */}
-            {pickerField === 'height' ? (
-              <View style={styles.heightPickerContainer}>
-                <View style={styles.searchBox}>
-                  <MaterialCommunityIcons name="human-height" size={18} color={colors.accent} />
-                  <TextInput
-                    style={styles.searchInput}
-                    placeholder="Enter feet (e.g. 5 or 6)"
-                    placeholderTextColor={colors.textMuted}
-                    value={heightSearch}
-                    onChangeText={handleHeightSearchChange}
-                    keyboardType="numeric"
-                    maxLength={2}
-                  />
-                </View>
-
-                <ScrollView contentContainerStyle={styles.suggestionsScroll} showsVerticalScrollIndicator={false}>
-                  {!heightSearch ? (
-                    <View style={styles.quickStartContainer}>
-                      <Text style={styles.quickStartTitle}>Tap to select feet:</Text>
-                      <View style={styles.quickStartButtons}>
-                        {['4\'', '5\'', '6\''].map(ft => (
-                          <TouchableOpacity
-                            key={ft}
-                            style={styles.quickStartBtn}
-                            onPress={() => setHeightSearch(ft)}
-                          >
-                            <Text style={styles.quickStartBtnText}>{ft}</Text>
-                          </TouchableOpacity>
-                        ))}
-                      </View>
-                    </View>
-                  ) : (
-                    <View style={styles.chipsContainer}>
-                      <Text style={styles.chipsTitle}>Choose inches for {heightSearch}:</Text>
-                      <View style={styles.chipsGrid}>
-                        {Array.from({ length: 12 }).map((_, inch) => {
-                          const option = `${heightSearch}${inch}"`;
-                          const isSelected = formData.height === option;
-                          return (
-                            <TouchableOpacity
-                              key={inch}
-                              style={[styles.inchChip, isSelected && styles.inchChipSelected]}
-                              onPress={() => selectOption(option)}
-                            >
-                              <Text style={[styles.inchChipText, isSelected && styles.inchChipTextSelected]}>
-                                {option}
-                              </Text>
-                            </TouchableOpacity>
-                          );
-                        })}
-                      </View>
-                    </View>
-                  )}
-                </ScrollView>
-              </View>
-            ) : (
-              <>
-                <View style={styles.searchBox}>
-                  <MaterialCommunityIcons name="magnify" size={18} color={colors.textMuted} />
-                  <TextInput
-                    style={styles.searchInput}
-                    placeholder={`Search ${getPickerTitle().toLowerCase()}...`}
-                    placeholderTextColor={colors.textMuted}
-                    value={heightSearch}
-                    onChangeText={setHeightSearch}
-                    autoCapitalize="none"
-                  />
-                </View>
-                <FlatList
-                  data={getPickerOptions()}
-                  keyExtractor={(item) => item}
-                  showsVerticalScrollIndicator={false}
-                  renderItem={({ item }) => (
-                    <TouchableOpacity
-                      style={[
-                        styles.optionRow,
-                        formData[pickerField] === item && styles.optionRowSelected,
-                      ]}
-                      onPress={() => selectOption(item)}
-                    >
-                      {formData[pickerField] === item && (
-                        <MaterialCommunityIcons name="check-circle" size={18} color={colors.accent} style={{ marginRight: 8 }} />
-                      )}
-                      <Text style={[
-                        styles.optionText,
-                        formData[pickerField] === item && styles.optionTextSelected,
-                      ]}>
-                        {item}
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                />
-              </>
+      <Modal visible={pickerVisible} transparent animationType="slide" onRequestClose={() => setPickerVisible(false)}>
+        <Pressable style={styles.modalOverlay} onPress={() => setPickerVisible(false)} />
+        <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 18) }]}>
+          <View style={styles.sheetHandle} />
+          <Text style={styles.sheetTitle}>Select {pickerField}</Text>
+          <FlatList
+            data={options()}
+            keyExtractor={(item) => String(item)}
+            renderItem={({ item }) => (
+              <Pressable
+                style={styles.option}
+                onPress={() => {
+                  updateForm(pickerField, item);
+                  setPickerVisible(false);
+                }}
+              >
+                <Text style={styles.optionText}>{item}</Text>
+                {formData[pickerField] === item ? <MaterialCommunityIcons name="check" size={20} color={colors.primary} /> : null}
+              </Pressable>
             )}
-          </View>
+          />
         </View>
       </Modal>
+    </AppBackground>
+  );
+}
+
+function PrivacyChoice({ title, value, onChange }) {
+  return (
+    <View style={styles.privacyChoice}>
+      <Text style={styles.switchTitle}>{title}</Text>
+      <View style={styles.visibilityGrid}>
+        {PHOTO_VISIBILITY_OPTIONS.map((option) => (
+          <Pressable
+            key={option.id}
+            onPress={() => onChange(option.id)}
+            style={[styles.visibilityOption, value === option.id && styles.visibilityOptionActive]}
+          >
+            <Text style={[styles.visibilityLabel, value === option.id && styles.visibilityLabelActive]}>{option.label}</Text>
+            <Text style={[styles.visibilityHelper, value === option.id && styles.visibilityHelperActive]}>{option.helper}</Text>
+          </Pressable>
+        ))}
+      </View>
     </View>
   );
 }
 
-const InputField = ({ label, style, multiline, ...props }) => {
-  const [focused, setFocused] = useState(false);
-  return (
-    <View style={[styles.inputGroup, style]}>
-      <Text style={styles.label}>{label}</Text>
-      <TextInput
-        style={[
-          styles.input,
-          focused && styles.inputFocused,
-          multiline && { height: 100, paddingTop: 12, textAlignVertical: 'top' },
-        ]}
-        placeholderTextColor={colors.textMuted}
-        multiline={multiline}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        {...props}
-      />
-    </View>
-  );
-};
-
 const styles = StyleSheet.create({
-  container: { flex: 1 },
   flex: { flex: 1 },
-  header: { paddingBottom: 16, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center' },
-  backBtn: { width: 44, height: 44, borderRadius: 22, marginRight: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
-  headerTitle: { fontSize: 20, fontWeight: '700', color: colors.text },
-  scroll: { padding: 24, paddingBottom: 60 },
-
-  photoSection: { alignItems: 'center', marginBottom: 32 },
-  avatarWrap: { width: 100, height: 100, borderRadius: 50, overflow: 'hidden', marginBottom: 12, borderWidth: 2, borderColor: colors.accent },
-  avatar: { width: '100%', height: '100%', resizeMode: 'cover' },
-  placeholder: { width: '100%', height: '100%', backgroundColor: 'rgba(212,175,55,0.2)', alignItems: 'center', justifyContent: 'center' },
-  initials: { fontSize: 40, color: colors.accent, fontWeight: 'bold' },
-  changePhotoBtn: { backgroundColor: 'rgba(212,175,55,0.15)', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(212,175,55,0.3)' },
-  changePhotoText: { color: colors.accent, fontWeight: '600', fontSize: 13 },
-
-  form: { marginBottom: 24 },
-  row: { flexDirection: 'row', marginBottom: 4 },
-  inputGroup: { marginBottom: 16 },
-  label: { fontSize: 12, fontWeight: '600', color: colors.textSecondary, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
-  input: { backgroundColor: 'rgba(255,255,255,0.07)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)', borderRadius: radius.md, paddingHorizontal: 16, paddingVertical: 16, color: colors.text, fontSize: 14 },
-  inputFocused: { borderColor: 'rgba(212,175,55,0.6)', backgroundColor: 'rgba(212,175,55,0.04)' },
-
-  pickerField: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: 'rgba(255,255,255,0.07)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)',
-    borderRadius: radius.md, paddingHorizontal: 16, paddingVertical: 16, marginBottom: 16,
+  scroll: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.xxxl,
+    gap: spacing.md,
   },
-  pickerFieldText: { flex: 1, color: colors.textMuted, fontSize: 14 },
-
-  section: { marginBottom: 32 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 12 },
-  tagsContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  tag: { backgroundColor: 'rgba(255,255,255,0.07)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 },
-  tagSelected: { backgroundColor: 'rgba(212,175,55,0.2)', borderColor: colors.accent },
-  tagText: { color: colors.textSecondary, fontSize: 12, fontWeight: '500' },
-  tagTextSelected: { color: colors.accent, fontWeight: '700' },
-
-  // Modal
-  modalOverlay: { flex: 1, justifyContent: 'flex-end' },
-  modalBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.6)' },
-  modalSheet: {
-    backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24,
-    maxHeight: '75%', paddingBottom: 24,
-    borderWidth: 1, borderColor: 'rgba(212,175,55,0.15)',
-    width: '100%',
+  photoCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
   },
-  modalHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.15)', alignSelf: 'center', marginTop: 12, marginBottom: 16 },
-  modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' },
-  modalTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
-  searchBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surfaceLight, marginHorizontal: 16, marginTop: 12, borderRadius: 12, paddingHorizontal: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.07)' },
-  searchInput: { flex: 1, paddingVertical: 12, marginLeft: 8, color: colors.text, fontSize: 16 },
-  optionRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.03)' },
-  optionRowSelected: { backgroundColor: 'rgba(212,175,55,0.08)' },
-  optionText: { fontSize: 16, color: colors.textSecondary },
-  optionTextSelected: { color: colors.accent, fontWeight: '700' },
-
-  // Privacy toggle styles (NEW)
-  privacyToggleRow: {
+  avatarWrap: {
+    width: 86,
+    height: 86,
+  },
+  avatar: {
+    width: 86,
+    height: 86,
+    borderRadius: 28,
+    backgroundColor: colors.surfaceLight,
+  },
+  avatarFallback: {
+    width: 86,
+    height: 86,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primaryLightBg,
+  },
+  avatarInitial: {
+    color: colors.primary,
+    fontSize: 34,
+    fontWeight: '900',
+  },
+  cardTitle: {
+    color: colors.text,
+    fontSize: 18,
+    fontWeight: '900',
+  },
+  cardText: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    lineHeight: 19,
+    marginTop: 3,
+  },
+  photoButton: {
+    alignSelf: 'flex-start',
+    marginTop: spacing.sm,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: radius.full,
+    backgroundColor: colors.primaryLightBg,
+  },
+  photoButtonText: {
+    color: colors.primary,
+    fontSize: 13,
+    fontWeight: '900',
+  },
+  section: {
+    gap: spacing.md,
+  },
+  switchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  switchTitle: {
+    color: colors.text,
+    fontSize: 16,
+    fontWeight: '900',
+  },
+  switchText: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    lineHeight: 19,
+    marginTop: 2,
+  },
+  privacyChoice: {
+    gap: spacing.sm,
+  },
+  visibilityGrid: {
+    gap: spacing.sm,
+  },
+  visibilityOption: {
+    padding: spacing.md,
+    borderRadius: radius.lg,
+    backgroundColor: colors.backgroundSoft,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  visibilityOptionActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  visibilityLabel: {
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  visibilityLabelActive: {
+    color: '#FFFFFF',
+  },
+  visibilityHelper: {
+    color: colors.textMuted,
+    fontSize: 12,
+    fontWeight: '700',
+    marginTop: 3,
+  },
+  visibilityHelperActive: {
+    color: '#F8E7ED',
+  },
+  row: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  rowItem: {
+    flex: 1,
+  },
+  aboutInput: {
+    minHeight: 94,
+    textAlignVertical: 'top',
+    paddingTop: 14,
+  },
+  errorText: {
+    color: colors.error,
+    fontSize: 12,
+    fontWeight: '700',
+    marginTop: -8,
+  },
+  chips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(32,33,36,0.36)',
+  },
+  sheet: {
+    maxHeight: '72%',
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: radius.xxl,
+    borderTopRightRadius: radius.xxl,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+  },
+  sheetHandle: {
+    width: 44,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: colors.borderStrong,
+    alignSelf: 'center',
+    marginBottom: spacing.md,
+  },
+  sheetTitle: {
+    color: colors.text,
+    fontSize: 20,
+    fontWeight: '900',
+    marginBottom: spacing.sm,
+  },
+  option: {
+    minHeight: 54,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 20,
-    width: '100%',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.06)',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.06)',
+    borderBottomColor: colors.divider,
   },
-  privacyLabel: {
-    fontSize: 14,
-    fontWeight: '600',
+  optionText: {
     color: colors.text,
-  },
-  privacyDesc: {
-    fontSize: 11,
-    color: colors.textSecondary,
-    marginTop: 2,
-    lineHeight: 14,
-  },
-  heightPickerContainer: {
-    minHeight: 250,
-    width: '100%',
-  },
-  suggestionsScroll: {
-    paddingVertical: 12,
-  },
-  quickStartContainer: {
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  quickStartTitle: {
-    color: colors.textSecondary,
-    fontSize: 14,
-    marginBottom: 12,
-  },
-  quickStartButtons: {
-    flexDirection: 'row',
-    gap: 16,
-  },
-  quickStartBtn: {
-    width: 64,
-    height: 48,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    backgroundColor: 'rgba(255,255,255,0.03)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  quickStartBtnText: {
-    color: colors.accent,
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  chipsContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  chipsTitle: {
-    color: colors.textSecondary,
-    fontSize: 13,
-    marginBottom: 12,
-  },
-  chipsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  inchChip: {
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-    backgroundColor: 'rgba(255,255,255,0.02)',
-    minWidth: '22%',
-    alignItems: 'center',
-  },
-  inchChipSelected: {
-    borderColor: colors.accent,
-    backgroundColor: 'rgba(212,175,55,0.1)',
-  },
-  inchChipText: {
-    color: colors.textSecondary,
-    fontSize: 13,
-  },
-  inchChipTextSelected: {
-    color: colors.accent,
+    fontSize: 15,
     fontWeight: '700',
   },
 });

@@ -243,7 +243,7 @@ function StoreBadge({ label, store }: { label: string; store: string }) {
                 )}
             </div>
             <span className="text-left">
-                <small className="block text-[10px] font-bold uppercase tracking-wider text-[var(--muted)]">Download on the</small>
+                <small className="block text-[10px] font-bold uppercase tracking-wider text-[var(--muted)]">{label}</small>
                 <strong className="block text-sm font-bold text-[var(--text)] mt-0.5">{store}</strong>
             </span>
         </a>

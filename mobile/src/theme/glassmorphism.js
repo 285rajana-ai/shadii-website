@@ -2,48 +2,49 @@ import { Platform, StyleSheet } from 'react-native';
 import colors from './colors';
 import { radius, spacing } from './spacing';
 
-// Luxury Glassmorphism card styles
+export const softShadow = Platform.select({
+  ios: {
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.08,
+    shadowRadius: 22,
+  },
+  android: {
+    elevation: 3,
+  },
+});
+
 export const glassStyles = StyleSheet.create({
   card: {
-    backgroundColor: colors.glassMedium,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.glassBorderLight,
+    borderColor: colors.border,
     borderRadius: radius.xl,
     overflow: 'hidden',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.4,
-        shadowRadius: 20,
-      },
-      android: {
-        elevation: 10,
-      },
-    }),
+    ...softShadow,
   },
 
   cardPremium: {
-    backgroundColor: 'rgba(212, 175, 55, 0.05)', // Subtle gold tint
+    backgroundColor: colors.primaryLightBg,
     borderWidth: 1,
-    borderColor: colors.accent,
+    borderColor: colors.accentLight,
     borderRadius: radius.xl,
     overflow: 'hidden',
   },
 
   pill: {
-    backgroundColor: colors.glass,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.glassBorderLight,
+    borderColor: colors.border,
     borderRadius: radius.full,
     paddingHorizontal: spacing.md,
     paddingVertical: 8,
   },
 
   input: {
-    backgroundColor: colors.surfaceLight,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: colors.border,
     borderRadius: radius.md,
     paddingHorizontal: 16,
     paddingVertical: spacing.md,
@@ -52,8 +53,8 @@ export const glassStyles = StyleSheet.create({
   },
 
   inputFocused: {
-    borderColor: colors.accent,
-    backgroundColor: 'rgba(212, 175, 55, 0.05)',
+    borderColor: colors.primary,
+    backgroundColor: '#FFFDF9',
   },
 
   button: {
@@ -67,7 +68,7 @@ export const glassStyles = StyleSheet.create({
 
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(32, 33, 36, 0.42)',
   },
 
   modal: {
@@ -78,13 +79,13 @@ export const glassStyles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: Platform.OS === 'ios' ? spacing.xxxl : spacing.xl,
     borderWidth: 1,
-    borderColor: colors.glassBorderLight,
+    borderColor: colors.border,
   },
 
   badge: {
-    backgroundColor: 'rgba(212, 175, 55, 0.15)',
+    backgroundColor: colors.primaryLightBg,
     borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.3)',
+    borderColor: colors.accentLight,
     borderRadius: radius.lg,
     paddingHorizontal: 12,
     paddingVertical: 4,
@@ -94,12 +95,10 @@ export const glassStyles = StyleSheet.create({
   },
 
   badgeText: {
-    color: colors.accent,
+    color: colors.primary,
     fontSize: 12,
-    fontWeight: 'bold',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  }
+    fontWeight: '700',
+  },
 });
 
 export { radius, spacing };

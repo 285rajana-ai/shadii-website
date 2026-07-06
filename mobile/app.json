@@ -2,37 +2,42 @@
   "expo": {
     "name": "Shadii.pk",
     "slug": "shadii-pk",
-    "version": "1.0.7",
+    "version": "1.0.8",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "light",
     "newArchEnabled": false,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#0D0D0D"
+      "backgroundColor": "#FAF7F2"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "pk.shadii"
+      "bundleIdentifier": "pk.shadii",
+      "buildNumber": "10",
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "pk.shadii",
-      "versionCode": 9,
+      "versionCode": 10,
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#0D0D0D"
+        "backgroundColor": "#FAF7F2"
       },
       "edgeToEdgeEnabled": true,
       "permissions": [
-        "CAMERA",
-        "INTERNET",
-        "ACCESS_NETWORK_STATE",
-        "READ_MEDIA_IMAGES",
-        "VIBRATE",
-        "RECEIVE_BOOT_COMPLETED",
-        "POST_NOTIFICATIONS"
+        "android.permission.CAMERA",
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.VIBRATE",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "web": {
@@ -61,7 +66,14 @@
           "androidCollapsedTitle": "Shadii.pk"
         }
       ],
-      "expo-iap"
-    ]
+      "expo-iap",
+      "expo-font"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "0688b3c0-3192-4262-a98d-488d1a3d4eb0"
+      }
+    },
+    "owner": "mrashail"
   }
 }

@@ -1,5 +1,13 @@
 import colors from './colors';
 
+export const font = {
+  heading: 'Poppins_700Bold',
+  headingAlt: 'Poppins_600SemiBold',
+  body: 'Outfit_400Regular',
+  bodyMedium: 'Outfit_500Medium',
+  bodySemi: 'Outfit_600SemiBold',
+};
+
 export const type = {
   h1: {
     fontSize: 32,
@@ -9,8 +17,8 @@ export const type = {
   },
   h2: {
     fontSize: 24,
-    lineHeight: 30,
-    fontWeight: '700',
+    lineHeight: 31,
+    fontWeight: '800',
     color: colors.text,
   },
   h3: {
@@ -33,14 +41,14 @@ export const type = {
   },
   caption: {
     fontSize: 12,
-    lineHeight: 18,
+    lineHeight: 17,
     fontWeight: '500',
     color: colors.textMuted,
   },
   micro: {
     fontSize: 11,
     lineHeight: 14,
-    fontWeight: '600',
+    fontWeight: '700',
     color: colors.textMuted,
   },
 };

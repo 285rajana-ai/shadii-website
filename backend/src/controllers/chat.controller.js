@@ -2,9 +2,11 @@ const mongoose = require('mongoose');
 const Message = require('../models/Message');
 const User = require('../models/User');
 const { scanMessage, handleViolation } = require('../services/chatFilter');
-
-// Build conversation ID (always sorted so A-B == B-A)
-const getConversationId = (id1, id2) => [id1, id2].sort().join('_');
+const {
+  getConversationId,
+  getChatAccess,
+  createIntroRequestIfNeeded,
+} = require('../services/chatAccess');
 
 // GET /api/chat/conversations
 exports.getConversations = async (req, res) => {
@@ -33,8 +35,6 @@ exports.getConversations = async (req, res) => {
       },
       { $sort: { 'lastMessage.createdAt': -1 } },
     ]);
-
-    const viewerSubscribed = req.user.hasActiveSubscription();
 
     // Populate the other user without letting one bad record break the whole list
     const populatedResults = await Promise.allSettled(
@@ -67,6 +67,7 @@ exports.getConversations = async (req, res) => {
             status: lastMsg.status,
             createdAt: lastMsg.createdAt,
             isMine: String(lastMsg.sender) === String(userId),
+            isFreeMessage: lastMsg.isFreeMessage,
           },
           unreadCount: conv.unreadCount,
         };
@@ -124,7 +125,9 @@ exports.getMessages = async (req, res) => {
       };
     });
 
-    res.json({ success: true, messages: responseMessages, page: pageNumber });
+    const chatAccess = await getChatAccess({ user: req.user, otherUserId });
+
+    res.json({ success: true, messages: responseMessages, page: pageNumber, chatAccess });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -150,33 +153,22 @@ exports.sendMessage = async (req, res) => {
       });
     }
 
-    // Check connection approval (must be approved to chat)
-    const isApproved = req.user.photoViewApproved?.some(
-      (uid) => String(uid) === String(otherUserId)
-    );
-    if (!isApproved) {
-      return res.status(403).json({
-        success: false,
-        message: 'You can only message this user after they approve your connection request.',
-        code: 'CONNECTION_REQUIRED',
-      });
-    }
-
     const conversationId = getConversationId(userId, otherUserId);
-
-    // Check if this is the first message in this conversation
-    const existingCount = await Message.countDocuments({ conversationId });
-    const isFreeMessage = existingCount === 0;
-
-    // If not free message, require subscription
-    if (!isFreeMessage && !req.user.hasActiveSubscription()) {
+    const chatAccess = await getChatAccess({ user: req.user, otherUserId });
+    if (!chatAccess.canSend) {
       return res.status(403).json({
         success: false,
-        message: 'Your free message has been used. Subscribe to continue chatting!',
-        code: 'SUBSCRIPTION_REQUIRED',
+        message: chatAccess.reason === 'accept_invite'
+          ? 'Accept this Rishta request before replying.'
+          : chatAccess.reason === 'waiting_for_acceptance'
+            ? 'Please wait until your Rishta request is accepted.'
+            : 'Your free messages in this chat are used. Subscribe to continue chatting!',
+        code: chatAccess.reason === 'subscription_required' ? 'SUBSCRIPTION_REQUIRED' : 'CHAT_INVITE_REQUIRED',
         upgradeUrl: 'shadii://subscription/plans',
+        chatAccess,
       });
     }
+    const isFreeMessage = !req.user.hasActiveSubscription();
 
     // Scan message for contact info
     const { isViolation, type, label } = scanMessage(content);
@@ -235,11 +227,13 @@ exports.sendMessage = async (req, res) => {
       isFreeMessage,
       seenDelayUntil,
     });
+    await createIntroRequestIfNeeded({ senderId: userId, receiverId: otherUserId, access: chatAccess });
 
     res.status(201).json({
       success: true,
       message,
       isFreeMessage,
+      chatAccess: await getChatAccess({ user: req.user, otherUserId }),
       seenNote: isFreeMessage ? 'Seen status will update after 6 hours' : null,
     });
   } catch (err) {

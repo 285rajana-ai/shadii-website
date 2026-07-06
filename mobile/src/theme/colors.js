@@ -1,70 +1,68 @@
-// 💍 Shadii.pk Premium Design System (2026 Edition)
+// Shadii.pk Light Design System
+// Warm, calm, trust-first palette for a serious matchmaking product.
 export const colors = {
-  // Brand Luxury Palette
-  primary: '#1A000A',       // Deepest Midnight Rose (almost black)
-  primaryDark: '#120006',
-  primaryLightBg: 'rgba(212, 175, 55, 0.12)',
-  secondary: '#121212',     // Rich Onyx
-  accent: '#D4AF37',        // Luxury Gold
-  accentLight: '#F3E5AB',   // Soft Champagne
-  maroon: '#5C0F31',        // Deep Royal Maroon
-  rose: '#8B1A4A',          // Signature Rose
+  primary: '#8A1538',
+  primaryDark: '#5C0F31',
+  primaryLight: '#B84A69',
+  primaryLightBg: '#FCE8EF',
+  secondary: '#245C54',
+  accent: '#8A1538',
+  accentLight: '#F3D6DF',
+  maroon: '#8A1538',
+  rose: '#B84A69',
 
-  // Backgrounds
-  background: '#0D0D0D',    // True Black
-  backgroundSoft: '#131313',
-  surface: '#1A1A1A',       // Elevated surface
-  surfaceLight: '#262626',  // Lighter surface
-  surfaceElevated: '#202020',
+  background: '#FAF7F2',
+  backgroundSoft: '#FFFDF9',
+  surface: '#FFFFFF',
+  surfaceLight: '#F6F0E8',
+  surfaceElevated: '#FFFFFF',
+  surfaceMuted: '#F1EAE0',
 
-  // Glassmorphism System
-  glass: 'rgba(255, 255, 255, 0.08)',
-  glassMedium: 'rgba(255, 255, 255, 0.12)',
-  glassStrong: 'rgba(255, 255, 255, 0.18)',
-  glassBorder: 'rgba(212, 175, 55, 0.3)', // Gold tint border
-  glassBorderLight: 'rgba(255, 255, 255, 0.15)',
+  glass: 'rgba(255, 255, 255, 0.74)',
+  glassMedium: '#FFFFFF',
+  glassStrong: '#FFFFFF',
+  glassBorder: '#E7DED3',
+  glassBorderLight: '#EFE6DA',
 
-  // Text System
-  text: '#FFFFFF',
-  textSecondary: '#A0A0A0',
-  textMuted: '#666666',
-  textPlaceholder: '#8A8A8A',
-  textAccent: '#D4AF37',    // Gold text for highlights
+  text: '#202124',
+  textSecondary: '#5F6673',
+  textMuted: '#8A8F99',
+  textPlaceholder: '#9BA1AA',
+  textAccent: '#8A1538',
 
-  // Missing referenced colors
-  border: 'rgba(255,255,255,0.1)',     // Generic border for dark theme
-  borderStrong: 'rgba(255,255,255,0.2)',
-  bubbleSent: '#5C0F31',              // Chat bubble for sent messages
-  primaryLight: '#8B1A4A',            // Light variant of primary for typing indicator
-  shadow: '#000000',
+  border: '#E7DED3',
+  borderStrong: '#D7CABB',
+  divider: '#EFE7DD',
+  shadow: '#1D1A16',
 
-  // Status Colors
-  success: '#2ECC71',
-  warning: '#F1C40F',
-  error: '#E74C3C',
-  info: '#3498DB',
+  bubbleSent: '#8A1538',
+  bubbleReceived: '#FFFFFF',
 
-  // Interaction
-  active: '#D4AF37',
-  inactive: '#333333',
+  success: '#147A5C',
+  warning: '#B7791F',
+  error: '#C23B3B',
+  info: '#2667A8',
 
-  // Gradients
+  verified: '#147A5C',
+  boost: '#D97834',
+  online: '#18A66A',
+  blur: 'rgba(250, 247, 242, 0.78)',
+
+  active: '#8A1538',
+  inactive: '#A8A29A',
+
   gradients: {
-    luxury: ['#1A000A', '#121212'],
-    gold: ['#BF953F', '#FCF6BA', '#B38728', '#FBF5B7', '#AA771C'],
-    royal: ['#5C0F31', '#8B1A4A'],
-    dark: ['#1A1A1A', '#0D0D0D'],
-    glass: ['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.01)'],
-    // Aliases used across screens
-    primary: ['#5C0F31', '#8B1A4A'],
-    primaryFull: ['#1A000A', '#5C0F31', '#8B1A4A', '#D4AF37'],
+    luxury: ['#FAF7F2', '#FFFDF9'],
+    gold: ['#8A1538', '#B84A69'],
+    royal: ['#8A1538', '#B84A69'],
+    dark: ['#FAF7F2', '#FFFDF9'],
+    glass: ['#FFFFFF', '#FFF9F1'],
+    primary: ['#8A1538', '#B84A69'],
+    primaryFull: ['#FAF7F2', '#FCE8EF', '#FFFFFF'],
+    hero: ['#FFF8EF', '#FCE8EF', '#FFFFFF'],
+    trust: ['#147A5C', '#2C9B7B'],
+    soft: ['#FFFFFF', '#F8F1E8'],
   },
-
-  // Premium Features
-  verified: '#D4AF37',      // Gold tick for verified
-  boost: '#FF6B35',
-  online: '#4CD964',
-  blur: 'rgba(26, 0, 10, 0.8)', // For blurred profiles
 };
 
 export default colors;

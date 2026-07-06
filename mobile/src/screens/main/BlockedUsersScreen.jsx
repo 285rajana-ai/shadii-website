@@ -111,8 +111,8 @@ export default function BlockedUsersScreen({ navigation }) {
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="light-content" />
-            <LinearGradient colors={['#1A000A', '#0D0D0D']} style={StyleSheet.absoluteFill} />
+            <StatusBar barStyle="dark-content" />
+            <LinearGradient colors={colors.gradients.hero} style={StyleSheet.absoluteFill} />
 
             <ScreenHeader
                 title="Blocked Users"
@@ -167,9 +167,9 @@ const styles = StyleSheet.create({
     list: { paddingHorizontal: 20, paddingBottom: 40 },
     infoBox: {
         flexDirection: 'row', alignItems: 'flex-start', gap: 8,
-        padding: 12, backgroundColor: 'rgba(255,255,255,0.04)',
+        padding: 12, backgroundColor: colors.surface,
         borderRadius: 12, marginBottom: 16, borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.08)',
+        borderColor: colors.border,
     },
     infoText: { fontSize: 12, color: colors.textSecondary, flex: 1, lineHeight: 18 },
 
@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
     userAvatar: { width: 52, height: 52, borderRadius: 26, overflow: 'hidden' },
     avatarImg: { width: 52, height: 52, borderRadius: 26 },
     avatarPlaceholder: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-    avatarInitial: { fontSize: 20, fontWeight: '800', color: '#FFF' },
+    avatarInitial: { fontSize: 20, fontWeight: '800', color: '#FFFFFF' },
     userName: { fontSize: 16, fontWeight: '700', color: colors.text },
     userDetails: { fontSize: 12, color: colors.textSecondary, marginTop: 3 },
     blockedBadge: {

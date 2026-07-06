@@ -157,8 +157,8 @@ export default function HelpSupportScreen({ navigation }) {
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="light-content" />
-            <LinearGradient colors={['#1A000A', '#0D0D0D']} style={StyleSheet.absoluteFill} />
+            <StatusBar barStyle="dark-content" />
+            <LinearGradient colors={colors.gradients.hero} style={StyleSheet.absoluteFill} />
 
             <ScreenHeader title="Help & Support" onBack={() => navigation.goBack()} insetsTop={insets.top} />
 
@@ -212,7 +212,7 @@ export default function HelpSupportScreen({ navigation }) {
                         />
                         <TouchableOpacity style={styles.sendBtn} onPress={sendMessage} activeOpacity={0.85}>
                             <LinearGradient colors={['#BF953F', '#D4AF37']} style={StyleSheet.absoluteFill} />
-                            <MaterialCommunityIcons name="send" size={18} color="#1A000A" />
+                            <MaterialCommunityIcons name="send" size={18} color="#FFFFFF" />
                             <Text style={styles.sendBtnText}>Send Message</Text>
                         </TouchableOpacity>
                     </View>
@@ -288,8 +288,8 @@ const styles = StyleSheet.create({
     contactCard: {
         width: CONTACT_CARD_WIDTH,
         padding: 16,
-        backgroundColor: colors.glassMedium, borderRadius: 18,
-        borderWidth: 1, borderColor: colors.glassBorderLight,
+        backgroundColor: colors.surface, borderRadius: 18,
+        borderWidth: 1, borderColor: colors.border,
     },
     contactIconBg: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
     contactLabel: { fontSize: 14, fontWeight: '700', color: colors.text },
@@ -301,14 +301,14 @@ const styles = StyleSheet.create({
     messageInput: {
         backgroundColor: colors.surfaceLight, borderRadius: 14,
         padding: 12, fontSize: 14, color: colors.text,
-        borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
+        borderWidth: 1, borderColor: colors.border,
         minHeight: 100, marginBottom: 12,
     },
     sendBtn: {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
         paddingVertical: 12, borderRadius: 14, overflow: 'hidden',
     },
-    sendBtnText: { fontSize: 14, fontWeight: '700', color: '#1A000A' },
+    sendBtnText: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
 
     faqHeading: { fontSize: 20, fontWeight: '800', color: colors.text, marginBottom: 16 },
     faqSection: { marginBottom: 20 },
@@ -321,7 +321,7 @@ const styles = StyleSheet.create({
     faqQText: { fontSize: 14, fontWeight: '600', color: colors.text, flex: 1, paddingRight: 12, lineHeight: 22 },
     faqAnswer: { paddingHorizontal: 16, paddingBottom: 16 },
     faqAText: { fontSize: 14, color: colors.textSecondary, lineHeight: 22 },
-    faqDivider: { height: 1, backgroundColor: 'rgba(255,255,255,0.06)', marginHorizontal: 16 },
+    faqDivider: { height: 1, backgroundColor: colors.divider, marginHorizontal: 16 },
 
     bottomLinks: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 8 },
     linkText: { fontSize: 12, color: colors.accent, fontWeight: '600' },

@@ -6,16 +6,17 @@ const columns = [
     {
         title: "Explore",
         links: [
-            { href: "#about", label: "Why Shadii.pk" },
-            { href: "#journey", label: "How It Works" },
-            { href: "#plans", label: "Pricing" },
-            { href: "#stories", label: "Success Stories" },
+            { href: "/#about", label: "Why Shadii.pk" },
+            { href: "/#journey", label: "How It Works" },
+            { href: "/#plans", label: "Pricing" },
+            { href: "/#stories", label: "Success Stories" },
         ],
     },
     {
         title: "Support",
         links: [
-            { href: "#faq", label: "Common Questions" },
+            { href: "/#faq", label: "Common Questions" },
+            { href: "/contact-us", label: "Contact Us" },
             { href: "mailto:help@shadii.pk", label: "help@shadii.pk" },
             { href: "mailto:safety@shadii.pk", label: "safety@shadii.pk" },
             { href: "mailto:payments@shadii.pk", label: "payments@shadii.pk" },
@@ -24,10 +25,11 @@ const columns = [
     {
         title: "Company",
         links: [
-            { href: "#download", label: "Download App" },
-            { href: "#plans", label: "Subscription Plans" },
-            { href: "#about", label: "Privacy Promise" },
-            { href: "#stories", label: "For Families" },
+            { href: "/#download", label: "Download App" },
+            { href: "/#plans", label: "Subscription Plans" },
+            { href: "/privacy-policy", label: "Privacy Policy" },
+            { href: "/terms-and-conditions", label: "Terms & Conditions" },
+            { href: "/refund-policy", label: "Refund Policy" },
         ],
     },
 ];
@@ -91,8 +93,14 @@ export function Footer() {
                         <Link href="/privacy" className="transition-colors hover:text-[var(--text)]">
                             Privacy Policy
                         </Link>
-                        <Link href="/terms" className="transition-colors hover:text-[var(--text)]">
-                            Terms of Service
+                        <Link href="/terms-and-conditions" className="transition-colors hover:text-[var(--text)]">
+                            Terms & Conditions
+                        </Link>
+                        <Link href="/refund-policy" className="transition-colors hover:text-[var(--text)]">
+                            Refund Policy
+                        </Link>
+                        <Link href="/contact-us" className="transition-colors hover:text-[var(--text)]">
+                            Contact Us
                         </Link>
                         <Link href="/delete-account" className="transition-colors hover:text-[var(--text)]">
                             Account Deletion

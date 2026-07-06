@@ -86,8 +86,8 @@ export default function BoostProfileScreen({ navigation }) {
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="light-content" />
-            <LinearGradient colors={['#1A000A', '#0D0D0D', '#1A000A']} style={StyleSheet.absoluteFill} />
+            <StatusBar barStyle="dark-content" />
+            <LinearGradient colors={colors.gradients.hero} style={StyleSheet.absoluteFill} />
 
             {/* Header */}
             <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
@@ -184,7 +184,7 @@ export default function BoostProfileScreen({ navigation }) {
                         onPress={isAlreadyBoosted ? null : handleBoost}
                         activeOpacity={0.85}
                     >
-                        <LinearGradient colors={isAlreadyBoosted ? ['#444', '#333'] : ['#FF6B35', '#FF4500']} style={StyleSheet.absoluteFill} />
+                        <LinearGradient colors={isAlreadyBoosted ? ['#CFC6BB', '#BDB3A8'] : ['#FF6B35', '#FF4500']} style={StyleSheet.absoluteFill} />
                         <MaterialCommunityIcons name="rocket-launch" size={22} color="#FFF" />
                         <Text style={styles.boostButtonText}>
                             {isAlreadyBoosted ? '🚀 Already Boosted' : 'Boost Now — PKR 500'}
@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
         paddingBottom: 16, paddingHorizontal: 20,
     },
-    backBtn: { padding: 8, backgroundColor: colors.glass, borderRadius: 12, borderWidth: 1, borderColor: colors.glassBorderLight },
+    backBtn: { padding: 8, backgroundColor: colors.surface, borderRadius: 12, borderWidth: 1, borderColor: colors.border },
     headerTitle: { fontSize: 20, fontWeight: '700', color: colors.text, letterSpacing: 0.5 },
     scroll: { paddingHorizontal: 20, paddingBottom: 40 },
 
@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
     packagePrice: { alignItems: 'flex-end' },
     priceAmount: { fontSize: 20, fontWeight: '800', color: colors.boost },
 
-    divider: { height: 1, backgroundColor: colors.glassBorderLight, marginBottom: 16 },
+    divider: { height: 1, backgroundColor: colors.divider, marginBottom: 16 },
 
     featureRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
     featureText: { fontSize: 14, color: colors.textSecondary, flex: 1 },
@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
         elevation: 12,
     },
     disabledButton: { shadowOpacity: 0 },
-    boostButtonText: { fontSize: 16, fontWeight: '800', color: '#FFF', letterSpacing: 0.5 },
+    boostButtonText: { fontSize: 16, fontWeight: '800', color: '#FFFFFF', letterSpacing: 0.5 },
 
     infoNote: { fontSize: 12, color: colors.textMuted, textAlign: 'center', lineHeight: 18, paddingHorizontal: 8 },
 });

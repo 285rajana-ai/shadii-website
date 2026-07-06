@@ -1,0 +1,44 @@
+# Dependencies and build output across the monorepo
+**/node_modules/
+**/dist/
+**/build/
+**/.expo/
+**/web-build/
+**/coverage/
+
+# Local env and logs
+**/.env
+**/.env.*
+**/.env*.local
+**/*.log
+
+# Generated iOS project is rebuilt by EAS from mobile/app.json
+mobile/ios/
+
+# Keep mobile/android source in the EAS archive, but exclude local artifacts.
+mobile/android/.gradle/
+mobile/android/.kotlin/
+mobile/android/build/
+mobile/android/app/build/
+mobile/android/local.properties
+mobile/android/*.keystore
+mobile/android/app/*.keystore
+mobile/android/app/debug.keystore
+
+# Native credential material
+**/*.jks
+**/*.p8
+**/*.p12
+**/*.key
+**/*.mobileprovision
+**/*.pem
+**/*.keystore
+
+# OS and IDE files
+**/.DS_Store
+**/.idea/
+**/.vscode/
+**/*.iml
+**/*.hprof
+**/.cxx/
+**/*.tsbuildinfo

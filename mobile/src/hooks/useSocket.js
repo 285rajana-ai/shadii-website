@@ -16,10 +16,14 @@ export const useSocket = () => {
 
     const socket = io(SOCKET_URL, {
       auth: { token },
-      transports: ['websocket'],
+      transports: ['websocket', 'polling'],
+      rememberUpgrade: true,
+      timeout: 10000,
       reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 2000,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 800,
+      reconnectionDelayMax: 8000,
+      randomizationFactor: 0.5,
     });
 
     socketRef.current = socket;

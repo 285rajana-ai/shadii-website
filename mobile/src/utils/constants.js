@@ -63,6 +63,23 @@ export const PAKISTAN_CITIES = [
   'Sargodha', 'Abbottabad', 'Mirpur AJK', 'Muzaffarabad', 'Other',
 ];
 
+export const PAKISTAN_REGIONS = [
+  'Punjab', 'Sindh', 'Khyber Pakhtunkhwa', 'Balochistan',
+  'Islamabad Capital Territory', 'Azad Jammu & Kashmir', 'Gilgit-Baltistan', 'Overseas Pakistani',
+];
+
+export const MARITAL_STATUS_OPTIONS = ['Never Married', 'Divorced', 'Widowed', 'Separated'];
+
+export const SECT_OPTIONS = ['Sunni', 'Shia', 'Deobandi', 'Barelvi', 'Ahl-e-Hadith', 'Other'];
+
+export const MOTHER_TONGUE_OPTIONS = ['Urdu', 'Punjabi', 'Sindhi', 'Pashto', 'Balochi', 'Saraiki', 'Kashmiri', 'Hindko', 'Other'];
+
+export const PHOTO_VISIBILITY_OPTIONS = [
+  { id: 'everyone', label: 'Everyone', helper: 'Visible on browse cards' },
+  { id: 'registered', label: 'Registered Users', helper: 'Only signed-in members' },
+  { id: 'connected', label: 'Connected Users', helper: 'After Rishta approval' },
+];
+
 export const CAST_OPTIONS = [
   'Abbasi', 'Ansari', 'Arain', 'Awan', 'Baloch', 'Bhatti', 'Bosan', 'Butt',
   'Chaudhry', 'Dogar', 'Farooqi', 'Gakhar', 'Gill', 'Gujjar', 'Hashmi', 'Janjua',

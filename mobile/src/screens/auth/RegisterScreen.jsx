@@ -1,142 +1,137 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
+  FlatList,
   KeyboardAvoidingView,
   Modal,
   Platform,
+  Pressable,
   ScrollView,
   StatusBar,
   StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-  FlatList,
   Switch,
+  Text,
+  View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import PrimaryButton from '../../components/ui/PrimaryButton';
+import ScreenHeader from '../../components/ui/ScreenHeader';
+import { AppBackground, Card, Chip, Field, SelectField, TrustBadge } from '../../components/ui/LightPrimitives';
 import colors from '../../theme/colors';
-import { glassStyles } from '../../theme/glassmorphism';
+import { radius, spacing } from '../../theme/spacing';
 import {
   API_BASE_URL,
-  PAKISTAN_CITIES,
-  EDUCATION_LEVELS,
   CAST_OPTIONS,
+  EDUCATION_LEVELS,
+  PAKISTAN_REGIONS,
+  PAKISTAN_CITIES,
+  PHOTO_VISIBILITY_OPTIONS,
 } from '../../utils/constants';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
-
-// Generate height options 4'6" to 6'6"
 const HEIGHT_OPTIONS = [];
 for (let ft = 4; ft <= 6; ft++) {
   const maxIn = ft === 6 ? 6 : 11;
-  for (let inch = ft === 4 ? 6 : 0; inch <= maxIn; inch++) {
-    HEIGHT_OPTIONS.push(`${ft}'${inch}"`);
-  }
+  for (let inch = ft === 4 ? 6 : 0; inch <= maxIn; inch++) HEIGHT_OPTIONS.push(`${ft}'${inch}"`);
 }
+
+const STEPS = ['Account', 'Details', 'Privacy'];
 
 export default function RegisterScreen({ navigation }) {
   const insets = useSafeAreaInsets();
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [pickerVisible, setPickerVisible] = useState(false);
-  const [pickerField, setPickerField] = useState(null); // 'city' | 'education' | 'cast' | 'height'
-  const [heightSearch, setHeightSearch] = useState('');
+  const [pickerField, setPickerField] = useState(null);
+  const [errors, setErrors] = useState({});
 
   const [formData, setFormData] = useState({
-    name: '', email: '', phone: '', password: '',
-    gender: '', age: '', height: '', education: '',
-    city: '', cast: '', about: '', hidePhotos: false,
+    name: '',
+    email: '',
+    phone: '',
+    password: '',
+    gender: '',
+    age: '',
+    height: '',
+    education: '',
+    region: '',
+    city: '',
+    cast: '',
+    about: '',
+    hidePhotos: true,
+    profilePhotoVisibility: 'registered',
+    photoVisibility: 'connected',
   });
 
-  const updateForm = (key, value) => setFormData(prev => ({ ...prev, [key]: value }));
+  const updateForm = (key, value) => {
+    setFormData((prev) => ({ ...prev, [key]: value }));
+    setErrors((prev) => ({ ...prev, [key]: '' }));
+  };
+
+  const pickerOptions = () => {
+    if (pickerField === 'city') return PAKISTAN_CITIES;
+    if (pickerField === 'region') return PAKISTAN_REGIONS;
+    if (pickerField === 'education') return EDUCATION_LEVELS;
+    if (pickerField === 'cast') return CAST_OPTIONS;
+    if (pickerField === 'height') return HEIGHT_OPTIONS;
+    return [];
+  };
+
+  const pickerTitle = () => {
+    if (pickerField === 'city') return 'Select city';
+    if (pickerField === 'region') return 'Select region';
+    if (pickerField === 'education') return 'Select education';
+    if (pickerField === 'cast') return 'Select cast / community';
+    if (pickerField === 'height') return 'Select height';
+    return 'Select';
+  };
 
   const openPicker = (field) => {
     setPickerField(field);
-    setHeightSearch('');
     setPickerVisible(true);
   };
 
-  const closePicker = () => {
-    setPickerVisible(false);
-    setPickerField(null);
-  };
-
-  const selectOption = (value) => {
-    updateForm(pickerField, value);
-    closePicker();
-  };
-
-  const handleHeightSearchChange = (text) => {
-    const clean = text.replace(/[^0-9]/g, '');
-    if (clean.length > 0) {
-      const ft = clean[0];
-      setHeightSearch(`${ft}'`);
-    } else {
-      setHeightSearch('');
+  const validateStep = () => {
+    const next = {};
+    if (step === 0) {
+      if (!formData.gender) next.gender = 'Choose who is creating this profile.';
+      if (!formData.name.trim()) next.name = 'Full name is required.';
+      if (!EMAIL_REGEX.test(formData.email.trim())) next.email = 'Enter a valid email address.';
+      if (formData.phone.trim().length < 10) next.phone = 'Enter a valid phone number.';
+      if (!PASSWORD_REGEX.test(formData.password)) next.password = 'Use 8+ chars with uppercase, lowercase, and a number.';
     }
-  };
-
-  const getPickerOptions = () => {
-    switch (pickerField) {
-      case 'city': return PAKISTAN_CITIES;
-      case 'education': return EDUCATION_LEVELS;
-      case 'cast': return CAST_OPTIONS;
-      case 'height':
-        if (!heightSearch) return HEIGHT_OPTIONS;
-        const digit = heightSearch.trim();
-        return HEIGHT_OPTIONS.filter(h => h.startsWith(digit));
-      default: return [];
+    if (step === 1) {
+      const age = Number(formData.age);
+      if (!age || age < 18 || age > 80) next.age = 'Age must be between 18 and 80.';
+      if (!formData.height) next.height = 'Height is required.';
+      if (!formData.region) next.region = 'Region is required.';
+      if (!formData.city) next.city = 'City is required.';
+      if (!formData.education) next.education = 'Education is required.';
     }
-  };
-
-  const getPickerTitle = () => {
-    switch (pickerField) {
-      case 'city': return 'Select City';
-      case 'education': return 'Select Education';
-      case 'cast': return 'Select Cast / Community';
-      case 'height': return 'Select Height';
-      default: return 'Select';
-    }
+    setErrors(next);
+    return Object.keys(next).length === 0;
   };
 
   const handleNext = () => {
-    if (step === 1) {
-      if (!formData.gender)
-        return Alert.alert('Select Gender', 'Please select whether you are Male or Female.');
-      if (!formData.name.trim())
-        return Alert.alert('Name Required', 'Please enter your full name.');
-      if (!formData.email.trim() || !EMAIL_REGEX.test(formData.email.trim()))
-        return Alert.alert('Invalid Email', 'Please enter a valid email address.');
-      if (!formData.phone.trim() || formData.phone.trim().length < 10)
-        return Alert.alert('Invalid Phone', 'Please enter a valid phone number.');
-      if (!PASSWORD_REGEX.test(formData.password))
-        return Alert.alert(
-          'Weak Password',
-          'Password must be at least 8 characters and include:\n• One uppercase letter\n• One lowercase letter\n• One number'
-        );
-      setStep(2);
-    } else {
-      const age = Number(formData.age);
-      if (!formData.age || isNaN(age) || age < 18 || age > 80)
-        return Alert.alert('Invalid Age', 'Age must be between 18 and 80.');
-      if (!formData.city.trim())
-        return Alert.alert('City Required', 'Please select your city.');
-      if (!formData.education.trim())
-        return Alert.alert('Education Required', 'Please select your education level.');
-      handleRegister();
+    if (!validateStep()) return;
+    if (step < 2) {
+      setStep((s) => s + 1);
+      return;
     }
+    handleRegister();
   };
 
   const handleRegister = async () => {
     setLoading(true);
     try {
-      const payload = { ...formData, age: Number(formData.age) };
+      const payload = {
+        ...formData,
+        age: Number(formData.age),
+        hidePhotos: formData.photoVisibility === 'connected' || formData.profilePhotoVisibility === 'connected',
+      };
       const res = await fetch(`${API_BASE_URL}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -144,549 +139,417 @@ export default function RegisterScreen({ navigation }) {
       });
       const data = await res.json();
       if (data.success) {
-        Alert.alert(
-          'Welcome to Shadii.pk! 🎉',
-          'Your account has been created. Please sign in to complete your profile.',
-          [{ text: 'Sign In', onPress: () => navigation.navigate('Login') }]
-        );
+        Alert.alert('Account created', 'Please sign in to complete your profile and start matching.', [
+          { text: 'Sign in', onPress: () => navigation.navigate('Login') },
+        ]);
       } else {
-        Alert.alert('Registration Failed', data.message || 'Something went wrong. Please try again.');
+        Alert.alert('Registration failed', data.message || 'Something went wrong. Please try again.');
       }
-    } catch (e) {
-      Alert.alert('Connection Error', 'Could not connect to servers. Please check your internet.');
+    } catch (_) {
+      Alert.alert('Connection error', 'Could not connect to Shadii.pk. Please check your internet.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-      <LinearGradient colors={colors.gradients.luxury} style={StyleSheet.absoluteFill} />
-
+    <AppBackground>
+      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
+      <ScreenHeader title="Create Profile" subtitle="Shadii.pk" onBack={() => navigation.goBack()} insetsTop={insets.top} />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
-        <ScrollView
-          contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 20 }]}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.title}>Join shadii.pk</Text>
-            <Text style={styles.subtitle}>Begin your luxury matchmaking journey</Text>
-            <View style={styles.stepIndicator}>
-              <View style={[styles.stepDot, step >= 1 && styles.stepDotActive]} />
-              <View style={[styles.stepLine, step >= 2 && styles.stepLineActive]} />
-              <View style={[styles.stepDot, step >= 2 && styles.stepDotActive]} />
-            </View>
-            <Text style={styles.stepLabel}>
-              {step === 1 ? 'Step 1: Account Details' : 'Step 2: Personal Info'}
-            </Text>
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <View style={styles.stepper}>
+            {STEPS.map((s, i) => (
+              <View key={s} style={styles.stepItem}>
+                <View style={[styles.stepDot, i <= step && styles.stepDotActive]}>
+                  <Text style={[styles.stepNum, i <= step && styles.stepNumActive]}>{i + 1}</Text>
+                </View>
+                <Text style={[styles.stepText, i === step && styles.stepTextActive]}>{s}</Text>
+              </View>
+            ))}
           </View>
 
-          <View style={[glassStyles.card, styles.card]}>
-            {step === 1 ? (
-              <View style={styles.cardContent}>
-                <Text style={styles.sectionTitle}>Identity</Text>
-
-                <Text style={styles.label}>I am seeking a partner as a...</Text>
-                <View style={styles.genderRow}>
-                  <TouchableOpacity
-                    style={[styles.genderBtn, formData.gender === 'male' && styles.genderActive]}
-                    onPress={() => updateForm('gender', 'male')}
-                  >
-                    <MaterialCommunityIcons name="human-male" size={24}
-                      color={formData.gender === 'male' ? colors.maroon : colors.textMuted} />
-                    <Text style={[styles.genderText, formData.gender === 'male' && styles.genderTextActive]}>Male</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.genderBtn, formData.gender === 'female' && styles.genderActive]}
-                    onPress={() => updateForm('gender', 'female')}
-                  >
-                    <MaterialCommunityIcons name="human-female" size={24}
-                      color={formData.gender === 'female' ? colors.maroon : colors.textMuted} />
-                    <Text style={[styles.genderText, formData.gender === 'female' && styles.genderTextActive]}>Female</Text>
-                  </TouchableOpacity>
-                </View>
-
-                <InputField
-                  icon="account-outline"
-                  label="Full Name"
-                  value={formData.name}
-                  onChange={(v) => updateForm('name', v)}
-                  placeholder="Enter your full name"
-                  autoCapitalize="words"
-                />
-                <InputField
-                  icon="email-outline"
-                  label="Email Address"
-                  value={formData.email}
-                  onChange={(v) => updateForm('email', v.toLowerCase())}
-                  placeholder="name@gmail.com"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
-                <InputField
-                  icon="phone-outline"
-                  label="Phone Number"
-                  value={formData.phone}
-                  onChange={(v) => updateForm('phone', v)}
-                  placeholder="+92 3XX XXXXXXX"
-                  keyboardType="phone-pad"
-                />
-                <InputField
-                  icon="lock-outline"
-                  label="Password"
-                  value={formData.password}
-                  onChange={(v) => updateForm('password', v)}
-                  placeholder="Min 8 chars, A-Z, a-z, 0-9"
-                  secureTextEntry={!showPassword}
-                  rightIcon={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                  onRightIconPress={() => setShowPassword(!showPassword)}
-                />
-                <Text style={styles.passwordHint}>
-                  Min 8 chars · one uppercase · one number (e.g. Abc12345)
-                </Text>
-              </View>
+          <Card style={styles.card}>
+            {step === 0 ? (
+              <AccountStep
+                formData={formData}
+                updateForm={updateForm}
+                errors={errors}
+                showPassword={showPassword}
+                setShowPassword={setShowPassword}
+              />
+            ) : step === 1 ? (
+              <DetailsStep formData={formData} updateForm={updateForm} errors={errors} openPicker={openPicker} />
             ) : (
-              <View style={styles.cardContent}>
-                <Text style={styles.sectionTitle}>Personal Details</Text>
-
-                <View style={styles.row}>
-                  <View style={{ flex: 1 }}>
-                    <InputField
-                      icon="calendar-outline"
-                      label="Age"
-                      value={formData.age}
-                      onChange={(v) => updateForm('age', v)}
-                      placeholder="25"
-                      keyboardType="numeric"
-                    />
-                  </View>
-                  <View style={{ width: 16 }} />
-                  <View style={{ flex: 1 }}>
-                    {/* Height picker */}
-                    <Text style={styles.inputLabel}>Height</Text>
-                    <TouchableOpacity
-                      style={styles.pickerBtn}
-                      onPress={() => openPicker('height')}
-                    >
-                      <MaterialCommunityIcons name="human-height" size={20} color={formData.height ? colors.accent : colors.textMuted} />
-                      <Text style={[styles.pickerBtnText, formData.height && { color: colors.text }]}>
-                        {formData.height || "Select"}
-                      </Text>
-                      <MaterialCommunityIcons name="chevron-down" size={18} color={colors.textMuted} />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-
-                {/* City picker */}
-                <Text style={styles.inputLabel}>City</Text>
-                <TouchableOpacity style={styles.pickerBtn} onPress={() => openPicker('city')}>
-                  <MaterialCommunityIcons name="map-marker-outline" size={20} color={formData.city ? colors.accent : colors.textMuted} />
-                  <Text style={[styles.pickerBtnText, formData.city && { color: colors.text }]}>
-                    {formData.city || "Select City"}
-                  </Text>
-                  <MaterialCommunityIcons name="chevron-down" size={18} color={colors.textMuted} />
-                </TouchableOpacity>
-
-                {/* Education picker */}
-                <Text style={styles.inputLabel}>Education Level</Text>
-                <TouchableOpacity style={styles.pickerBtn} onPress={() => openPicker('education')}>
-                  <MaterialCommunityIcons name="school-outline" size={20} color={formData.education ? colors.accent : colors.textMuted} />
-                  <Text style={[styles.pickerBtnText, formData.education && { color: colors.text }]}>
-                    {formData.education || "Select Education"}
-                  </Text>
-                  <MaterialCommunityIcons name="chevron-down" size={18} color={colors.textMuted} />
-                </TouchableOpacity>
-
-                {/* Cast picker */}
-                <Text style={styles.inputLabel}>Cast / Community</Text>
-                <TouchableOpacity style={styles.pickerBtn} onPress={() => openPicker('cast')}>
-                  <MaterialCommunityIcons name="account-group-outline" size={20} color={formData.cast ? colors.accent : colors.textMuted} />
-                  <Text style={[styles.pickerBtnText, formData.cast && { color: colors.text }]}>
-                    {formData.cast || "Select Cast (Optional)"}
-                  </Text>
-                  <MaterialCommunityIcons name="chevron-down" size={18} color={colors.textMuted} />
-                </TouchableOpacity>
-
-                {/* Hide Photos Switch (NEW) */}
-                <View style={styles.toggleRow}>
-                  <View style={{ flex: 1, marginRight: 16 }}>
-                    <Text style={styles.toggleLabel}>Private Profile Pictures</Text>
-                    <Text style={styles.toggleDesc}>Hide your photos from free members (requires connection approval)</Text>
-                  </View>
-                  <Switch
-                    value={formData.hidePhotos}
-                    onValueChange={(val) => updateForm('hidePhotos', val)}
-                    trackColor={{ false: '#2C2A29', true: colors.accent }}
-                    thumbColor={formData.hidePhotos ? colors.text : '#7C7A79'}
-                  />
-                </View>
-              </View>
+              <PrivacyStep formData={formData} updateForm={updateForm} />
             )}
+          </Card>
 
-            <View style={styles.footer}>
-              <TouchableOpacity onPress={handleNext} style={styles.btnContainer} activeOpacity={0.8}>
-                <LinearGradient colors={colors.gradients.gold} style={styles.btn}>
-                  {loading ? (
-                    <ActivityIndicator color={colors.maroon} />
-                  ) : (
-                    <Text style={styles.btnText}>{step === 1 ? 'Continue →' : 'Create My Account'}</Text>
-                  )}
-                </LinearGradient>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.backBtn}
-                onPress={() => step === 1 ? navigation.navigate('Login') : setStep(1)}
-              >
-                <Text style={styles.backBtnText}>
-                  {step === 1 ? 'Already have an account? Sign In' : '← Go Back'}
-                </Text>
-              </TouchableOpacity>
-            </View>
+          <View style={styles.actions}>
+            {step > 0 ? (
+              <PrimaryButton label="Back" variant="secondary" onPress={() => setStep((s) => s - 1)} style={styles.actionButton} />
+            ) : null}
+            <PrimaryButton
+              label={step === 2 ? 'Create account' : 'Continue'}
+              icon={step === 2 ? 'check' : 'arrow-right'}
+              onPress={handleNext}
+              loading={loading}
+              style={styles.actionButton}
+            />
           </View>
-          <View style={{ height: 40 }} />
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* Picker Modal */}
-      <Modal visible={pickerVisible} transparent animationType="slide" onRequestClose={closePicker}>
-        <View style={styles.modalOverlay}>
-          <TouchableOpacity style={styles.modalBackdrop} onPress={closePicker} />
-          <View style={styles.modalSheet}>
-            <View style={styles.modalHandle} />
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{getPickerTitle()}</Text>
-              <TouchableOpacity onPress={closePicker}>
-                <MaterialCommunityIcons name="close" size={22} color={colors.textMuted} />
-              </TouchableOpacity>
-            </View>
-
-            {/* Height custom selector */}
-            {pickerField === 'height' ? (
-              <View style={styles.heightPickerContainer}>
-                <View style={styles.searchBox}>
-                  <MaterialCommunityIcons name="human-height" size={18} color={colors.accent} />
-                  <TextInput
-                    style={styles.searchInput}
-                    placeholder="Enter feet (e.g. 5 or 6)"
-                    placeholderTextColor={colors.textMuted}
-                    value={heightSearch}
-                    onChangeText={handleHeightSearchChange}
-                    keyboardType="numeric"
-                    maxLength={2}
-                  />
-                </View>
-
-                <ScrollView contentContainerStyle={styles.suggestionsScroll} showsVerticalScrollIndicator={false}>
-                  {!heightSearch ? (
-                    <View style={styles.quickStartContainer}>
-                      <Text style={styles.quickStartTitle}>Tap to select feet:</Text>
-                      <View style={styles.quickStartButtons}>
-                        {['4\'', '5\'', '6\''].map(ft => (
-                          <TouchableOpacity
-                            key={ft}
-                            style={styles.quickStartBtn}
-                            onPress={() => setHeightSearch(ft)}
-                          >
-                            <Text style={styles.quickStartBtnText}>{ft}</Text>
-                          </TouchableOpacity>
-                        ))}
-                      </View>
-                    </View>
-                  ) : (
-                    <View style={styles.chipsContainer}>
-                      <Text style={styles.chipsTitle}>Choose inches for {heightSearch}:</Text>
-                      <View style={styles.chipsGrid}>
-                        {Array.from({ length: 12 }).map((_, inch) => {
-                          const option = `${heightSearch}${inch}"`;
-                          const isSelected = formData.height === option;
-                          return (
-                            <TouchableOpacity
-                              key={inch}
-                              style={[styles.inchChip, isSelected && styles.inchChipSelected]}
-                              onPress={() => selectOption(option)}
-                            >
-                              <Text style={[styles.inchChipText, isSelected && styles.inchChipTextSelected]}>
-                                {option}
-                              </Text>
-                            </TouchableOpacity>
-                          );
-                        })}
-                      </View>
-                    </View>
-                  )}
-                </ScrollView>
-              </View>
-            ) : (
-              <>
-                <View style={styles.searchBox}>
-                  <MaterialCommunityIcons name="magnify" size={18} color={colors.textMuted} />
-                  <TextInput
-                    style={styles.searchInput}
-                    placeholder={`Search ${getPickerTitle().toLowerCase()}...`}
-                    placeholderTextColor={colors.textMuted}
-                    value={heightSearch}
-                    onChangeText={setHeightSearch}
-                    autoCapitalize="none"
-                  />
-                </View>
-                <FlatList
-                  data={getPickerOptions()}
-                  keyExtractor={(item) => item}
-                  showsVerticalScrollIndicator={false}
-                  renderItem={({ item }) => (
-                    <TouchableOpacity
-                      style={[
-                        styles.optionRow,
-                        formData[pickerField] === item && styles.optionRowSelected,
-                      ]}
-                      onPress={() => selectOption(item)}
-                    >
-                      {formData[pickerField] === item && (
-                        <MaterialCommunityIcons name="check-circle" size={18} color={colors.accent} style={{ marginRight: 8 }} />
-                      )}
-                      <Text style={[
-                        styles.optionText,
-                        formData[pickerField] === item && styles.optionTextSelected,
-                      ]}>
-                        {item}
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                />
-              </>
+      <Modal visible={pickerVisible} transparent animationType="slide" onRequestClose={() => setPickerVisible(false)}>
+        <Pressable style={styles.modalOverlay} onPress={() => setPickerVisible(false)} />
+        <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 18) }]}>
+          <View style={styles.sheetHandle} />
+          <Text style={styles.sheetTitle}>{pickerTitle()}</Text>
+          <FlatList
+            data={pickerOptions()}
+            keyExtractor={(item) => String(item)}
+            style={styles.sheetList}
+            renderItem={({ item }) => (
+              <Pressable
+                style={styles.option}
+                onPress={() => {
+                  updateForm(pickerField, item);
+                  setPickerVisible(false);
+                }}
+              >
+                <Text style={styles.optionText}>{item}</Text>
+                {formData[pickerField] === item ? <MaterialCommunityIcons name="check" size={20} color={colors.primary} /> : null}
+              </Pressable>
             )}
-          </View>
+          />
         </View>
       </Modal>
+    </AppBackground>
+  );
+}
+
+function AccountStep({ formData, updateForm, errors, showPassword, setShowPassword }) {
+  return (
+    <View style={styles.section}>
+      <TrustBadge icon="shield-account-outline" label="Private account setup" tone="trust" />
+      <Text style={styles.title}>Start with the basics</Text>
+      <Text style={styles.subtitle}>Use real details. They help keep the community reliable and improve match quality.</Text>
+
+      <View>
+        <Text style={styles.label}>Profile created for</Text>
+        <View style={styles.genderRow}>
+          <Chip label="Male" icon="human-male" active={formData.gender === 'male'} onPress={() => updateForm('gender', 'male')} style={styles.genderChip} />
+          <Chip label="Female" icon="human-female" active={formData.gender === 'female'} onPress={() => updateForm('gender', 'female')} style={styles.genderChip} />
+        </View>
+        {errors.gender ? <Text style={styles.error}>{errors.gender}</Text> : null}
+      </View>
+
+      <Field label="Full name" icon="account-outline" value={formData.name} onChangeText={(v) => updateForm('name', v)} placeholder="Enter full name" autoCapitalize="words" error={errors.name} />
+      <Field label="Email address" icon="email-outline" value={formData.email} onChangeText={(v) => updateForm('email', v.toLowerCase())} placeholder="name@example.com" keyboardType="email-address" autoCapitalize="none" error={errors.email} />
+      <Field label="Phone number" icon="phone-outline" value={formData.phone} onChangeText={(v) => updateForm('phone', v)} placeholder="+92 3XX XXXXXXX" keyboardType="phone-pad" error={errors.phone} />
+      <Field
+        label="Password"
+        icon="lock-outline"
+        value={formData.password}
+        onChangeText={(v) => updateForm('password', v)}
+        placeholder="At least 8 characters"
+        secureTextEntry={!showPassword}
+        error={errors.password}
+        right={
+          <Pressable onPress={() => setShowPassword((v) => !v)} hitSlop={10}>
+            <MaterialCommunityIcons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color={colors.textMuted} />
+          </Pressable>
+        }
+      />
     </View>
   );
 }
 
-const InputField = ({ label, icon, rightIcon, onRightIconPress, onChange, ...props }) => {
-  const [focused, setFocused] = useState(false);
+function DetailsStep({ formData, updateForm, errors, openPicker }) {
   return (
-    <View style={styles.inputGroup}>
-      <Text style={styles.inputLabel}>{label}</Text>
-      <View style={[styles.inputContainer, focused && styles.inputContainerFocused]}>
-        <MaterialCommunityIcons
-          name={icon}
-          size={20}
-          color={focused ? colors.accent : colors.textMuted}
-        />
-        <TextInput
-          style={[styles.input, props.multiline && { height: 100, textAlignVertical: 'top' }]}
-          placeholderTextColor={colors.textMuted}
-          onChangeText={onChange}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          {...props}
-        />
-        {rightIcon && (
-          <TouchableOpacity onPress={onRightIconPress} style={styles.rightIconBtn}>
-            <MaterialCommunityIcons name={rightIcon} size={20} color={colors.textMuted} />
-          </TouchableOpacity>
-        )}
+    <View style={styles.section}>
+      <TrustBadge icon="account-details-outline" label="Match details" />
+      <Text style={styles.title}>Tell us what matters</Text>
+      <Text style={styles.subtitle}>These details help people understand compatibility before sending requests.</Text>
+
+      <View style={styles.row}>
+        <Field label="Age" icon="calendar-outline" value={formData.age} onChangeText={(v) => updateForm('age', v)} placeholder="25" keyboardType="numeric" error={errors.age} style={styles.rowItem} />
+        <SelectField label="Height" icon="human-height" value={formData.height} placeholder="Select" onPress={() => openPicker('height')} style={styles.rowItem} />
+      </View>
+      {errors.height ? <Text style={styles.error}>{errors.height}</Text> : null}
+      <SelectField label="Region" icon="map-marker-radius-outline" value={formData.region} placeholder="Select region" onPress={() => openPicker('region')} />
+      {errors.region ? <Text style={styles.error}>{errors.region}</Text> : null}
+      <SelectField label="City" icon="map-marker-outline" value={formData.city} placeholder="Select city" onPress={() => openPicker('city')} />
+      {errors.city ? <Text style={styles.error}>{errors.city}</Text> : null}
+      <SelectField label="Education" icon="school-outline" value={formData.education} placeholder="Select education" onPress={() => openPicker('education')} />
+      {errors.education ? <Text style={styles.error}>{errors.education}</Text> : null}
+      <SelectField label="Cast / community" icon="account-group-outline" value={formData.cast} placeholder="Optional" onPress={() => openPicker('cast')} />
+      <Field label="About" value={formData.about} onChangeText={(v) => updateForm('about', v)} placeholder="A short respectful intro..." multiline inputStyle={styles.aboutInput} />
+    </View>
+  );
+}
+
+function PrivacyStep({ formData, updateForm }) {
+  return (
+    <View style={styles.section}>
+      <TrustBadge icon="lock-check-outline" label="Privacy defaults" tone="trust" />
+      <Text style={styles.title}>Choose your comfort level</Text>
+      <Text style={styles.subtitle}>You can change these settings later from your profile.</Text>
+
+      <PrivacyChoice
+        title="Who can see your profile picture?"
+        value={formData.profilePhotoVisibility}
+        onChange={(value) => updateForm('profilePhotoVisibility', value)}
+      />
+      <PrivacyChoice
+        title="Who can see your photo gallery?"
+        value={formData.photoVisibility}
+        onChange={(value) => {
+          updateForm('photoVisibility', value);
+          updateForm('hidePhotos', value === 'connected');
+        }}
+      />
+
+      <View style={styles.note}>
+        <MaterialCommunityIcons name="information-outline" size={20} color={colors.info} />
+        <Text style={styles.noteText}>
+          Shadii.pk uses verification, request controls, reporting, and blocking to keep conversations respectful.
+        </Text>
       </View>
     </View>
   );
-};
+}
+
+function PrivacyChoice({ title, value, onChange }) {
+  return (
+    <View style={styles.privacyChoice}>
+      <Text style={styles.privacyTitle}>{title}</Text>
+      <View style={styles.visibilityGrid}>
+        {PHOTO_VISIBILITY_OPTIONS.map((option) => (
+          <Pressable
+            key={option.id}
+            onPress={() => onChange(option.id)}
+            style={[styles.visibilityOption, value === option.id && styles.visibilityOptionActive]}
+          >
+            <Text style={[styles.visibilityLabel, value === option.id && styles.visibilityLabelActive]}>{option.label}</Text>
+            <Text style={[styles.visibilityHelper, value === option.id && styles.visibilityHelperActive]}>{option.helper}</Text>
+          </Pressable>
+        ))}
+      </View>
+    </View>
+  );
+}
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1 },
-  scroll: { padding: 24, paddingBottom: 40 },
-  header: { marginBottom: 32, alignItems: 'center' },
-  title: { fontSize: 32, fontWeight: '900', color: colors.text, letterSpacing: -1 },
-  subtitle: { fontSize: 14, color: colors.accent, marginTop: 4 },
-  stepIndicator: { flexDirection: 'row', alignItems: 'center', marginTop: 24, gap: 8 },
-  stepDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.surfaceLight },
-  stepDotActive: { backgroundColor: colors.accent, width: 24 },
-  stepLine: { width: 40, height: 2, backgroundColor: colors.surfaceLight },
-  stepLineActive: { backgroundColor: colors.accent },
-  stepLabel: { fontSize: 12, color: colors.textSecondary, marginTop: 8, fontWeight: '600' },
-
-  card: { backgroundColor: 'rgba(26, 26, 26, 0.6)', padding: 24 },
-  cardContent: {},
-  sectionTitle: { fontSize: 20, fontWeight: '800', color: colors.text, marginBottom: 24 },
-  label: { fontSize: 12, fontWeight: '700', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 },
-
-  genderRow: { flexDirection: 'row', gap: 12, marginBottom: 24 },
-  genderBtn: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8, paddingVertical: 16, borderRadius: 16,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', backgroundColor: colors.surfaceLight,
+  scroll: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.xxxl,
+    gap: spacing.lg,
   },
-  genderActive: { borderColor: colors.accent, backgroundColor: colors.accent },
-  genderText: { fontSize: 14, color: colors.textSecondary, fontWeight: '700' },
-  genderTextActive: { color: colors.maroon },
-
-  inputGroup: { marginBottom: 20 },
-  inputLabel: { fontSize: 12, fontWeight: '700', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 },
-  passwordHint: { fontSize: 11, color: 'rgba(245,230,200,0.35)', marginTop: -8, marginBottom: 12, paddingHorizontal: 4 },
-  inputContainer: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: colors.surfaceLight,
-    borderRadius: 16, paddingHorizontal: 16,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)',
-  },
-  inputContainerFocused: {
-    borderColor: 'rgba(212,175,55,0.6)',
-    backgroundColor: 'rgba(212,175,55,0.04)',
-  },
-  input: { flex: 1, paddingVertical: 16, marginLeft: 12, color: colors.text, fontSize: 16 },
-  rightIconBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
-  row: { flexDirection: 'row', marginBottom: 4 },
-
-  pickerBtn: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: colors.surfaceLight,
-    borderRadius: 16, paddingHorizontal: 16, paddingVertical: 16,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)',
-    marginBottom: 20, gap: 12,
-  },
-  pickerBtnText: { flex: 1, color: colors.textMuted, fontSize: 16 },
-
-  footer: { marginTop: 12 },
-  btnContainer: { borderRadius: 16, overflow: 'hidden' },
-  btn: { paddingVertical: 16, alignItems: 'center' },
-  btnText: { color: colors.maroon, fontSize: 16, fontWeight: '800' },
-  backBtn: { alignItems: 'center', marginTop: 20 },
-  backBtnText: { color: colors.textSecondary, fontSize: 14, fontWeight: '600' },
-
-  // Modal styles
-  modalOverlay: { flex: 1, justifyContent: 'flex-end' },
-  modalBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.6)' },
-  modalSheet: {
-    backgroundColor: colors.surface,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
-    maxHeight: '75%',
-    width: '100%',
-  },
-  modalHandle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    alignSelf: 'center',
-    marginBottom: 16,
-  },
-  toggleRow: {
+  stepper: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 16,
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.06)',
+    gap: spacing.sm,
   },
-  toggleLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  toggleDesc: {
-    fontSize: 11,
-    color: colors.textSecondary,
-    marginTop: 2,
-    lineHeight: 14,
-  },
-  heightPickerContainer: {
+  stepItem: {
     flex: 1,
-    minHeight: 250,
-  },
-  suggestionsScroll: {
-    paddingVertical: 12,
-  },
-  quickStartContainer: {
-    paddingVertical: 16,
     alignItems: 'center',
+    gap: 6,
   },
-  quickStartTitle: {
-    color: colors.textSecondary,
-    fontSize: 14,
-    marginBottom: 12,
-  },
-  quickStartButtons: {
-    flexDirection: 'row',
-    gap: 16,
-  },
-  quickStartBtn: {
-    width: 64,
-    height: 48,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    backgroundColor: 'rgba(255,255,255,0.03)',
+  stepDot: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  quickStartBtnText: {
-    color: colors.accent,
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  chipsContainer: {
-    paddingVertical: 8,
-  },
-  chipsTitle: {
-    color: colors.textSecondary,
-    fontSize: 13,
-    marginBottom: 12,
-  },
-  chipsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  inchChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-    backgroundColor: 'rgba(255,255,255,0.02)',
-    minWidth: '22%',
-    alignItems: 'center',
+    borderColor: colors.border,
   },
-  inchChipSelected: {
-    borderColor: colors.accent,
-    backgroundColor: 'rgba(212,175,55,0.1)',
+  stepDotActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
-  inchChipText: {
-    color: colors.textSecondary,
-    fontSize: 13,
+  stepNum: {
+    color: colors.textMuted,
+    fontWeight: '900',
   },
-  inchChipTextSelected: {
-    color: colors.accent,
+  stepNumActive: {
+    color: '#FFFFFF',
+  },
+  stepText: {
+    color: colors.textMuted,
+    fontSize: 12,
     fontWeight: '700',
   },
-  modalHeader: {
-    flexDirection: 'row', alignItems: 'center',
+  stepTextActive: {
+    color: colors.primary,
+  },
+  card: {
+    padding: spacing.lg,
+  },
+  section: {
+    gap: spacing.md,
+  },
+  title: {
+    color: colors.text,
+    fontSize: 25,
+    lineHeight: 31,
+    fontWeight: '900',
+  },
+  subtitle: {
+    color: colors.textSecondary,
+    fontSize: 14,
+    lineHeight: 21,
+  },
+  label: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    fontWeight: '800',
+    marginBottom: 8,
+  },
+  genderRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  genderChip: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  row: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  rowItem: {
+    flex: 1,
+  },
+  aboutInput: {
+    minHeight: 88,
+    textAlignVertical: 'top',
+    paddingTop: 14,
+  },
+  error: {
+    color: colors.error,
+    fontSize: 12,
+    fontWeight: '700',
+    marginTop: -6,
+  },
+  privacyCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.md,
+    borderRadius: radius.lg,
+    backgroundColor: colors.backgroundSoft,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  privacyChoice: {
+    gap: spacing.sm,
+  },
+  visibilityGrid: {
+    gap: spacing.sm,
+  },
+  visibilityOption: {
+    padding: spacing.md,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  visibilityOptionActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  visibilityLabel: {
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  visibilityLabelActive: {
+    color: '#FFFFFF',
+  },
+  visibilityHelper: {
+    color: colors.textMuted,
+    fontSize: 12,
+    fontWeight: '700',
+    marginTop: 3,
+  },
+  visibilityHelperActive: {
+    color: '#F8E7ED',
+  },
+  privacyTitle: {
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  privacyBody: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    lineHeight: 19,
+    marginTop: 3,
+  },
+  note: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderRadius: radius.lg,
+    backgroundColor: '#EEF6FD',
+  },
+  noteText: {
+    flex: 1,
+    color: colors.textSecondary,
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  actions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  actionButton: {
+    flex: 1,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(32,33,36,0.34)',
+  },
+  sheet: {
+    maxHeight: '70%',
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: radius.xxl,
+    borderTopRightRadius: radius.xxl,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+  },
+  sheetHandle: {
+    width: 44,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: colors.borderStrong,
+    alignSelf: 'center',
+    marginBottom: spacing.md,
+  },
+  sheetTitle: {
+    color: colors.text,
+    fontSize: 20,
+    fontWeight: '900',
+    marginBottom: spacing.sm,
+  },
+  sheetList: {
+    marginHorizontal: -spacing.lg,
+  },
+  option: {
+    minHeight: 54,
+    flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20, paddingVertical: 16,
-    borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)',
+    paddingHorizontal: spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.divider,
   },
-  modalTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
-  searchBox: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: colors.surfaceLight,
-    marginHorizontal: 16, marginTop: 12,
-    borderRadius: 12, paddingHorizontal: 12,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.07)',
+  optionText: {
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: '600',
   },
-  searchInput: { flex: 1, paddingVertical: 12, marginLeft: 8, color: colors.text, fontSize: 16 },
-  optionRow: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingVertical: 14, paddingHorizontal: 20,
-    borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.03)',
-  },
-  optionRowSelected: { backgroundColor: 'rgba(212,175,55,0.08)' },
-  optionText: { fontSize: 16, color: colors.textSecondary },
-  optionTextSelected: { color: colors.accent, fontWeight: '700' },
 });

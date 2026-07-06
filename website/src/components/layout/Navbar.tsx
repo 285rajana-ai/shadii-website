@@ -5,11 +5,11 @@ import { useEffect, useState } from "react";
 import { BrandMark } from "../ui/BrandMark";
 
 const links = [
-    { href: "#features", label: "Features" },
-    { href: "#how-it-works", label: "Journey" },
-    { href: "#pricing", label: "Plans" },
-    { href: "#testimonials", label: "Stories" },
-    { href: "#faq", label: "FAQ" },
+    { href: "/#features", label: "Features" },
+    { href: "/#how-it-works", label: "Journey" },
+    { href: "/#pricing", label: "Plans" },
+    { href: "/#testimonials", label: "Stories" },
+    { href: "/contact-us", label: "Contact" },
 ];
 
 export function Navbar() {

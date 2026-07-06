@@ -72,8 +72,8 @@ export default function LivePhotoScreen({ route, navigation }) {
   };
 
   return (
-    <LinearGradient colors={['#1A000A', '#0D0509', '#0D0D0D']} style={styles.container}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+    <LinearGradient colors={colors.gradients.hero} style={styles.container}>
+      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <MaterialCommunityIcons name="chevron-left" size={26} color={colors.accent} />
@@ -126,7 +126,7 @@ export default function LivePhotoScreen({ route, navigation }) {
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.btnWrap} onPress={handleSubmit} disabled={loading}>
-          <LinearGradient colors={loading ? ['#555', '#333'] : colors.gradients.primary} style={styles.btn}>
+          <LinearGradient colors={loading ? ['#CFC6BB', '#BDB3A8'] : colors.gradients.primary} style={styles.btn}>
             <Text style={styles.btnText}>{loading ? 'Submitting...' : 'Submit for Review'}</Text>
           </LinearGradient>
         </TouchableOpacity>
@@ -142,17 +142,17 @@ export default function LivePhotoScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { paddingBottom: 16, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center' },
-  backBtn: { width: 40, height: 40, borderRadius: 20, marginRight: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  backBtn: { width: 40, height: 40, borderRadius: 20, marginRight: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
   headerTitle: { fontSize: 20, fontWeight: '700', color: colors.text },
   content: { padding: 24, flex: 1 },
   title: { fontSize: 24, fontWeight: '800', color: colors.text, marginBottom: 8 },
   subtitle: { fontSize: 14, color: colors.textSecondary, marginBottom: 20, lineHeight: 22 },
-  instructionBox: { backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 14, padding: 16, marginBottom: 24, gap: 10, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' },
+  instructionBox: { backgroundColor: colors.surface, borderRadius: 14, padding: 16, marginBottom: 24, gap: 10, borderWidth: 1, borderColor: colors.border },
   instructionRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   instructionText: { fontSize: 13, color: colors.textSecondary, flex: 1 },
   cameraCard: {
     height: 240, borderRadius: 20, marginBottom: 24,
-    backgroundColor: 'rgba(255,255,255,0.05)', borderWidth: 2, borderColor: 'rgba(212,175,55,0.3)',
+    backgroundColor: colors.surface, borderWidth: 2, borderColor: 'rgba(212,175,55,0.3)',
     borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
   },
   previewImage: { width: '100%', height: '100%', resizeMode: 'cover' },

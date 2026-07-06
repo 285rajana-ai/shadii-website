@@ -1,27 +1,27 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Dimensions,
   Image,
+  Pressable,
   RefreshControl,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
+import PrimaryButton from '../../components/ui/PrimaryButton';
+import { AppBackground, Card, EmptyState, TrustBadge } from '../../components/ui/LightPrimitives';
 import colors from '../../theme/colors';
 import { radius, spacing } from '../../theme/spacing';
 import { API_BASE_URL } from '../../utils/constants';
 
 const { width } = Dimensions.get('window');
-const CARD_WIDTH = width * 0.78;
+const CARD_WIDTH = Math.min(width * 0.76, 310);
 
 export default function HomeScreen({ navigation }) {
   const { user, token } = useSelector((s) => s.auth);
@@ -31,7 +31,6 @@ export default function HomeScreen({ navigation }) {
   const [refreshing, setRefreshing] = useState(false);
   const [unreadNotif, setUnreadNotif] = useState(0);
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(30)).current;
 
   const fetchMatches = async () => {
     try {
@@ -39,9 +38,7 @@ export default function HomeScreen({ navigation }) {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      if (data.success) {
-        setMatches(data.matches || []);
-      }
+      if (data.success) setMatches(data.matches || []);
     } catch (_) {
     } finally {
       setLoading(false);
@@ -62,13 +59,9 @@ export default function HomeScreen({ navigation }) {
   };
 
   useEffect(() => {
-    setLoading(true);
     fetchMatches();
     fetchUnreadCount();
-    Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: 500, useNativeDriver: true }),
-    ]).start();
+    Animated.timing(fadeAnim, { toValue: 1, duration: 420, useNativeDriver: true }).start();
   }, []);
 
   const onRefresh = () => {
@@ -77,409 +70,408 @@ export default function HomeScreen({ navigation }) {
     fetchUnreadCount();
   };
 
-  const getGreeting = () => {
-    const h = new Date().getHours();
-    if (h < 12) return 'Good Morning';
-    if (h < 17) return 'Good Afternoon';
-    return 'Good Evening';
-  };
+  const firstName = user?.name?.split(' ')[0] || 'Friend';
+  const completion = user?.profileCompleteness || 65;
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-      <LinearGradient colors={['#1A000A', '#0D0509', '#0D0D0D']} style={StyleSheet.absoluteFill} />
-      {/* Ambient glow orbs */}
-      <View style={styles.orb1} />
-      <View style={styles.orb2} />
-
+    <AppBackground>
+      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
       <ScrollView
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
-        contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 16 }]}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} colors={[colors.primary]} />}
+        contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 16 }]}
       >
-        <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
-          {/* Header Section */}
+        <Animated.View style={{ opacity: fadeAnim }}>
           <View style={styles.header}>
-            <View style={styles.headerTop}>
-              <View>
-                <Text style={styles.greetingText}>{getGreeting()},</Text>
-                <Text style={styles.userName}>{user?.name?.split(' ')[0] || 'User'} 🌹</Text>
-              </View>
-              <TouchableOpacity
-                style={styles.notifBtn}
-                onPress={() => navigation.navigate('Notifications')}
-              >
-                <MaterialCommunityIcons name="bell-outline" size={22} color={colors.text} />
-                {unreadNotif > 0 && <View style={styles.notifBadge} />}
-              </TouchableOpacity>
+            <View>
+              <Text style={styles.eyebrow}>Welcome back</Text>
+              <Text style={styles.title}>{firstName}</Text>
             </View>
-
-            {/* Stats strip */}
-            <View style={styles.statsStrip}>
-              {[{ icon: 'eye-outline', val: user?.profileViews || 0, label: 'Views' },
-              { icon: 'heart-outline', val: user?.likeCount ?? 0, label: 'Likes' },
-              { icon: 'account-check-outline', val: user?.subscription?.isActive ? user.subscription.plan : 'Free', label: 'Plan' },
-              ].map((s, i) => (
-                <View key={i} style={[styles.statItem, i < 2 && styles.statBorder]}>
-                  <MaterialCommunityIcons name={s.icon} size={16} color={colors.accent} />
-                  <Text style={styles.statVal}>{s.val}</Text>
-                  <Text style={styles.statLabel}>{s.label}</Text>
-                </View>
-              ))}
-            </View>
-
-            {!user?.subscription?.isActive && (
-              <TouchableOpacity
-                onPress={() => navigation.navigate('Plans')}
-                style={styles.upgradeCard}
-                activeOpacity={0.85}
-              >
-                <LinearGradient
-                  colors={['rgba(212,175,55,0.22)', 'rgba(92,15,49,0.15)', 'rgba(212,175,55,0.08)']}
-                  style={StyleSheet.absoluteFill}
-                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                />
-                <LinearGradient colors={colors.gradients.gold} style={styles.upgradeIconBg}>
-                  <MaterialCommunityIcons name="crown" size={20} color={colors.maroon} />
-                </LinearGradient>
-                <View style={{ flex: 1, marginLeft: 12 }}>
-                  <Text style={styles.upgradeTitle}>Unlock Premium Experience</Text>
-                  <Text style={styles.upgradeSub}>Starting from PKR 1,000 • Cancel anytime</Text>
-                </View>
-                <MaterialCommunityIcons name="chevron-right" size={22} color={colors.accent} />
-              </TouchableOpacity>
-            )}
+            <Pressable style={styles.iconButton} onPress={() => navigation.navigate('Notifications')}>
+              <MaterialCommunityIcons name="bell-outline" size={22} color={colors.text} />
+              {unreadNotif > 0 ? <View style={styles.notifDot} /> : null}
+            </Pressable>
           </View>
 
-          {/* Today's Premium Picks */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <View style={styles.sectionTitleRow}>
-                <View style={styles.sectionAccentBar} />
-                <Text style={styles.sectionTitle}>Today's Premium Picks</Text>
-              </View>
-              <TouchableOpacity onPress={() => navigation.navigate('Discover')} style={styles.seeAllBtn}>
-                <Text style={styles.seeAll}>See All</Text>
-                <MaterialCommunityIcons name="arrow-right" size={14} color={colors.accent} />
-              </TouchableOpacity>
+          <Card style={styles.profileCard}>
+            <View style={styles.profileTop}>
+              <TrustBadge icon="shield-check-outline" label={user?.isVerified ? 'Verified profile' : 'Verification pending'} tone={user?.isVerified ? 'trust' : 'primary'} />
+              <Text style={styles.profileScore}>{completion}%</Text>
             </View>
+            <Text style={styles.profileTitle}>Complete profile, better matches</Text>
+            <Text style={styles.profileBody}>Add clear details, privacy preferences, and verification to improve serious match quality.</Text>
+            <View style={styles.progressTrack}>
+              <View style={[styles.progressFill, { width: `${Math.min(completion, 100)}%` }]} />
+            </View>
+            <View style={styles.profileActions}>
+              <PrimaryButton label="Edit profile" icon="pencil-outline" onPress={() => navigation.navigate('EditProfile')} style={styles.profileAction} />
+              <PrimaryButton label="Verify" variant="secondary" icon="check-decagram-outline" onPress={() => navigation.navigate('Verification')} style={styles.profileAction} />
+            </View>
+          </Card>
 
-            {loading ? (
-              <MatchCardSkeleton />
-            ) : matches.length === 0 ? (
-              <TouchableOpacity
-                style={styles.emptyMatchesCard}
-                onPress={() => navigation.navigate('Discover')}
-                activeOpacity={0.8}
-              >
-                <MaterialCommunityIcons name="heart-search" size={40} color={colors.accent} />
-                <Text style={styles.emptyMatchesText}>Complete your profile to get matched</Text>
-                <Text style={styles.emptyMatchesSub}>Tap to discover profiles →</Text>
-              </TouchableOpacity>
-            ) : (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                snapToInterval={CARD_WIDTH + 16}
-                decelerationRate="fast"
-                contentContainerStyle={styles.matchesScroll}
-              >
-                {matches.map((match) => (
-                  <MatchCard key={String(match.id || match._id)} match={match} navigation={navigation} />
-                ))}
-              </ScrollView>
-            )}
+          {!user?.subscription?.isActive ? (
+            <Pressable style={styles.membership} onPress={() => navigation.navigate('Plans')}>
+              <View style={styles.membershipIcon}>
+                <MaterialCommunityIcons name="crown-outline" size={22} color={colors.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.membershipTitle}>Premium unlocks safer discovery</Text>
+                <Text style={styles.membershipText}>View more matches, send more requests, and unlock approved contacts.</Text>
+              </View>
+              <MaterialCommunityIcons name="chevron-right" size={22} color={colors.textMuted} />
+            </Pressable>
+          ) : null}
+
+          <View style={styles.sectionHeader}>
+            <View>
+              <Text style={styles.sectionKicker}>Today</Text>
+              <Text style={styles.sectionTitle}>Recommended matches</Text>
+            </View>
+            <Pressable onPress={() => navigation.navigate('Discover')} hitSlop={10}>
+              <Text style={styles.link}>See all</Text>
+            </Pressable>
           </View>
 
-          {/* Exclusive Quick Actions */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <View style={styles.sectionTitleRow}>
-                <View style={styles.sectionAccentBar} />
-                <Text style={styles.sectionTitle}>Exclusive Premium Services</Text>
-              </View>
-            </View>
-            <View style={styles.actionsGrid}>
-              <QuickAction icon="account-search-outline" title="Discover" sub="Find matches" onPress={() => navigation.navigate('Discover')} premium />
-              <QuickAction icon="shield-check-outline" title="Verify" sub="Get blue tick" onPress={() => navigation.navigate('Verification')} premium />
-              <QuickAction icon="lightning-bolt" title="Boost" sub="Top of results" onPress={() => navigation.navigate('Boost')} highlight premium />
-              <QuickAction icon="message-text-outline" title="Messages" sub="Your chats" onPress={() => navigation.navigate('ChatList')} premium />
-            </View>
-          </View>
-
-          {/* Profile Progress */}
-          <View style={styles.section}>
-            <TouchableOpacity
-              style={styles.progressCard}
-              onPress={() => navigation.navigate('EditProfile')}
-              activeOpacity={0.85}
-            >
-              <LinearGradient
-                colors={['rgba(92,15,49,0.4)', 'rgba(26,0,10,0.6)']}
-                style={StyleSheet.absoluteFill}
-                borderRadius={24}
+          {loading ? (
+            <LoadingMatchCard />
+          ) : matches.length === 0 ? (
+            <Card>
+              <EmptyState
+                icon="account-heart-outline"
+                title="No daily matches yet"
+                body="Complete your profile and adjust discovery filters to receive stronger suggestions."
+                action={<PrimaryButton label="Open discover" variant="secondary" onPress={() => navigation.navigate('Discover')} style={{ marginTop: spacing.sm }} />}
               />
-              <View style={styles.progressTop}>
-                <View style={styles.progressInfo}>
-                  <Text style={styles.progressTitle}>Complete Your Profile</Text>
-                  <Text style={styles.progressSub}>{user?.profileCompleteness || 65}% done • Tap to finish</Text>
-                </View>
-                <View style={styles.progressCircle}>
-                  <Text style={styles.progressPercent}>{user?.profileCompleteness || 65}%</Text>
-                </View>
-              </View>
-              <View style={styles.progressBarBg}>
-                <LinearGradient
-                  colors={colors.gradients.gold}
-                  style={[styles.progressBarFill, { width: `${user?.profileCompleteness || 65}%` }]}
-                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                />
-              </View>
-            </TouchableOpacity>
-          </View>
+            </Card>
+          ) : (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.matchScroll}>
+              {matches.map((match) => (
+                <MatchCard key={String(match.id || match._id)} match={match} navigation={navigation} />
+              ))}
+            </ScrollView>
+          )}
 
-          <View style={{ height: 120 }} />
+          <View style={styles.sectionHeader}>
+            <View>
+              <Text style={styles.sectionKicker}>Shortcuts</Text>
+              <Text style={styles.sectionTitle}>Your next action</Text>
+            </View>
+          </View>
+          <View style={styles.grid}>
+            <QuickAction icon="card-search-outline" title="Discover" body="Browse profiles" onPress={() => navigation.navigate('Discover')} />
+            <QuickAction icon="account-arrow-down-outline" title="Requests" body="Review incoming" onPress={() => navigation.navigate('IncomingRequests')} />
+            <QuickAction icon="message-text-outline" title="Messages" body="Continue chats" onPress={() => navigation.navigate('ChatList')} />
+            <QuickAction icon="rocket-launch-outline" title="Boost" body="Get noticed" onPress={() => navigation.navigate('Boost')} />
+          </View>
         </Animated.View>
+        <View style={{ height: 112 }} />
       </ScrollView>
-    </View>
+    </AppBackground>
   );
 }
 
 function MatchCard({ match, navigation }) {
-  // API returns: { id, name, age, city, photo, isVerified, isOnline, matchScore }
-  // photo is singular field from backend
-  const photo = match.photo || (match.photos && match.photos[0]);
+  const photo = match.photo || match.photos?.[0];
   const userId = match.id || match._id;
-  const score = match.matchScore ? `${Math.round(match.matchScore)}%` : (match.compatibility || '');
   return (
-    <TouchableOpacity
-      style={styles.matchCard}
-      onPress={() => navigation.navigate('ProfileDetail', { userId })}
-      activeOpacity={0.9}
-    >
-      {photo ? (
-        <Image source={{ uri: photo }} style={styles.matchPhoto} />
-      ) : (
-        <LinearGradient colors={colors.gradients.royal} style={styles.matchPhoto} />
-      )}
-      {/* Blur overlay for unconnected matches */}
-      {match.isPhotoBlurred && photo && (
-        <BlurView intensity={85} tint="dark" style={[StyleSheet.absoluteFillObject, styles.matchBlurOverlay]}>
-          <MaterialCommunityIcons name="lock" size={26} color="rgba(255,255,255,0.9)" />
-          <Text style={styles.matchBlurText}>Connect to view</Text>
-        </BlurView>
-      )}
-      <LinearGradient
-        colors={['transparent', 'rgba(0,0,0,0.9)']}
-        style={styles.matchGradient}
-      />
-
-      <View style={styles.matchContent}>
-        <View style={styles.matchTopInfo}>
-          <View style={styles.matchHeaderRow}>
-            <Text style={styles.matchName} numberOfLines={1}>{match.name}, {match.age}</Text>
-            {match.isVerified && (
-              <MaterialCommunityIcons name="check-decagram" size={18} color={colors.accent} />
-            )}
+    <Pressable style={styles.matchCard} onPress={() => navigation.navigate('ProfileDetail', { userId })}>
+      <View style={styles.matchPhotoWrap}>
+        {photo ? (
+          <Image source={{ uri: photo }} style={styles.matchPhoto} />
+        ) : (
+          <View style={styles.matchPhotoFallback}>
+            <Text style={styles.initial}>{match.name?.[0] || '?'}</Text>
           </View>
-          <Text style={styles.matchLocation} numberOfLines={1}>
-            <MaterialCommunityIcons name="map-marker" size={12} color="rgba(255,255,255,0.7)" /> {match.city}
-          </Text>
+        )}
+        {match.isPhotoBlurred ? (
+          <View style={styles.privateOverlay}>
+            <MaterialCommunityIcons name="lock-outline" size={22} color={colors.primary} />
+            <Text style={styles.privateText}>Private photo</Text>
+          </View>
+        ) : null}
+      </View>
+      <View style={styles.matchInfo}>
+        <View style={styles.matchNameRow}>
+          <Text style={styles.matchName} numberOfLines={1}>{match.name}, {match.age}</Text>
+          {match.isVerified ? <MaterialCommunityIcons name="check-decagram" size={17} color={colors.success} /> : null}
         </View>
-
+        <Text style={styles.matchMeta} numberOfLines={1}>{match.city || 'Pakistan'} • {match.education || 'Profile details'}</Text>
         <View style={styles.matchFooter}>
-          {score ? (
-            <View style={styles.compatibilityBadge}>
-              <Text style={styles.compatibilityText}>{score} Match</Text>
-            </View>
-          ) : <View />}
-          <TouchableOpacity
-            style={[styles.chatIconButton, match.isPhotoBlurred && { backgroundColor: 'rgba(255,255,255,0.08)', shadowColor: 'transparent' }]}
-            onPress={() => {
-              if (match.isPhotoBlurred) {
-                navigation.navigate('ProfileDetail', { userId });
-              } else {
-                navigation.navigate('ChatDetail', { userId, userName: match.name, isOnline: match.isOnline, lastActive: match.lastActive });
-              }
-            }}
-            accessibilityLabel={`Message ${match.name}`}
-          >
-            <MaterialCommunityIcons
-              name={match.isPhotoBlurred ? 'message-lock' : 'message-text'}
-              size={20}
-              color={match.isPhotoBlurred ? colors.textMuted : colors.primary}
-            />
-          </TouchableOpacity>
+          <TrustBadge icon="heart-outline" label={match.matchScore ? `${Math.round(match.matchScore)}% match` : 'Recommended'} />
         </View>
       </View>
-    </TouchableOpacity>
+    </Pressable>
   );
 }
 
-function QuickAction({ icon, title, sub, onPress, highlight }) {
+function QuickAction({ icon, title, body, onPress }) {
   return (
-    <TouchableOpacity
-      style={[styles.actionBtn, highlight && styles.actionBtnHighlight]}
-      onPress={onPress}
-      activeOpacity={0.75}
-    >
-      {highlight && <LinearGradient colors={['rgba(212,175,55,0.15)', 'rgba(212,175,55,0.03)']} style={StyleSheet.absoluteFill} borderRadius={20} />}
-      <View style={[styles.actionIconCircle, highlight && styles.actionIconHighlight]}>
-        <MaterialCommunityIcons name={icon} size={22} color={highlight ? colors.maroon : colors.accent} />
+    <Pressable style={styles.quickCard} onPress={onPress}>
+      <View style={styles.quickIcon}>
+        <MaterialCommunityIcons name={icon} size={22} color={colors.primary} />
       </View>
-      <Text style={[styles.actionLabel, highlight && { color: colors.accent }]}>{title}</Text>
-      {sub && <Text style={styles.actionSub}>{sub}</Text>}
-    </TouchableOpacity>
+      <Text style={styles.quickTitle}>{title}</Text>
+      <Text style={styles.quickBody}>{body}</Text>
+    </Pressable>
+  );
+}
+
+function LoadingMatchCard() {
+  return (
+    <Card style={styles.loadingCard}>
+      <View style={styles.loadingPhoto} />
+      <View style={styles.loadingLine} />
+      <View style={[styles.loadingLine, { width: '52%' }]} />
+    </Card>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  orb1: { position: 'absolute', width: width * 0.7, height: width * 0.7, borderRadius: width * 0.35, top: -width * 0.2, right: -width * 0.15, backgroundColor: 'rgba(139,26,74,0.12)' },
-  orb2: { position: 'absolute', width: width * 0.6, height: width * 0.6, borderRadius: width * 0.3, bottom: width * 0.3, left: -width * 0.2, backgroundColor: 'rgba(212,175,55,0.06)' },
-  scrollContent: { paddingBottom: 112 },
-  header: { paddingHorizontal: spacing.lg, marginBottom: 24 },
-  headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  greetingText: { color: colors.textSecondary, fontSize: 14, fontWeight: '500', letterSpacing: 0.3 },
-  userName: { color: colors.text, fontSize: 32, fontWeight: '900', marginTop: 2, letterSpacing: -0.5 },
-  notifBtn: {
-    width: 48, height: 48, borderRadius: 24,
-    backgroundColor: 'rgba(255,255,255,0.07)',
-    alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)'
+  scroll: {
+    paddingHorizontal: spacing.lg,
   },
-  notifBadge: {
-    position: 'absolute', top: 11, right: 12,
-    width: 8, height: 8, borderRadius: 4,
-    backgroundColor: colors.accent, borderWidth: 2, borderColor: colors.background
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.lg,
   },
-  statsStrip: {
-    flexDirection: 'row', backgroundColor: 'rgba(255,255,255,0.04)',
-    borderRadius: 16, marginBottom: 16, overflow: 'hidden',
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.07)'
+  eyebrow: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    fontWeight: '800',
   },
-  statItem: { flex: 1, alignItems: 'center', paddingVertical: 12, gap: 4 },
-  statBorder: { borderRightWidth: 1, borderRightColor: 'rgba(255,255,255,0.07)' },
-  statVal: { color: colors.text, fontSize: 14, fontWeight: '800' },
-  statLabel: { color: colors.textMuted, fontSize: 11, fontWeight: '500', textTransform: 'uppercase', letterSpacing: 0.5 },
-  upgradeCard: {
-    flexDirection: 'row', alignItems: 'center',
-    padding: 16, borderRadius: 20, overflow: 'hidden',
-    borderWidth: 1, borderColor: 'rgba(212,175,55,0.3)'
+  title: {
+    color: colors.text,
+    fontSize: 32,
+    lineHeight: 38,
+    fontWeight: '900',
   },
-  upgradeIconBg: {
-    width: 40, height: 40, borderRadius: 12,
-    alignItems: 'center', justifyContent: 'center'
+  iconButton: {
+    width: 46,
+    height: 46,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  upgradeTitle: { color: colors.text, fontWeight: '700', fontSize: 14 },
-  upgradeSub: { color: colors.accent, fontSize: 11, marginTop: 3, fontWeight: '500' },
-
-  section: { marginTop: 24 },
+  notifDot: {
+    position: 'absolute',
+    top: 11,
+    right: 12,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.error,
+  },
+  profileCard: {
+    gap: spacing.md,
+  },
+  profileTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  profileScore: {
+    color: colors.primary,
+    fontSize: 22,
+    fontWeight: '900',
+  },
+  profileTitle: {
+    color: colors.text,
+    fontSize: 22,
+    fontWeight: '900',
+  },
+  profileBody: {
+    color: colors.textSecondary,
+    fontSize: 14,
+    lineHeight: 21,
+  },
+  progressTrack: {
+    height: 9,
+    borderRadius: radius.full,
+    backgroundColor: colors.surfaceLight,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: radius.full,
+    backgroundColor: colors.primary,
+  },
+  profileActions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  profileAction: {
+    flex: 1,
+  },
+  membership: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.md,
+    marginTop: spacing.md,
+    borderRadius: radius.xl,
+    backgroundColor: '#FFF4E6',
+    borderWidth: 1,
+    borderColor: '#F0D8B5',
+  },
+  membershipIcon: {
+    width: 46,
+    height: 46,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surface,
+  },
+  membershipTitle: {
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: '900',
+  },
+  membershipText: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 2,
+  },
   sectionHeader: {
-    flexDirection: 'row', justifyContent: 'space-between',
-    alignItems: 'center', paddingHorizontal: spacing.lg, marginBottom: 16
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    marginTop: spacing.xl,
+    marginBottom: spacing.md,
   },
-  sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  sectionAccentBar: { width: 3, height: 20, borderRadius: 2, backgroundColor: colors.accent },
-  sectionTitle: { fontSize: 20, fontWeight: '800', color: colors.text, letterSpacing: -0.3 },
-  seeAllBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  seeAll: { color: colors.accent, fontWeight: '600', fontSize: 12 },
-
-  matchesScroll: { paddingHorizontal: spacing.lg, gap: 16 },
-  emptyMatchesCard: {
-    marginHorizontal: spacing.lg, padding: 32, borderRadius: radius.xxl,
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    alignItems: 'center', borderWidth: 1, borderColor: 'rgba(212,175,55,0.15)',
+  sectionKicker: {
+    color: colors.primary,
+    fontSize: 12,
+    fontWeight: '900',
   },
-  emptyMatchesText: { color: colors.text, fontWeight: '700', fontSize: 16, marginTop: 12, textAlign: 'center' },
-  emptyMatchesSub: { color: colors.accent, fontSize: 12, marginTop: 4, fontWeight: '500' },
-  matchCard: { width: CARD_WIDTH, height: 440, borderRadius: 32, overflow: 'hidden', backgroundColor: colors.surface },
-  matchPhoto: { width: '100%', height: '100%' },
-  matchBlurOverlay: { alignItems: 'center', justifyContent: 'center', gap: 8 },
-  matchBlurText: { color: 'rgba(255,255,255,0.85)', fontSize: 13, fontWeight: '700', letterSpacing: 0.4 },
-  matchGradient: { ...StyleSheet.absoluteFillObject },
-  matchContent: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 20 },
-  matchHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  matchName: { fontSize: 20, fontWeight: '800', color: '#FFF', flex: 1 },
-  matchLocation: { color: 'rgba(255,255,255,0.7)', fontSize: 12, marginTop: 4 },
-  matchFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 },
-  compatibilityBadge: {
-    backgroundColor: 'rgba(212,175,55,0.25)', paddingHorizontal: 12, paddingVertical: 8,
-    borderRadius: 14, borderWidth: 0.5, borderColor: colors.accent
+  sectionTitle: {
+    color: colors.text,
+    fontSize: 22,
+    fontWeight: '900',
   },
-  compatibilityText: { color: colors.accent, fontSize: 12, fontWeight: '700' },
-  chatIconButton: {
-    width: 48, height: 48, borderRadius: 24,
-    backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center',
-    shadowColor: colors.accent, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8
+  link: {
+    color: colors.primary,
+    fontSize: 14,
+    fontWeight: '900',
   },
-
-  actionsGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: spacing.lg, gap: 12, marginTop: 4 },
-  actionBtn: {
-    width: (width - spacing.lg * 2 - 12) / 2,
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    padding: 16, borderRadius: 22,
-    alignItems: 'center', overflow: 'hidden',
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.07)'
+  matchScroll: {
+    gap: spacing.md,
+    paddingRight: spacing.lg,
   },
-  actionBtnHighlight: { borderColor: 'rgba(212,175,55,0.3)' },
-  actionIconCircle: {
-    width: 52, height: 52, borderRadius: 26,
-    backgroundColor: 'rgba(212,175,55,0.12)', alignItems: 'center', justifyContent: 'center',
-    marginBottom: 12, borderWidth: 1, borderColor: 'rgba(212,175,55,0.2)'
+  matchCard: {
+    width: CARD_WIDTH,
+    overflow: 'hidden',
+    borderRadius: radius.xl,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  actionIconHighlight: { backgroundColor: colors.accent },
-  actionLabel: { color: colors.text, fontSize: 14, fontWeight: '700' },
-  actionSub: { color: colors.textMuted, fontSize: 11, marginTop: 3, fontWeight: '400' },
-
-  progressCard: {
-    marginHorizontal: spacing.lg, padding: 20, borderRadius: 24, overflow: 'hidden',
-    borderWidth: 1, borderColor: 'rgba(212,175,55,0.2)'
+  matchPhotoWrap: {
+    height: 260,
+    backgroundColor: colors.surfaceLight,
   },
-  progressTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  progressTitle: { color: colors.text, fontSize: 16, fontWeight: '700' },
-  progressSub: { color: colors.textSecondary, fontSize: 12, marginTop: 4 },
-  progressCircle: {
-    width: 48, height: 48, borderRadius: 24,
-    borderWidth: 2, borderColor: colors.accent, alignItems: 'center', justifyContent: 'center',
-    backgroundColor: 'rgba(212,175,55,0.08)'
+  matchPhoto: {
+    width: '100%',
+    height: '100%',
   },
-  progressPercent: { color: colors.accent, fontSize: 12, fontWeight: '900' },
-  progressBarBg: { height: 6, backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 3, overflow: 'hidden' },
-  progressBarFill: { height: '100%', borderRadius: 3 },
-
-  loadingContainer: { height: 300, justifyContent: 'center', alignItems: 'center' },
-  matchTopInfo: {},
-
-  // Skeleton styles
-  skeletonCard: { width: CARD_WIDTH, height: 440, borderRadius: 32, overflow: 'hidden', backgroundColor: 'rgba(255,255,255,0.06)', marginRight: 0 },
-  skeletonBar: { backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 8 },
-  skeletonFooter: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 20, gap: 8 },
+  matchPhotoFallback: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primaryLightBg,
+  },
+  initial: {
+    color: colors.primary,
+    fontSize: 48,
+    fontWeight: '900',
+  },
+  privateOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(250, 247, 242, 0.84)',
+  },
+  privateText: {
+    color: colors.primary,
+    fontSize: 13,
+    fontWeight: '900',
+  },
+  matchInfo: {
+    padding: spacing.md,
+    gap: 7,
+  },
+  matchNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  matchName: {
+    flex: 1,
+    color: colors.text,
+    fontSize: 18,
+    fontWeight: '900',
+  },
+  matchMeta: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  matchFooter: {
+    marginTop: 4,
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  quickCard: {
+    width: '48.5%',
+    minHeight: 132,
+    padding: spacing.md,
+    borderRadius: radius.xl,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  quickIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primaryLightBg,
+    marginBottom: spacing.sm,
+  },
+  quickTitle: {
+    color: colors.text,
+    fontSize: 16,
+    fontWeight: '900',
+  },
+  quickBody: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 3,
+  },
+  loadingCard: {
+    width: CARD_WIDTH,
+    gap: spacing.sm,
+  },
+  loadingPhoto: {
+    height: 220,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surfaceLight,
+  },
+  loadingLine: {
+    height: 14,
+    width: '76%',
+    borderRadius: radius.full,
+    backgroundColor: colors.surfaceLight,
+  },
 });
-
-function MatchCardSkeleton() {
-  const shimmer = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(shimmer, { toValue: 1, duration: 900, useNativeDriver: true }),
-        Animated.timing(shimmer, { toValue: 0, duration: 900, useNativeDriver: true }),
-      ])
-    ).start();
-    return () => shimmer.stopAnimation();
-  }, []);
-  const opacity = shimmer.interpolate({ inputRange: [0, 1], outputRange: [0.4, 0.85] });
-  return (
-    <View style={styles.matchesScroll}>
-      {[0, 1].map((i) => (
-        <Animated.View key={i} style={[styles.skeletonCard, { opacity, marginRight: i === 0 ? 16 : 0 }]}>
-          <LinearGradient colors={['rgba(255,255,255,0.04)', 'rgba(255,255,255,0.08)', 'rgba(255,255,255,0.04)']} style={StyleSheet.absoluteFill} />
-          <View style={styles.skeletonFooter}>
-            <View style={[styles.skeletonBar, { height: 22, width: '60%' }]} />
-            <View style={[styles.skeletonBar, { height: 14, width: '40%' }]} />
-          </View>
-        </Animated.View>
-      ))}
-    </View>
-  );
-}

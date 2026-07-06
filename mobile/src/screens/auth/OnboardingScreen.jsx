@@ -4,49 +4,41 @@ import { useRef, useState } from 'react';
 import {
   Animated,
   Dimensions,
+  Pressable,
   StatusBar,
   StyleSheet,
   Text,
-  TouchableOpacity,
-  View
+  View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import PrimaryButton from '../../components/ui/PrimaryButton';
+import { AppBackground, Card, TrustBadge } from '../../components/ui/LightPrimitives';
 import colors from '../../theme/colors';
+import { radius, spacing } from '../../theme/spacing';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 const slides = [
   {
-    id: '1',
-    emoji: '💕',
-    title: 'Find Your Perfect Match',
-    titleUrdu: 'اپنا ہم سفر تلاش کریں',
-    desc: 'Connect with thousands of verified profiles. Your journey to a beautiful life begins here.',
-    gradient: [colors.primary, '#C44B7A'],
+    icon: 'account-heart-outline',
+    eyebrow: 'Trusted introductions',
+    title: 'Meet serious people looking for marriage',
+    desc: 'Discover verified profiles with family-friendly details, preferences, and respectful communication controls.',
+    bullets: ['Verified profiles', 'Private photos', 'Connection-first chat'],
   },
   {
-    id: '2',
-    emoji: '✅',
-    title: 'Verified & Safe',
-    titleUrdu: 'محفوظ اور تصدیق شدہ',
-    desc: 'Every profile goes through CNIC verification and live photo review. Your safety is our priority.',
-    gradient: ['#C44B7A', '#D4AF37'],
+    icon: 'shield-check-outline',
+    eyebrow: 'Privacy by design',
+    title: 'You decide what becomes visible',
+    desc: 'Photos, phone numbers, and conversations stay protected until both sides are ready to connect.',
+    bullets: ['Photo approval', 'Report and block', 'Safe messaging'],
   },
   {
-    id: '3',
-    emoji: '🤖',
-    title: 'Smart Daily Matches',
-    titleUrdu: 'روزانہ ذہین میچز',
-    desc: 'Our algorithm sends you 3-5 high-quality matches every morning based on your preferences.',
-    gradient: [colors.primary, '#5C0F31'],
-  },
-  {
-    id: '4',
-    emoji: '🔒',
-    title: 'Privacy Protected',
-    titleUrdu: 'پرائیویسی محفوظ',
-    desc: 'Verified female photos are blurred by default. Share contact info only when you feel ready.',
-    gradient: ['#5C0F31', colors.primary],
+    icon: 'star-four-points-outline',
+    eyebrow: 'Better daily matches',
+    title: 'A calmer way to find the right match',
+    desc: 'Review high-quality suggestions, refine preferences, and keep your profile complete for better results.',
+    bullets: ['Daily picks', 'Profile checklist', 'Smart filters'],
   },
 ];
 
@@ -60,144 +52,169 @@ export default function OnboardingScreen({ navigation }) {
     if (currentIndex < slides.length - 1) {
       flatListRef.current?.scrollToIndex({ index: currentIndex + 1 });
       setCurrentIndex(currentIndex + 1);
-    } else {
-      navigation.replace('Login');
+      return;
     }
+    navigation.replace('Login');
   };
 
-  const handleSkip = () => navigation.replace('Login');
-
-  const renderSlide = ({ item }) => (
-    <LinearGradient colors={item.gradient} style={styles.slide} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-      {/* Decorative bg circles */}
-      <View style={[styles.bgCircle, { width: 280, height: 280, top: -60, right: -60 }]} />
-      <View style={[styles.bgCircle, { width: 180, height: 180, bottom: 80, left: -50 }]} />
-
-      <View style={styles.emojiContainer}>
-        <Text style={styles.emoji}>{item.emoji}</Text>
-      </View>
-
-      <Text style={styles.titleUrdu}>{item.titleUrdu}</Text>
-      <Text style={styles.title}>{item.title}</Text>
-      <Text style={styles.desc}>{item.desc}</Text>
-    </LinearGradient>
-  );
-
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+    <AppBackground>
+      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
+      <View style={[styles.top, { paddingTop: insets.top + 18 }]}>
+        <View style={styles.brandMark}>
+          <MaterialCommunityIcons name="heart-multiple" size={25} color={colors.primary} />
+        </View>
+        <Text style={styles.brand}>Shadii.pk</Text>
+        <Pressable onPress={() => navigation.replace('Login')} hitSlop={12}>
+          <Text style={styles.skip}>Skip</Text>
+        </Pressable>
+      </View>
 
       <Animated.FlatList
         ref={flatListRef}
         data={slides}
-        renderItem={renderSlide}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.title}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
         onScroll={Animated.event([{ nativeEvent: { contentOffset: { x: scrollX } } }], { useNativeDriver: false })}
-        onMomentumScrollEnd={(e) => {
-          setCurrentIndex(Math.round(e.nativeEvent.contentOffset.x / width));
-        }}
+        onMomentumScrollEnd={(e) => setCurrentIndex(Math.round(e.nativeEvent.contentOffset.x / width))}
+        renderItem={({ item }) => (
+          <View style={styles.slide}>
+            <Card style={styles.heroCard}>
+              <LinearGradient colors={colors.gradients.hero} style={StyleSheet.absoluteFill} />
+              <View style={styles.iconRing}>
+                <MaterialCommunityIcons name={item.icon} size={44} color={colors.primary} />
+              </View>
+              <TrustBadge icon="check-decagram" label={item.eyebrow} tone="trust" />
+              <Text style={styles.title}>{item.title}</Text>
+              <Text style={styles.desc}>{item.desc}</Text>
+              <View style={styles.bullets}>
+                {item.bullets.map((b) => (
+                  <View key={b} style={styles.bullet}>
+                    <MaterialCommunityIcons name="check-circle" size={17} color={colors.success} />
+                    <Text style={styles.bulletText}>{b}</Text>
+                  </View>
+                ))}
+              </View>
+            </Card>
+          </View>
+        )}
       />
 
-      {/* Controls overlay */}
-      <View style={[styles.controls, { paddingBottom: Math.max(insets.bottom, 20) + 12 }]}>
-        {/* Dots */}
+      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 18) + 8 }]}>
         <View style={styles.dots}>
           {slides.map((_, i) => {
             const inputRange = [(i - 1) * width, i * width, (i + 1) * width];
             const dotWidth = scrollX.interpolate({
-              inputRange, outputRange: [8, 24, 8], extrapolate: 'clamp',
+              inputRange,
+              outputRange: [8, 26, 8],
+              extrapolate: 'clamp',
             });
-            const dotOpacity = scrollX.interpolate({
-              inputRange, outputRange: [0.4, 1, 0.4], extrapolate: 'clamp',
-            });
-            return (
-              <Animated.View key={i} style={[styles.dot, { width: dotWidth, opacity: dotOpacity }]} />
-            );
+            return <Animated.View key={i} style={[styles.dot, i === currentIndex && styles.dotActive, { width: dotWidth }]} />;
           })}
         </View>
-
-        <View style={styles.buttons}>
-          <TouchableOpacity onPress={handleSkip} style={styles.skipBtn} activeOpacity={0.7}>
-            <Text style={styles.skipText}>Skip</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={handleNext} style={styles.nextBtn} activeOpacity={0.8}>
-            <LinearGradient
-              colors={['rgba(255,255,255,0.28)', 'rgba(255,255,255,0.12)']}
-              style={styles.nextBtnInner}
-            >
-              <Text style={styles.nextText}>
-                {currentIndex === slides.length - 1 ? 'Get Started' : 'Next'}
-              </Text>
-              <MaterialCommunityIcons
-                name={currentIndex === slides.length - 1 ? 'heart' : 'arrow-right'}
-                size={16}
-                color="#FFFFFF"
-              />
-            </LinearGradient>
-          </TouchableOpacity>
-        </View>
+        <PrimaryButton
+          label={currentIndex === slides.length - 1 ? 'Create or sign in' : 'Continue'}
+          icon={currentIndex === slides.length - 1 ? 'arrow-right' : 'chevron-right'}
+          onPress={handleNext}
+        />
       </View>
-    </View>
+    </AppBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  slide: {
-    width, height,
+  top: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    gap: 10,
+  },
+  brandMark: {
+    width: 42,
+    height: 42,
+    borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 40,
-    paddingBottom: 160,
-  },
-  bgCircle: {
-    position: 'absolute',
-    borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
+    borderColor: colors.border,
   },
-  emojiContainer: {
-    width: 120, height: 120,
-    borderRadius: 40,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.3)',
-    alignItems: 'center', justifyContent: 'center',
-    marginBottom: 32,
+  brand: {
+    flex: 1,
+    color: colors.text,
+    fontSize: 22,
+    fontWeight: '900',
   },
-  emoji: { fontSize: 40 },
-  titleUrdu: {
-    fontSize: 20, fontWeight: '700', color: 'rgba(255,255,255,0.85)',
-    textAlign: 'center', marginBottom: 8, writingDirection: 'rtl',
+  skip: {
+    color: colors.textSecondary,
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  slide: {
+    width,
+    paddingHorizontal: spacing.lg,
+    justifyContent: 'center',
+  },
+  heroCard: {
+    minHeight: 500,
+    justifyContent: 'center',
+    gap: spacing.md,
+    overflow: 'hidden',
+  },
+  iconRing: {
+    width: 112,
+    height: 112,
+    borderRadius: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: spacing.xs,
   },
   title: {
-    fontSize: 24, fontWeight: '800', color: '#FFFFFF',
-    textAlign: 'center', marginBottom: 16, letterSpacing: -0.5,
+    color: colors.text,
+    fontSize: 31,
+    lineHeight: 38,
+    fontWeight: '900',
+    letterSpacing: -0.2,
   },
   desc: {
-    fontSize: 14, color: 'rgba(255,255,255,0.75)',
-    textAlign: 'center', lineHeight: 22,
+    color: colors.textSecondary,
+    fontSize: 16,
+    lineHeight: 24,
   },
-  controls: {
-    position: 'absolute', bottom: 0, left: 0, right: 0,
-    paddingHorizontal: 24,
-    backgroundColor: 'rgba(0,0,0,0.1)',
+  bullets: {
+    marginTop: spacing.sm,
+    gap: 10,
   },
-  dots: { flexDirection: 'row', justifyContent: 'center', gap: 4, marginBottom: 24 },
-  dot: { height: 8, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.85)' },
-  buttons: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  skipBtn: { paddingHorizontal: 16, paddingVertical: 12 },
-  skipText: { color: 'rgba(255,255,255,0.7)', fontSize: 14, fontWeight: '500' },
-  nextBtn: { borderRadius: 14, overflow: 'hidden' },
-  nextBtnInner: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    paddingHorizontal: 24, paddingVertical: 12,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.35)',
-    borderRadius: 14,
+  bullet: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
-  nextText: { color: '#FFFFFF', fontSize: 14, fontWeight: '700' },
+  bulletText: {
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  footer: {
+    paddingHorizontal: spacing.lg,
+    gap: spacing.md,
+  },
+  dots: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 7,
+  },
+  dot: {
+    height: 8,
+    borderRadius: radius.full,
+    backgroundColor: colors.borderStrong,
+  },
+  dotActive: {
+    backgroundColor: colors.primary,
+  },
 });

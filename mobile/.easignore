@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+
+# Expo and web build output
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Local environment
+.env
+.env.*
+.env*.local
+
+# Generated iOS project is rebuilt by EAS from app.json
+ios/
+
+# Android local/build artifacts. Keep the native project files, gradlew, and
+# Gradle wrapper in the EAS archive so cloud builds can run.
+android/.gradle/
+android/.kotlin/
+android/build/
+android/app/build/
+android/local.properties
+android/*.keystore
+android/app/*.keystore
+android/app/debug.keystore
+
+# Native credential material
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.pem
+*.keystore
+
+# Logs and OS/IDE files
+*.log
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+.DS_Store
+.idea/
+.vscode/
+*.iml
+*.hprof
+*.cxx/
+*.tsbuildinfo

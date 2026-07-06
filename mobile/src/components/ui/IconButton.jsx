@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 import colors from '../../theme/colors';
-import { radius, spacing } from '../../theme/spacing';
+import { radius } from '../../theme/spacing';
 
 export default function IconButton({
   icon,
@@ -21,12 +21,10 @@ export default function IconButton({
         disabled && styles.disabled,
         style,
       ]}
-      hitSlop={6}
+      hitSlop={8}
       accessibilityRole="button"
     >
-      <View style={styles.iconWrap}>
-        <MaterialCommunityIcons name={icon} size={size} color={color} />
-      </View>
+      <MaterialCommunityIcons name={icon} size={size} color={color} />
     </Pressable>
   );
 }
@@ -36,20 +34,14 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: radius.md,
-    backgroundColor: colors.glass,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.glassBorderLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconWrap: {
-    width: 24,
-    height: 24,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
   pressed: {
-    opacity: 0.75,
+    opacity: 0.78,
     transform: [{ scale: 0.97 }],
   },
   disabled: {

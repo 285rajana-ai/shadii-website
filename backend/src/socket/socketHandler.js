@@ -58,6 +58,7 @@ module.exports = (io) => {
       try {
         const Message = require('../models/Message');
         const { scanMessage, handleViolation } = require('../services/chatFilter');
+        const { getChatAccess, createIntroRequestIfNeeded } = require('../services/chatAccess');
 
         // Validate input
         if (!content || typeof content !== 'string' || content.trim().length === 0) {
@@ -68,16 +69,26 @@ module.exports = (io) => {
           return socket.emit('message:error', { error: 'Invalid receiver or conversation ID' });
         }
 
-        // Check connection approval (must be approved to chat)
         const user = await User.findById(socket.userId);
         if (!user) {
           return socket.emit('message:error', { error: 'User not found' });
         }
-        const isApproved = user.photoViewApproved?.some(
-          (uid) => String(uid) === String(receiverId)
-        );
-        if (!isApproved) {
-          return socket.emit('message:error', { error: 'You must be connected with this user to chat.' });
+        const access = await getChatAccess({ user, otherUserId: receiverId });
+        if (!access.canSend) {
+          if (access.reason === 'subscription_required') {
+            socket.emit('subscription:required', {
+              message: 'Your free messages in this chat are used. Subscribe to continue chatting.',
+              chatAccess: access,
+            });
+          } else {
+            socket.emit('message:error', {
+              error: access.reason === 'accept_invite'
+                ? 'Accept this Rishta request before replying.'
+                : 'Please wait until your Rishta request is accepted.',
+              chatAccess: access,
+            });
+          }
+          return;
         }
 
         // Check violation
@@ -88,13 +99,7 @@ module.exports = (io) => {
           return;
         }
 
-        const existingCount = await Message.countDocuments({ conversationId });
-        const isFreeMessage = existingCount === 0;
-
-        if (!isFreeMessage && !user.hasActiveSubscription()) {
-          socket.emit('subscription:required', { message: 'Subscribe to continue messaging' });
-          return;
-        }
+        const isFreeMessage = !user.hasActiveSubscription();
 
         const seenDelayUntil = isFreeMessage ? new Date(Date.now() + 6 * 60 * 60 * 1000) : null;
 
@@ -108,6 +113,7 @@ module.exports = (io) => {
           isFreeMessage,
           seenDelayUntil,
         });
+        await createIntroRequestIfNeeded({ senderId: socket.userId, receiverId, access });
 
         // Send to receiver if online, else send push notification
         const receiverSocketIds = onlineUsers.get(String(receiverId));
@@ -131,7 +137,12 @@ module.exports = (io) => {
         }
 
         // Confirm to sender
-        socket.emit('message:sent', { ...message.toJSON(), isFreeMessage, clientMessageId });
+        socket.emit('message:sent', {
+          ...message.toJSON(),
+          isFreeMessage,
+          clientMessageId,
+          chatAccess: await getChatAccess({ user, otherUserId: receiverId }),
+        });
       } catch (err) {
         socket.emit('message:error', { error: err.message });
       }

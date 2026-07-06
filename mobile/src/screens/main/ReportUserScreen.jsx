@@ -87,7 +87,7 @@ export default function ReportUserScreen({ navigation, route }) {
     if (submitted) {
         return (
             <View style={styles.container}>
-                <LinearGradient colors={['#1A000A', '#0D0D0D']} style={StyleSheet.absoluteFill} />
+                <LinearGradient colors={colors.gradients.hero} style={StyleSheet.absoluteFill} />
                 <Animated.View style={[styles.successState, { opacity: successAnim, transform: [{ scale: successAnim }] }]}>
                     <LinearGradient colors={['rgba(46,204,113,0.2)', 'transparent']} style={styles.successGlow} />
                     <View style={styles.successCircle}>
@@ -110,8 +110,8 @@ export default function ReportUserScreen({ navigation, route }) {
 
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="light-content" />
-            <LinearGradient colors={['#1A000A', '#0D0D0D']} style={StyleSheet.absoluteFill} />
+            <StatusBar barStyle="dark-content" />
+            <LinearGradient colors={colors.gradients.hero} style={StyleSheet.absoluteFill} />
 
             <ScreenHeader title="Report Profile" onBack={() => navigation.goBack()} insetsTop={insets.top} />
 
@@ -228,10 +228,10 @@ export default function ReportUserScreen({ navigation, route }) {
                         activeOpacity={0.85}
                     >
                         <LinearGradient
-                            colors={selectedReason ? ['#E74C3C', '#C0392B'] : ['#333', '#222']}
+                            colors={selectedReason ? ['#E74C3C', '#C0392B'] : ['#CFC6BB', '#BDB3A8']}
                             style={StyleSheet.absoluteFill}
                         />
-                        <MaterialCommunityIcons name="flag" size={20} color="#FFF" />
+                        <MaterialCommunityIcons name="flag" size={20} color="#FFFFFF" />
                         <Text style={styles.submitBtnText}>
                             {submitting ? 'Submitting...' : 'Submit Report'}
                         </Text>
@@ -249,7 +249,7 @@ const styles = StyleSheet.create({
     reportedCard: { flexDirection: 'row', alignItems: 'center', padding: 12, marginBottom: 16 },
     reportedAvatar: { width: 48, height: 48, borderRadius: 24, overflow: 'hidden' },
     avatarImg: { width: 48, height: 48, borderRadius: 24 },
-    avatarInitial: { fontSize: 20, fontWeight: '800', color: '#FFF' },
+    avatarInitial: { fontSize: 20, fontWeight: '800', color: '#FFFFFF' },
     reportedName: { fontSize: 16, fontWeight: '700', color: colors.text },
     reportedDetails: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
     reportingBadge: {
@@ -271,12 +271,12 @@ const styles = StyleSheet.create({
 
     reasonCard: {
         flexDirection: 'row', alignItems: 'center', padding: 16,
-        backgroundColor: colors.glassMedium, borderRadius: 16,
-        borderWidth: 1, borderColor: colors.glassBorderLight,
+        backgroundColor: colors.surface, borderRadius: 16,
+        borderWidth: 1, borderColor: colors.border,
         marginBottom: 8, overflow: 'hidden',
     },
     reasonCardSelected: { borderColor: 'rgba(231,76,60,0.5)' },
-    reasonIcon: { width: 44, height: 44, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.06)', alignItems: 'center', justifyContent: 'center' },
+    reasonIcon: { width: 44, height: 44, borderRadius: 12, backgroundColor: colors.surfaceAlt, alignItems: 'center', justifyContent: 'center' },
     reasonLabel: { fontSize: 14, fontWeight: '600', color: colors.text },
     reasonDesc: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
     radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: colors.textMuted, alignItems: 'center', justifyContent: 'center' },
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
     detailsInput: {
         backgroundColor: colors.surfaceLight, borderRadius: 14,
         padding: 12, fontSize: 14, color: colors.text,
-        borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
+        borderWidth: 1, borderColor: colors.border,
         minHeight: 110, marginBottom: 4,
     },
     charCount: { fontSize: 12, color: colors.textMuted, textAlign: 'right', marginBottom: 16 },
@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
         elevation: 10,
     },
     submitBtnDisabled: { shadowOpacity: 0 },
-    submitBtnText: { fontSize: 16, fontWeight: '800', color: '#FFF' },
+    submitBtnText: { fontSize: 16, fontWeight: '800', color: '#FFFFFF' },
 
     successState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40 },
     successGlow: { position: 'absolute', width: 300, height: 300, borderRadius: 150, top: '30%' },
@@ -322,5 +322,5 @@ const styles = StyleSheet.create({
         paddingVertical: 16, paddingHorizontal: 48, borderRadius: 20, overflow: 'hidden',
         shadowColor: colors.success, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.3, shadowRadius: 16,
     },
-    doneBtnText: { fontSize: 16, fontWeight: '800', color: '#FFF' },
+    doneBtnText: { fontSize: 16, fontWeight: '800', color: '#FFFFFF' },
 });

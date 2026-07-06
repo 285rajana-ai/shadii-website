@@ -1,59 +1,46 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import React, { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   Animated,
-  Dimensions,
-  KeyboardAvoidingView, Platform,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
   ScrollView,
   StatusBar,
   StyleSheet,
-  Text, TextInput, TouchableOpacity,
-  View
+  Text,
+  View,
 } from 'react-native';
 import { useDispatch } from 'react-redux';
+import PrimaryButton from '../../components/ui/PrimaryButton';
+import { AppBackground, Card, Field, TrustBadge } from '../../components/ui/LightPrimitives';
 import { setTokens, setUser } from '../../store/slices/authSlice';
 import colors from '../../theme/colors';
+import { spacing } from '../../theme/spacing';
 import { API_BASE_URL } from '../../utils/constants';
-
-const { width } = Dimensions.get('window');
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [emailFocused, setEmailFocused] = useState(false);
-  const [passFocused, setPassFocused] = useState(false);
-
+  const [error, setError] = useState('');
   const dispatch = useDispatch();
-  const shakeAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(40)).current;
+  const slideAnim = useRef(new Animated.Value(24)).current;
 
-  React.useEffect(() => {
+  useEffect(() => {
     Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 700, useNativeDriver: true }),
-      Animated.spring(slideAnim, { toValue: 0, tension: 60, friction: 9, useNativeDriver: true }),
+      Animated.timing(fadeAnim, { toValue: 1, duration: 480, useNativeDriver: true }),
+      Animated.spring(slideAnim, { toValue: 0, friction: 9, tension: 70, useNativeDriver: true }),
     ]).start();
-  }, []);
-
-  const shake = () => {
-    Animated.sequence([
-      Animated.timing(shakeAnim, { toValue: 10, duration: 50, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: -10, duration: 50, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: 6, duration: 50, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: -6, duration: 50, useNativeDriver: true }),
-      Animated.timing(shakeAnim, { toValue: 0, duration: 50, useNativeDriver: true }),
-    ]).start();
-  };
+  }, [fadeAnim, slideAnim]);
 
   const handleLogin = async () => {
+    setError('');
     if (!email.trim() || !password.trim()) {
-      shake();
-      Alert.alert('Incomplete Fields', 'Please enter your credentials to proceed.');
+      setError('Please enter both email and password.');
       return;
     }
 
@@ -71,178 +58,159 @@ export default function LoginScreen({ navigation }) {
         dispatch(setUser(data.user));
         navigation.replace('Main');
       } else {
-        shake();
-        Alert.alert('Login Failed', data.message || 'The credentials provided are incorrect.');
+        setError(data.message || 'Email or password is incorrect.');
       }
-    } catch (err) {
-      shake();
-      Alert.alert('Connection Error', 'Unable to reach our premium servers. Please try again.');
+    } catch (_) {
+      Alert.alert('Connection Error', 'Unable to reach Shadii.pk. Please check your internet and try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-      <LinearGradient colors={['#1A000A', '#0D0509', '#0D0D0D']} style={StyleSheet.absoluteFill} />
-      <View style={styles.orb1} />
-      <View style={styles.orb2} />
-
+    <AppBackground>
+      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
+            <View style={styles.brandRow}>
+              <View style={styles.logo}>
+                <MaterialCommunityIcons name="heart-multiple" size={30} color={colors.primary} />
+              </View>
+              <View>
+                <Text style={styles.brand}>Shadii.pk</Text>
+                <Text style={styles.brandSub}>Respectful matchmaking</Text>
+              </View>
+            </View>
 
-          {/* Logo */}
-          <Animated.View style={[styles.header, { opacity: fadeAnim }]}>
-            <LinearGradient colors={colors.gradients.gold} style={styles.logoContainer}>
-              <MaterialCommunityIcons name="heart-multiple" size={40} color={colors.maroon} />
-            </LinearGradient>
-            <Text style={styles.logoText}>shadii<Text style={styles.logoDot}>.pk</Text></Text>
-            <Text style={styles.tagline}>ہم قدم — ایک مکمل زندگی کا سفر</Text>
-          </Animated.View>
+            <Card style={styles.card}>
+              <TrustBadge icon="shield-check-outline" label="Secure sign in" tone="trust" />
+              <Text style={styles.title}>Welcome back</Text>
+              <Text style={styles.subtitle}>Continue managing matches, requests, and conversations from one calm place.</Text>
 
-          {/* Login Card */}
-          <Animated.View style={[styles.loginCard, { transform: [{ translateX: shakeAnim }, { translateY: slideAnim }], opacity: fadeAnim }]}>
-            <Text style={styles.cardTitle}>Welcome Back</Text>
-            <Text style={styles.cardSubtitle}>Sign in to your premium account</Text>
-
-            {/* Email Field */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Email Address</Text>
-              <View style={[styles.inputContainer, emailFocused && styles.inputFocused]}>
-                <MaterialCommunityIcons name="email-outline" size={20} color={emailFocused ? colors.accent : colors.textMuted} />
-                <TextInput
-                  style={styles.input}
+              <View style={styles.form}>
+                <Field
+                  label="Email address"
+                  icon="email-outline"
                   value={email}
-                  onChangeText={setEmail}
-                  placeholder="your@shadii.pk"
-                  placeholderTextColor={colors.textMuted}
+                  onChangeText={(v) => setEmail(v.toLowerCase())}
+                  placeholder="name@example.com"
                   keyboardType="email-address"
                   autoCapitalize="none"
-                  onFocus={() => setEmailFocused(true)}
-                  onBlur={() => setEmailFocused(false)}
+                  autoCorrect={false}
                 />
-              </View>
-            </View>
-
-            {/* Password Field */}
-            <View style={styles.inputGroup}>
-              <View style={styles.labelRow}>
-                <Text style={styles.label}>Password</Text>
-                <TouchableOpacity style={styles.forgotBtn}>
-                  <Text style={styles.forgotText}>Forgot?</Text>
-                </TouchableOpacity>
-              </View>
-              <View style={[styles.inputContainer, passFocused && styles.inputFocused]}>
-                <MaterialCommunityIcons name="lock-outline" size={20} color={passFocused ? colors.accent : colors.textMuted} />
-                <TextInput
-                  style={styles.input}
+                <Field
+                  label="Password"
+                  icon="lock-outline"
                   value={password}
                   onChangeText={setPassword}
-                  placeholder="••••••••"
-                  placeholderTextColor={colors.textMuted}
+                  placeholder="Enter your password"
                   secureTextEntry={!showPassword}
-                  onFocus={() => setPassFocused(true)}
-                  onBlur={() => setPassFocused(false)}
+                  right={
+                    <Pressable onPress={() => setShowPassword((v) => !v)} hitSlop={10}>
+                      <MaterialCommunityIcons
+                        name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                        size={20}
+                        color={colors.textMuted}
+                      />
+                    </Pressable>
+                  }
                 />
-                <TouchableOpacity 
-                  onPress={() => setShowPassword(!showPassword)}
-                  style={styles.eyeBtn}
-                  hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                >
-                  <MaterialCommunityIcons
-                    name={showPassword ? "eye-off-outline" : "eye-outline"}
-                    size={20}
-                    color={colors.textMuted}
-                  />
-                </TouchableOpacity>
+                {error ? <Text style={styles.error}>{error}</Text> : null}
+                <PrimaryButton label="Sign in" icon="arrow-right" onPress={handleLogin} loading={loading} />
               </View>
-            </View>
 
-            {/* Premium Login Button */}
-            <TouchableOpacity
-              onPress={handleLogin}
-              disabled={loading}
-              activeOpacity={0.8}
-              style={styles.loginBtnContainer}
-            >
-              <LinearGradient
-                colors={colors.gradients.gold}
-                style={[styles.loginBtn, loading && styles.loginBtnDisabled]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-              >
-                {loading ? (
-                  <ActivityIndicator color={colors.maroon} />
-                ) : (
-                  <Text style={styles.loginBtnText}>Sign In</Text>
-                )}
-              </LinearGradient>
-            </TouchableOpacity>
-
-            <View style={styles.footerRow}>
-              <Text style={styles.footerText}>New to Shadii.pk? </Text>
-              <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-                <Text style={styles.footerLink}>Create Account</Text>
-              </TouchableOpacity>
-            </View>
+              <View style={styles.footer}>
+                <Text style={styles.footerText}>New to Shadii.pk?</Text>
+                <Pressable onPress={() => navigation.navigate('Register')} hitSlop={10}>
+                  <Text style={styles.footerLink}>Create account</Text>
+                </Pressable>
+              </View>
+            </Card>
           </Animated.View>
-
-          <View style={{ height: 40 }} />
         </ScrollView>
       </KeyboardAvoidingView>
-    </View>
+    </AppBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  flex: { flex: 1 },
-  scroll: { flexGrow: 1, paddingHorizontal: 24, paddingTop: 72 },
-  orb1: { position: 'absolute', width: width * 0.8, height: width * 0.8, borderRadius: width * 0.4, top: -width * 0.25, right: -width * 0.25, backgroundColor: 'rgba(139,26,74,0.2)' },
-  orb2: { position: 'absolute', width: width * 0.7, height: width * 0.7, borderRadius: width * 0.35, bottom: -width * 0.2, left: -width * 0.25, backgroundColor: 'rgba(212,175,55,0.08)' },
-
-  header: { alignItems: 'center', marginBottom: 32 },
-  logoContainer: {
-    width: 80, height: 80, borderRadius: 24,
-    alignItems: 'center', justifyContent: 'center',
-    marginBottom: 16,
-    shadowColor: colors.accent, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.4, shadowRadius: 20,
+  flex: {
+    flex: 1,
   },
-  logoText: { fontSize: 32, fontWeight: '900', color: colors.text, letterSpacing: -1.5 },
-  logoDot: { color: colors.accent },
-  tagline: { fontSize: 12, color: colors.textSecondary, marginTop: 8, letterSpacing: 0.5 },
-
-  loginCard: {
-    padding: 32,
-    backgroundColor: 'rgba(26,0,10,0.7)',
-    borderRadius: 24, borderWidth: 1,
-    borderColor: 'rgba(212,175,55,0.15)',
+  scroll: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    padding: spacing.lg,
   },
-  cardTitle: { fontSize: 24, fontWeight: '900', color: colors.text, textAlign: 'center', letterSpacing: -0.5 },
-  cardSubtitle: { fontSize: 14, color: colors.textSecondary, textAlign: 'center', marginTop: 8, marginBottom: 32 },
-
-  inputGroup: { marginBottom: 24 },
-  labelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  label: { fontSize: 12, fontWeight: '700', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 1 },
-  forgotBtn: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 8, marginHorizontal: -8 },
-  forgotText: { fontSize: 12, color: colors.accent, fontWeight: '700' },
-  inputContainer: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 16, paddingHorizontal: 16,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
+  brandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: spacing.xl,
   },
-  inputFocused: { borderColor: 'rgba(212,175,55,0.6)', backgroundColor: 'rgba(212,175,55,0.04)' },
-  input: { flex: 1, paddingVertical: 16, marginLeft: 16, color: colors.text, fontSize: 16 },
-  eyeBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', marginRight: -8 },
-
-  loginBtnContainer: { marginTop: 8, borderRadius: 16, overflow: 'hidden' },
-  loginBtn: { paddingVertical: 16, alignItems: 'center' },
-  loginBtnDisabled: { opacity: 0.6 },
-  loginBtnText: { color: colors.maroon, fontSize: 16, fontWeight: '900', letterSpacing: 0.5 },
-
-  footerRow: { flexDirection: 'row', justifyContent: 'center', marginTop: 24 },
-  footerText: { color: colors.textSecondary, fontSize: 14 },
-  footerLink: { color: colors.accent, fontSize: 14, fontWeight: '700' },
+  logo: {
+    width: 60,
+    height: 60,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  brand: {
+    color: colors.text,
+    fontSize: 28,
+    fontWeight: '900',
+  },
+  brandSub: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  card: {
+    gap: spacing.md,
+  },
+  title: {
+    color: colors.text,
+    fontSize: 30,
+    lineHeight: 36,
+    fontWeight: '900',
+  },
+  subtitle: {
+    color: colors.textSecondary,
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  form: {
+    gap: spacing.md,
+    marginTop: spacing.xs,
+  },
+  error: {
+    color: colors.error,
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '700',
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 5,
+    marginTop: spacing.sm,
+  },
+  footerText: {
+    color: colors.textSecondary,
+    fontSize: 14,
+  },
+  footerLink: {
+    color: colors.primary,
+    fontSize: 14,
+    fontWeight: '800',
+  },
 });

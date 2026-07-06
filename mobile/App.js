@@ -1,6 +1,6 @@
 import * as SecureStore from 'expo-secure-store';
 import React, { useEffect } from 'react';
-import { Platform, StatusBar, Text, UIManager, View } from 'react-native';
+import { LogBox, Platform, StatusBar, Text, UIManager, View } from 'react-native';
 import 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider, useDispatch, useSelector } from 'react-redux';
@@ -14,16 +14,21 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
+LogBox.ignoreLogs([
+  'The app is running using the Legacy Architecture',
+  'has a shadow set but cannot calculate shadow efficiently',
+]);
+
 class ErrorBoundary extends React.Component {
   state = { error: null };
   static getDerivedStateFromError(e) { return { error: e }; }
   render() {
     if (this.state.error) {
       return (
-        <View style={{ flex: 1, backgroundColor: '#0D0D0D', justifyContent: 'center', padding: 24 }}>
-          <Text style={{ color: '#D4AF37', fontSize: 18, fontWeight: 'bold', marginBottom: 12 }}>Crash Report</Text>
-          <Text style={{ color: '#fff', fontSize: 13 }}>{this.state.error?.message}</Text>
-          <Text style={{ color: '#A0A0A0', fontSize: 11, marginTop: 8 }}>{this.state.error?.stack?.slice(0, 500)}</Text>
+        <View style={{ flex: 1, backgroundColor: '#FAF7F2', justifyContent: 'center', padding: 24 }}>
+          <Text style={{ color: '#8A1538', fontSize: 18, fontWeight: 'bold', marginBottom: 12 }}>Crash Report</Text>
+          <Text style={{ color: '#202124', fontSize: 13 }}>{this.state.error?.message}</Text>
+          <Text style={{ color: '#5F6673', fontSize: 11, marginTop: 8 }}>{this.state.error?.stack?.slice(0, 500)}</Text>
         </View>
       );
     }
@@ -98,7 +103,7 @@ function AppRoot() {
 
   return (
     <>
-      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
       <AppNavigator />
     </>
   );
