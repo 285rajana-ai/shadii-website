@@ -155,7 +155,7 @@ function SectionIntro({
     align?: "center" | "left";
 }) {
     return (
-        <div className={`premium-section-intro ${align === "left" ? "items-start text-left" : "items-center text-center"}`}>
+        <div className={`flex flex-col gap-2 mb-16 ${align === "left" ? "items-start text-left" : "items-center text-center"}`}>
             <span className="editorial-eyebrow">{eyebrow}</span>
             <h2 className="font-display text-4xl md:text-5xl text-[var(--text)] leading-tight">{title}</h2>
             <p className="text-[var(--muted)] text-sm leading-relaxed mt-4 max-w-2xl">{copy}</p>
@@ -209,7 +209,7 @@ function VerificationMatcher() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 my-2">
-                    <div className="border border-[var(--line)] p-4 flex flex-col items-center justify-center text-center bg-[var(--canvas)]">
+                    <div className="border border-[var(--line)] p-4 flex flex-col items-center justify-center text-center bg-[var(--canvas)] rounded-2xl">
                         <div className="w-12 h-12 rounded-full border border-[var(--gold)] bg-white flex items-center justify-center text-xl mb-2">
                             {scanState === "matched" ? "👨" : "👤"}
                         </div>
@@ -217,7 +217,7 @@ function VerificationMatcher() {
                         <span className="text-[8px] text-[var(--muted)]">Live Capture</span>
                     </div>
 
-                    <div className="border border-[var(--line)] p-4 flex flex-col items-center justify-center text-center bg-[var(--canvas)]">
+                    <div className="border border-[var(--line)] p-4 flex flex-col items-center justify-center text-center bg-[var(--canvas)] rounded-2xl">
                         <div className="w-12 h-8 rounded border border-dashed border-[var(--gold)] bg-white flex items-center justify-center text-sm mb-3">
                             🪪
                         </div>
@@ -240,7 +240,7 @@ function VerificationMatcher() {
 
                 <button
                     onClick={startScan}
-                    className="btn-editorial-primary w-full py-3.5 text-[10px] font-bold tracking-widest uppercase mt-2 cursor-pointer"
+                    className="btn-editorial-primary w-full py-3.5 text-[10px] font-bold tracking-widest uppercase mt-2 cursor-pointer rounded-2xl"
                 >
                     {scanState === "idle" && "Execute Identity Scan"}
                     {scanState === "scanning" && "Auditing Identity..."}
@@ -263,7 +263,7 @@ function PhotoPrivacySimulator() {
     };
 
     return (
-        <div className="border border-[var(--line)] p-6 bg-white flex flex-col items-center text-center max-w-sm mx-auto w-full card-3d">
+        <div className="border border-[var(--line)] p-6 bg-white flex flex-col items-center text-center max-w-sm mx-auto w-full card-3d rounded-3xl">
             <span className="text-[9px] font-bold uppercase tracking-widest text-[var(--gold)] mb-4 block">Secured Photo Shield</span>
             
             <div className="private-photo-mask w-24 h-24 rounded-full border border-[var(--line)] mb-4 relative flex items-center justify-center overflow-hidden">
@@ -293,17 +293,17 @@ function PhotoPrivacySimulator() {
             </div>
 
             {status === "locked" && (
-                <button onClick={requestAccess} className="btn-editorial-primary w-full py-3 text-[10px] tracking-widest uppercase">
+                <button onClick={requestAccess} className="btn-editorial-primary w-full py-3 text-[10px] tracking-widest uppercase rounded-2xl">
                     Request Photo Access
                 </button>
             )}
             {status === "requesting" && (
-                <button disabled className="btn-editorial-secondary w-full py-3 text-[10px] tracking-widest uppercase opacity-55">
+                <button disabled className="btn-editorial-secondary w-full py-3 text-[10px] tracking-widest uppercase opacity-55 rounded-2xl">
                     Authorizing...
                 </button>
             )}
             {status === "unlocked" && (
-                <button onClick={() => setStatus("locked")} className="btn-editorial-secondary w-full py-3 text-[10px] tracking-widest uppercase">
+                <button onClick={() => setStatus("locked")} className="btn-editorial-secondary w-full py-3 text-[10px] tracking-widest uppercase rounded-2xl">
                     Re-lock Photo
                 </button>
             )}
@@ -326,10 +326,10 @@ function ChatLimitSimulator() {
     };
 
     return (
-        <div className="border border-[var(--line)] p-4 bg-white max-w-md mx-auto w-full flex flex-col justify-between min-h-[20rem] card-3d">
+        <div className="border border-[var(--line)] p-4 bg-white max-w-md mx-auto w-full flex flex-col justify-between min-h-[20rem] card-3d rounded-3xl">
             <span className="text-[9px] font-bold uppercase tracking-widest text-[var(--gold)] text-center mb-3 block">Conversational Rules Flow</span>
             
-            <div className="chat-box-mockup flex-1 mb-4">
+            <div className="chat-box-mockup flex-1 mb-4 rounded-2xl">
                 {stage === "idle" ? (
                     <div className="h-full flex flex-col items-center justify-center text-center p-4">
                         <span className="text-2xl mb-2 text-[var(--gold)]">✉️</span>
@@ -337,19 +337,19 @@ function ChatLimitSimulator() {
                     </div>
                 ) : (
                     <div className="space-y-3">
-                        <div className="bubble-mockup sent">
+                        <div className="bubble-mockup sent rounded-2xl">
                             Assalam-o-Alaikum, I reviewed your education background and marital status details. I would love to connect.
                         </div>
                         {(stage === "replying" || stage === "limited") && (
-                            <div className="bubble-mockup received">
+                            <div className="bubble-mockup received rounded-2xl">
                                 Walaikum Assalam, thank you for reaching out. Yes, we can chat here to discuss family background details.
                             </div>
                         )}
                         {stage === "limited" && (
-                            <div className="chat-warning-overlay mt-4">
+                            <div className="chat-warning-overlay mt-4 rounded-2xl">
                                 <span className="text-[10px] font-bold text-[var(--berry)] tracking-wider block mb-1">Reply limit reached</span>
                                 <p className="text-[9px] text-[var(--muted)] mb-3">Upgrade to Premium to continue your safe matrimonial discussion.</p>
-                                <a href="#pricing" className="btn-editorial-primary py-2 px-6 text-[9px] tracking-wider uppercase">
+                                <a href="#pricing" className="btn-editorial-primary py-2 px-6 text-[9px] tracking-wider uppercase rounded-2xl">
                                     View Subscriptions
                                 </a>
                             </div>
@@ -359,15 +359,186 @@ function ChatLimitSimulator() {
             </div>
 
             {stage === "idle" ? (
-                <button onClick={startChat} className="btn-editorial-primary w-full py-3 text-[10px] tracking-widest uppercase">
+                <button onClick={startChat} className="btn-editorial-primary w-full py-3 text-[10px] tracking-widest uppercase rounded-2xl">
                     Send Matrimonial Invite
                 </button>
             ) : (
-                <button onClick={() => setStage("idle")} className="btn-editorial-secondary w-full py-3 text-[10px] tracking-widest uppercase">
+                <button onClick={() => setStage("idle")} className="btn-editorial-secondary w-full py-3 text-[10px] tracking-widest uppercase rounded-2xl">
                     Restart Conversation
                 </button>
             )}
         </div>
+    );
+}
+
+// 4. Rishta Seriousness Calculator Simulator
+function SeriousnessCalculator() {
+    const [checks, setChecks] = useState({
+        cnic: true,
+        selfie: true,
+        family: false,
+        career: false,
+    });
+
+    const score = useMemo(() => {
+        let val = 40;
+        if (checks.cnic) val += 20;
+        if (checks.selfie) val += 15;
+        if (checks.family) val += 15;
+        if (checks.career) val += 10;
+        return val;
+    }, [checks]);
+
+    const status = useMemo(() => {
+        if (score === 100) return "Platinum Elite Proposal";
+        if (score >= 80) return "Gold Certified Status";
+        if (score >= 60) return "Silver Audited Candidate";
+        return "Basic Unverified Candidate";
+    }, [score]);
+
+    return (
+        <div className="border border-[var(--line)] bg-white p-8 rounded-3xl max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center shadow-sm">
+            <div>
+                <span className="editorial-eyebrow">Interactive Simulator</span>
+                <h3 className="font-display text-3xl text-[var(--text)] leading-tight mb-6">
+                    Calculate proposal <em>seriousness score.</em>
+                </h3>
+                <p className="text-[var(--muted)] text-xs leading-relaxed mb-8">
+                    See how our compliance parameters filter serious matchmaking candidates from casual profiles. 
+                    Toggle the indicators to view safety changes.
+                </p>
+
+                <div className="space-y-4">
+                    {[
+                        { id: "cnic", label: "Govt CNIC Hand-Audit", desc: "Cross-referenced with database records", pts: "+20% Score" },
+                        { id: "selfie", label: "Live Selfie Match Check", desc: "Ensures profile user matches CNIC details", pts: "+15% Score" },
+                        { id: "family", label: "Family Representative Consent", desc: "Active phone-call check with parents", pts: "+15% Score" },
+                        { id: "career", label: "Career & Degree Verification", desc: "Verifies company/university details", pts: "+10% Score" },
+                    ].map((item) => (
+                        <label key={item.id} className="flex items-start gap-4 p-3 rounded-2xl border border-[var(--line)] hover:border-[var(--gold-soft)] cursor-pointer transition-colors bg-[var(--canvas)]">
+                            <input
+                                type="checkbox"
+                                checked={checks[item.id as keyof typeof checks]}
+                                onChange={(e) => setChecks({ ...checks, [item.id]: e.target.checked })}
+                                className="w-4 h-4 rounded border-[var(--line)] text-[var(--berry)] focus:ring-[var(--gold)] mt-1 cursor-pointer"
+                            />
+                            <div className="flex-1">
+                                <div className="flex justify-between items-baseline">
+                                    <strong className="text-xs text-[var(--text)] font-semibold">{item.label}</strong>
+                                    <span className="text-[8px] font-bold text-[var(--gold)] uppercase tracking-wider">{item.pts}</span>
+                                </div>
+                                <p className="text-[10px] text-[var(--muted)] mt-0.5">{item.desc}</p>
+                            </div>
+                        </label>
+                    ))}
+                </div>
+            </div>
+
+            <div className="flex flex-col items-center justify-center p-8 bg-[var(--canvas-deep)] rounded-3xl text-center border border-[var(--line)] min-h-[22rem]">
+                <span className="text-[9px] font-bold text-[var(--gold)] tracking-widest uppercase mb-6">Audited Standing</span>
+                
+                <div className="relative w-36 h-36 flex items-center justify-center mb-6">
+                    <svg className="absolute inset-0 w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="42" stroke="rgba(31,36,33,0.06)" strokeWidth="4" fill="transparent" />
+                        <circle
+                            cx="50"
+                            cy="50"
+                            r="42"
+                            stroke="var(--gold)"
+                            strokeWidth="4"
+                            fill="transparent"
+                            strokeDasharray={263}
+                            strokeDashoffset={263 - (263 * score) / 100}
+                            className="transition-all duration-700 ease-out"
+                        />
+                    </svg>
+                    <div className="flex flex-col items-center">
+                        <span className="font-display text-4xl text-[var(--berry)] font-medium">{score}%</span>
+                        <span className="text-[8px] font-bold text-[var(--muted)] uppercase tracking-widest mt-1">Readiness</span>
+                    </div>
+                </div>
+
+                <div className="space-y-1">
+                    <strong className="font-display italic text-lg text-[var(--text)] block">{status}</strong>
+                    <p className="text-[10px] text-[var(--muted)] max-w-xs px-4 leading-relaxed">
+                        {score === 100 
+                            ? "Complete verification profile. Eligible for priority direct family matching recommendations." 
+                            : "Provide additional details to unlock gold or platinum matching standing."}
+                    </p>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// 5. Matchmaking Council Journey
+function MatchmakingCouncil() {
+    return (
+        <section id="how-it-works" className="section bg-[var(--canvas)]">
+            <div className="site-shell grid grid-cols-1 lg:grid-cols-12 gap-16 items-start py-8">
+                <div className="lg:col-span-5">
+                    <span className="editorial-eyebrow">Human-Led Standard</span>
+                    <h2 className="font-display text-4xl md:text-5xl text-[var(--text)] leading-tight">
+                        The Matchmaking Council. <em>No algorithms dictate your fate.</em>
+                    </h2>
+                    <p className="text-sm text-[var(--muted)] leading-relaxed mt-6">
+                        We reject superficial matching scripts. Every candidate proposal undergoes an audit check by our council of experts before connection begins.
+                    </p>
+                    <div className="mt-8 border-t border-[var(--line)] pt-8 flex gap-6">
+                        <div>
+                            <strong className="font-display text-3xl text-[var(--berry)] block">100%</strong>
+                            <span className="text-[9px] font-bold text-[var(--muted)] uppercase tracking-widest">Manual Audit</span>
+                        </div>
+                        <div>
+                            <strong className="font-display text-3xl text-[var(--berry)] block">15 Min</strong>
+                            <span className="text-[9px] font-bold text-[var(--muted)] uppercase tracking-widest">Audit Time</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="lg:col-span-7 space-y-6">
+                    {[
+                        { num: "01", title: "Identity CNIC Audit Checks", desc: "Our specialists check CNIC registrations and match selfies manually to confirm zero profile duplication." },
+                        { num: "02", title: "Matrimonial Intent Assessment", desc: "We contact candidate profile creators to verify intention level (independent vs parental involvement)." },
+                        { num: "03", title: "Criteria Compatibility Search", desc: "Our dashboard processes family requirements: education background, city locations, and cast/sect parameters." },
+                        { num: "04", title: "Respectful Mutual Introduction", desc: "We establish a secure introductory chat channel, locking photo visibility until candidate consents are granted." },
+                    ].map((step) => (
+                        <div key={step.num} className="flex gap-6 border-b border-[var(--line)] pb-6 last:border-b-0 last:pb-0 group">
+                            <span className="font-display italic text-3xl text-[var(--gold)] font-medium opacity-50 group-hover:opacity-100 transition-opacity">
+                                {step.num}
+                            </span>
+                            <div>
+                                <h4 className="text-sm font-bold uppercase tracking-widest text-[var(--text)]">{step.title}</h4>
+                                <p className="text-xs text-[var(--muted)] mt-2 leading-relaxed">{step.desc}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </section>
+    );
+}
+
+// 6. Matrimonial Quote Banner
+function FamilyCharter() {
+    return (
+        <section className="section bg-[#faf8f5] border-y border-[var(--line)] py-24 relative overflow-hidden">
+            <div className="absolute inset-0 opacity-5 pointer-events-none select-none flex items-center justify-center">
+                <svg className="w-[30rem] h-[30rem] text-[var(--gold)]" viewBox="0 0 100 100" fill="currentColor">
+                    <circle cx="50" cy="50" r="45" stroke="currentColor" strokeWidth="1" fill="transparent" />
+                </svg>
+            </div>
+            <div className="site-shell text-center max-w-3xl mx-auto relative z-10">
+                <span className="editorial-eyebrow">matrimonial charter</span>
+                <blockquote className="font-display text-3xl md:text-5xl leading-tight text-[var(--text)] mt-4">
+                    “We do not build dating swipe lists. <br />We craft serious family connections.”
+                </blockquote>
+                <div className="w-12 h-[1px] bg-[var(--gold)] mx-auto mt-8 mb-4" />
+                <cite className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--muted)] font-sans not-italic">
+                    Shadii.pk Code of Matrimonial Respect
+                </cite>
+            </div>
+        </section>
     );
 }
 
@@ -386,7 +557,7 @@ function MatchConsole() {
     }, [age, city]);
 
     return (
-        <div className="border border-[var(--line)] bg-white p-8 grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-4xl mx-auto card-3d">
+        <div className="border border-[var(--line)] bg-white p-8 grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-4xl mx-auto card-3d rounded-3xl">
             <div className="flex flex-col justify-center">
                 <span className="editorial-eyebrow">Matchmaking filters</span>
                 <h3 className="font-display text-4xl text-[var(--text)] leading-tight mb-6">
@@ -420,7 +591,7 @@ function MatchConsole() {
                             <button
                                 type="button"
                                 onClick={() => setVerifiedOnly((value) => !value)}
-                                className={`btn-editorial-secondary py-2.5 text-[9px] tracking-widest uppercase cursor-pointer ${
+                                className={`btn-editorial-secondary py-2.5 text-[9px] tracking-widest uppercase cursor-pointer rounded-2xl ${
                                     verifiedOnly ? "!bg-[var(--text)] !text-white" : ""
                                 }`}
                             >
@@ -433,7 +604,7 @@ function MatchConsole() {
 
             <div className="flex flex-col gap-4 justify-center">
                 {profiles.map((profile, index) => (
-                    <article key={profile.name} className="border border-[var(--line)] p-4 bg-[var(--canvas)] flex justify-between items-center transition-all hover:border-[var(--gold)]">
+                    <article key={profile.name} className="border border-[var(--line)] p-4 bg-[var(--canvas)] flex justify-between items-center transition-all hover:border-[var(--gold)] rounded-2xl">
                         <div>
                             <span className="text-[9px] font-bold text-[var(--gold)] tracking-widest block mb-1">0{index + 1} / PROFILE</span>
                             <strong className="font-display italic text-sm text-[var(--text)] block">{profile.name}</strong>
@@ -488,10 +659,10 @@ export default function Home() {
                         </p>
                         
                         <div className="flex flex-wrap gap-4 mt-10">
-                            <a href="/portal/register?plan=free" className="btn-editorial-primary">
+                            <a href="/portal/register?plan=free" className="btn-editorial-primary rounded-2xl">
                                 Begin Journey
                             </a>
-                            <a href="/portal/login" className="btn-editorial-secondary">
+                            <a href="/portal/login" className="btn-editorial-secondary rounded-2xl">
                                 Enter Portal
                             </a>
                         </div>
@@ -513,7 +684,7 @@ export default function Home() {
                         <motion.div 
                             animate={{ x: mouseCoords.x * 0.4, y: mouseCoords.y * 0.4 }}
                             transition={{ type: "spring", stiffness: 120, damping: 20 }}
-                            className="absolute top-16 left-4 z-20 border border-[var(--line)] bg-white p-4 flex gap-3 items-center shadow-[0_20px_45px_rgba(0,0,0,0.02)]"
+                            className="absolute top-16 left-4 z-20 border border-[var(--line)] bg-white p-4 flex gap-3 items-center shadow-[0_20px_45px_rgba(0,0,0,0.02)] rounded-2xl"
                         >
                             <ShieldCheckIcon className="w-5 h-5 text-[var(--gold)]" />
                             <div>
@@ -526,7 +697,7 @@ export default function Home() {
                         <motion.div 
                             animate={{ rotateY: mouseCoords.x * 0.6, rotateX: -mouseCoords.y * 0.6 }}
                             transition={{ type: "spring", stiffness: 100, damping: 25 }}
-                            className="phone-frame scale-105 z-10 shadow-2xl relative"
+                            className="phone-frame scale-105 z-10 shadow-2xl relative rounded-[2rem]"
                         >
                             <div className="flex justify-between items-center border-b border-[var(--line)] pb-3 mb-4">
                                 <span className="text-[9px] font-bold tracking-widest uppercase text-[var(--text)]">Shadii.pk</span>
@@ -543,17 +714,17 @@ export default function Home() {
                             </div>
 
                             <div className="space-y-2 mb-6">
-                                <div className="border border-[var(--line)] p-2.5 bg-[var(--canvas-deep)]">
+                                <div className="border border-[var(--line)] p-2.5 bg-[var(--canvas-deep)] rounded-xl">
                                     <span className="block text-[8px] text-[var(--muted)] uppercase tracking-wider">Identity Audit</span>
                                     <span className="text-[9px] font-bold text-emerald-800">✓ Govt CNIC Verified</span>
                                 </div>
-                                <div className="border border-[var(--line)] p-2.5 bg-[var(--canvas-deep)]">
+                                <div className="border border-[var(--line)] p-2.5 bg-[var(--canvas-deep)] rounded-xl">
                                     <span className="block text-[8px] text-[var(--muted)] uppercase tracking-wider">Security State</span>
                                     <span className="text-[9px] font-bold text-[var(--gold)]">Photo Access Request Enabled</span>
                                 </div>
                             </div>
 
-                            <button className="btn-editorial-primary w-full py-2.5 text-[9px] tracking-widest uppercase" type="button">
+                            <button className="btn-editorial-primary w-full py-2.5 text-[9px] tracking-widest uppercase rounded-xl" type="button">
                                 Send Invite
                             </button>
                         </motion.div>
@@ -562,7 +733,7 @@ export default function Home() {
                         <motion.div 
                             animate={{ x: -mouseCoords.x * 0.4, y: -mouseCoords.y * 0.4 }}
                             transition={{ type: "spring", stiffness: 120, damping: 20 }}
-                            className="absolute bottom-24 right-4 z-20 border border-[var(--line)] bg-white p-4 flex gap-3 items-center shadow-[0_20px_45px_rgba(0,0,0,0.02)]"
+                            className="absolute bottom-24 right-4 z-20 border border-[var(--line)] bg-white p-4 flex gap-3 items-center shadow-[0_20px_45px_rgba(0,0,0,0.02)] rounded-2xl"
                         >
                             <EyeSlashIcon className="w-5 h-5 text-[var(--berry)]" />
                             <div>
@@ -609,6 +780,9 @@ export default function Home() {
                 </div>
             </section>
 
+            {/* 1. New Section: The Matchmaking Council Curated Steps */}
+            <MatchmakingCouncil />
+
             {/* Core Pillars / Bento Grid Features */}
             <section id="features" className="section">
                 <div className="site-shell">
@@ -629,7 +803,7 @@ export default function Home() {
                                     variants={card3DVariants}
                                     viewport={{ once: true, margin: "-50px" }}
                                     key={feat.title}
-                                    className={`bento-item ${index === 0 || index === 3 ? "col-span-12 md:col-span-8" : "col-span-12 md:col-span-4"}`}
+                                    className={`bento-item rounded-3xl ${index === 0 || index === 3 ? "col-span-12 md:col-span-8" : "col-span-12 md:col-span-4"}`}
                                 >
                                     <span className="text-[10px] font-bold text-[var(--gold)] tracking-widest block mb-4">{feat.tag}</span>
                                     <h3 className="font-display text-2xl mb-4 text-[var(--text)]">{feat.title}</h3>
@@ -643,6 +817,9 @@ export default function Home() {
                     </div>
                 </div>
             </section>
+
+            {/* 2. New Section: Matrimonial Quote Banner */}
+            <FamilyCharter />
 
             {/* Interactive Simulators Showcase */}
             <section className="section bg-[var(--canvas-deep)]">
@@ -674,6 +851,13 @@ export default function Home() {
                 </div>
             </section>
 
+            {/* 3. New Section: Seriousness Calculator Simulator */}
+            <section className="section bg-[var(--canvas)]">
+                <div className="site-shell">
+                    <SeriousnessCalculator />
+                </div>
+            </section>
+
             {/* MatchConsole Section */}
             <section className="section">
                 <div className="site-shell">
@@ -698,12 +882,12 @@ export default function Home() {
                                 whileHover="hover"
                                 variants={card3DVariants}
                                 key={plan.name} 
-                                className={`border p-8 bg-white flex flex-col justify-between relative ${
+                                className={`border p-8 bg-white flex flex-col justify-between relative rounded-3xl ${
                                     plan.accent ? "border-[var(--gold)] shadow-[0_20px_50px_rgba(199,125,99,0.06)]" : "border-[var(--line)]"
                                 }`}
                             >
                                 {plan.accent && (
-                                    <span className="absolute -top-3.5 right-6 px-3 py-1 bg-[var(--gold)] text-white text-[8px] font-bold uppercase tracking-widest">
+                                    <span className="absolute -top-3.5 right-6 px-3 py-1 bg-[var(--gold)] text-white text-[8px] font-bold uppercase tracking-widest rounded-full">
                                         Council Pick
                                     </span>
                                 )}
@@ -725,7 +909,7 @@ export default function Home() {
                                     </ul>
                                 </div>
 
-                                <a href="/portal/register?plan=free" className="btn-editorial-primary w-full text-center py-3.5 text-[9px] tracking-widest uppercase mt-10">
+                                <a href="/portal/register?plan=free" className="btn-editorial-primary w-full text-center py-3.5 text-[9px] tracking-widest uppercase mt-10 rounded-2xl">
                                     {plan.name === "Free Trial" ? "Register Free" : `Activate ${plan.name}`}
                                 </a>
                             </motion.div>
@@ -768,7 +952,7 @@ export default function Home() {
                             ["First-Message Rules", "Introduction invites block match spammers from accessing matches."],
                             ["Gateway Compliant Rails", "All policies and subscriptions follow rapid compliance rules."],
                         ].map(([title, desc]) => (
-                            <div key={title} className="border border-[var(--line)] p-5 bg-[var(--canvas-deep)] card-3d">
+                            <div key={title} className="border border-[var(--line)] p-5 bg-[var(--canvas-deep)] card-3d rounded-3xl">
                                 <SparklesIcon className="w-4 h-4 text-[var(--gold)] mb-3" />
                                 <h4 className="text-xs font-bold uppercase tracking-widest text-[var(--text)]">{title}</h4>
                                 <p className="text-[11px] text-[var(--muted)] mt-1.5 leading-relaxed">{desc}</p>
@@ -791,7 +975,7 @@ export default function Home() {
                         </p>
                     </div>
 
-                    <div className="lg:col-span-7 space-y-3 bg-white border border-[var(--line)] p-6 card-3d">
+                    <div className="lg:col-span-7 space-y-3 bg-white border border-[var(--line)] p-6 card-3d rounded-3xl">
                         {faqs.map((faq, i) => (
                             <details key={faq.q} open={i === 0} className="border-b border-[var(--line)] py-4 last:border-0 last:pb-0 first:pt-0">
                                 <summary className="flex justify-between items-center cursor-pointer font-bold text-xs uppercase tracking-widest text-[var(--text)] outline-none">
@@ -808,7 +992,7 @@ export default function Home() {
             {/* CTA Final Invitation */}
             <section className="section pb-24 pt-20">
                 <div className="site-shell">
-                    <div className="border border-[var(--line)] p-12 md:p-20 text-center bg-white relative overflow-hidden card-3d">
+                    <div className="border border-[var(--line)] p-12 md:p-20 text-center bg-white relative overflow-hidden card-3d rounded-[2rem]">
                         <MapPinIcon className="w-8 h-8 text-[var(--gold)] mx-auto mb-6" />
                         <span className="editorial-eyebrow">matrimonial portal</span>
                         <h2 className="font-display text-4xl md:text-5xl text-[var(--text)] mt-4 leading-tight">
@@ -819,10 +1003,10 @@ export default function Home() {
                         </p>
                         
                         <div className="flex flex-wrap gap-4 justify-center mt-10">
-                            <a href="/portal/register?plan=free" className="btn-editorial-primary">
+                            <a href="/portal/register?plan=free" className="btn-editorial-primary rounded-2xl">
                                 Register Profile
                             </a>
-                            <a href="/contact-us" className="btn-editorial-secondary">
+                            <a href="/contact-us" className="btn-editorial-secondary rounded-2xl">
                                 Contact Support
                             </a>
                         </div>
