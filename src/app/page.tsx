@@ -21,6 +21,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { StarIcon } from "@heroicons/react/24/solid";
 import { useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const metrics = [
     { value: "50K+", label: "Verified Members" },
@@ -29,21 +30,49 @@ const metrics = [
     { value: "24/7", label: "Manual Moderation" },
 ];
 
-const features = [
+const trustSignals = [
+    "CNIC and live selfie checks",
+    "Photo privacy controls",
+    "Family-ready introductions",
+    "Safe first-message flow",
+];
+
+const featureCards = [
     {
-        tag: "01 / IDENTITY",
+        icon: ShieldCheckIcon,
         title: "Manual CNIC Auditing",
-        desc: "We verify Government CNICs alongside live selfie captures to eliminate fake profiles before they can browse matches.",
+        copy: "We verify Government CNICs alongside live selfie captures to eliminate fake profiles before they can browse matches.",
+        tag: "Identity",
     },
     {
-        tag: "02 / CONTROL",
-        title: "The Photo Shield",
-        desc: "Choose whether your photos are public, visible only to verified profiles, or unlocked strictly on request.",
+        icon: EyeSlashIcon,
+        title: "Complete Photo Shields",
+        copy: "Photos stay hidden under blur controls until you explicitly approve match request permissions.",
+        tag: "Privacy",
     },
     {
-        tag: "03 / DISCOVERY",
+        icon: AdjustmentsHorizontalIcon,
         title: "Intent-Based Filters",
-        desc: "Filter profiles by city, age, sect, marital status, and family background expectations with complete clarity.",
+        copy: "Filter profiles by city, age, sect, marital status, and family background expectations with complete clarity.",
+        tag: "Discovery",
+    },
+    {
+        icon: ChatBubbleLeftRightIcon,
+        title: "Matrimonial Connection Rules",
+        copy: "Direct messaging requires mutual consent. Free members can send one initial request invitation.",
+        tag: "Messaging",
+    },
+    {
+        icon: CreditCardIcon,
+        title: "Transparent Payment Rails",
+        copy: "All subscriptions, invoices, and refund policies follow strict payment gateway audit guidelines.",
+        tag: "Payments",
+    },
+    {
+        icon: BellAlertIcon,
+        title: "Guided Activity States",
+        copy: "Verification updates, lock permissions, and chat request statuses are grouped into calm, readable boards.",
+        tag: "Operations",
     },
 ];
 
@@ -71,6 +100,13 @@ const plans = [
     },
 ];
 
+const legalLinks = [
+    { href: "/privacy-policy", label: "Privacy Policy" },
+    { href: "/terms-and-conditions", label: "Terms & Conditions" },
+    { href: "/refund-policy", label: "Refund Policy" },
+    { href: "/contact-us", label: "Contact Us" },
+];
+
 const faqs = [
     {
         q: "How does Shadii.pk verify profile authenticity?",
@@ -86,16 +122,50 @@ const faqs = [
     },
 ];
 
-const legalLinks = [
-    { href: "/privacy-policy", label: "Privacy Policy" },
-    { href: "/terms-and-conditions", label: "Terms & Conditions" },
-    { href: "/refund-policy", label: "Refund Policy" },
-    { href: "/contact-us", label: "Contact Us" },
-];
+const cities = ["Lahore", "Karachi", "Islamabad", "Rawalpindi", "Faisalabad", "Multan"];
+
+const revealVariants = {
+    hidden: { opacity: 0, y: 50 },
+    visible: { 
+        opacity: 1, 
+        y: 0,
+        transition: { type: "spring" as const, stiffness: 50, damping: 15, duration: 0.8 }
+    }
+};
+
+const card3DVariants = {
+    rest: { rotateX: 0, rotateY: 0, z: 0 },
+    hover: { 
+        rotateX: 4, 
+        rotateY: -4, 
+        z: 15,
+        transition: { type: "spring" as const, stiffness: 120, damping: 18 }
+    }
+};
+
+function SectionIntro({
+    eyebrow,
+    title,
+    copy,
+    align = "center",
+}: {
+    eyebrow: string;
+    title: string;
+    copy: string;
+    align?: "center" | "left";
+}) {
+    return (
+        <div className={`premium-section-intro ${align === "left" ? "items-start text-left" : "items-center text-center"}`}>
+            <span className="editorial-eyebrow">{eyebrow}</span>
+            <h2 className="font-display text-4xl md:text-5xl text-[var(--text)] leading-tight">{title}</h2>
+            <p className="text-[var(--muted)] text-sm leading-relaxed mt-4 max-w-2xl">{copy}</p>
+        </div>
+    );
+}
 
 function ComplianceRail() {
     return (
-        <div className="compliance-rail" aria-label="Rapid Gateway compliance links">
+        <div className="compliance-rail mt-12" aria-label="Rapid Gateway compliance links">
             <div>
                 <span className="premium-eyebrow">Gateway Ready</span>
                 <p>Policies, support details, and plan terms are one tap away.</p>
@@ -111,16 +181,7 @@ function ComplianceRail() {
     );
 }
 
-const trustSignals = [
-    "CNIC and live selfie checks",
-    "Photo privacy controls",
-    "Family-ready introductions",
-    "Safe first-message flow",
-];
-
-const cities = ["Lahore", "Karachi", "Islamabad", "Rawalpindi", "Faisalabad", "Multan"];
-
-// Interactive Showcase 1: CNIC Matcher
+// 1. Verification Matcher Simulator Widget
 function VerificationMatcher() {
     const [scanState, setScanState] = useState<"idle" | "scanning" | "matched">("idle");
 
@@ -137,7 +198,7 @@ function VerificationMatcher() {
     };
 
     return (
-        <div className={`scan-active-container ${scanState === "scanning" ? "scanning" : ""}`}>
+        <div className={`scan-active-container card-3d ${scanState === "scanning" ? "scanning" : ""}`}>
             <div className="scanning-bar" />
             <div className="flex flex-col gap-5">
                 <div className="flex justify-between items-center border-b border-[var(--line)] pb-3">
@@ -190,7 +251,7 @@ function VerificationMatcher() {
     );
 }
 
-// Interactive Showcase 2: Photo Shield
+// 2. Photo Privacy Simulator Widget
 function PhotoPrivacySimulator() {
     const [status, setStatus] = useState<"locked" | "requesting" | "unlocked">("locked");
 
@@ -202,7 +263,7 @@ function PhotoPrivacySimulator() {
     };
 
     return (
-        <div className="border border-[var(--line)] p-6 bg-white flex flex-col items-center text-center max-w-sm mx-auto w-full">
+        <div className="border border-[var(--line)] p-6 bg-white flex flex-col items-center text-center max-w-sm mx-auto w-full card-3d">
             <span className="text-[9px] font-bold uppercase tracking-widest text-[var(--gold)] mb-4 block">Secured Photo Shield</span>
             
             <div className="private-photo-mask w-24 h-24 rounded-full border border-[var(--line)] mb-4 relative flex items-center justify-center overflow-hidden">
@@ -250,7 +311,7 @@ function PhotoPrivacySimulator() {
     );
 }
 
-// Interactive Showcase 3: Message Flow & Subscription Limit
+// 3. Message Flow & Subscription Limit
 function ChatLimitSimulator() {
     const [stage, setStage] = useState<"idle" | "sent" | "replying" | "limited">("idle");
 
@@ -265,7 +326,7 @@ function ChatLimitSimulator() {
     };
 
     return (
-        <div className="border border-[var(--line)] p-4 bg-white max-w-md mx-auto w-full flex flex-col justify-between min-h-[20rem]">
+        <div className="border border-[var(--line)] p-4 bg-white max-w-md mx-auto w-full flex flex-col justify-between min-h-[20rem] card-3d">
             <span className="text-[9px] font-bold uppercase tracking-widest text-[var(--gold)] text-center mb-3 block">Conversational Rules Flow</span>
             
             <div className="chat-box-mockup flex-1 mb-4">
@@ -325,7 +386,7 @@ function MatchConsole() {
     }, [age, city]);
 
     return (
-        <div className="border border-[var(--line)] bg-white p-8 grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-4xl mx-auto">
+        <div className="border border-[var(--line)] bg-white p-8 grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-4xl mx-auto card-3d">
             <div className="flex flex-col justify-center">
                 <span className="editorial-eyebrow">Matchmaking filters</span>
                 <h3 className="font-display text-4xl text-[var(--text)] leading-tight mb-6">
@@ -375,10 +436,10 @@ function MatchConsole() {
                     <article key={profile.name} className="border border-[var(--line)] p-4 bg-[var(--canvas)] flex justify-between items-center transition-all hover:border-[var(--gold)]">
                         <div>
                             <span className="text-[9px] font-bold text-[var(--gold)] tracking-widest block mb-1">0{index + 1} / PROFILE</span>
-                            <strong className="text-sm font-display italic text-[var(--text)] block">{profile.name}</strong>
+                            <strong className="font-display italic text-sm text-[var(--text)] block">{profile.name}</strong>
                             <span className="text-[10px] text-[var(--muted)] mt-0.5 block">{profile.detail}</span>
                         </div>
-                        <div className="w-10 h-10 border border-[var(--gold)] rounded-full flex items-center justify-center text-[10px] font-bold text-[var(--gold)]">
+                        <div className="w-10 h-10 border border-[var(--gold)] rounded-full flex items-center justify-center text-[10px] font-bold text-[var(--gold)] font-display">
                             {profile.score}%
                         </div>
                     </article>
@@ -389,16 +450,33 @@ function MatchConsole() {
 }
 
 export default function Home() {
+    const [mouseCoords, setMouseCoords] = useState({ x: 0, y: 0 });
+
+    const handleMouseMove = (e: React.MouseEvent) => {
+        const { clientX, clientY } = e;
+        const x = (clientX - window.innerWidth / 2) / 38;
+        const y = (clientY - window.innerHeight / 2) / 38;
+        setMouseCoords({ x, y });
+    };
+
     return (
-        <main className="min-h-screen bg-[var(--canvas)] selection:bg-[var(--rose)] selection:text-[var(--berry)]">
+        <main 
+            onMouseMove={handleMouseMove}
+            className="min-h-screen bg-[var(--canvas)] selection:bg-[var(--rose)] selection:text-[var(--berry)]"
+        >
             <Navbar />
 
             {/* Hero Section */}
-            <section className="section pt-36 pb-24 relative overflow-hidden parallax-section">
+            <section className="section pt-36 pb-24 relative overflow-hidden">
                 <div className="site-shell grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
                     
                     {/* Left Copy Block */}
-                    <div className="editorial-reveal">
+                    <motion.div 
+                        initial="hidden" 
+                        animate="visible" 
+                        variants={revealVariants}
+                        className="editorial-reveal"
+                    >
                         <span className="editorial-eyebrow">Pakistan&apos;s Premium Matrimony</span>
                         <h1 className="font-display text-5xl md:text-7xl leading-[1.08] text-[var(--text)]">
                             Serious matchmaking, <br />refined for <br />
@@ -427,21 +505,29 @@ export default function Home() {
                                 </div>
                             ))}
                         </div>
-                    </div>
+                    </motion.div>
 
-                    {/* Right 3D Visual Mockup */}
+                    {/* Right 3D Visual Mockup with Dynamic Mouse Tilt */}
                     <div className="relative w-full h-[40rem] flex items-center justify-center phone-frame-container">
                         {/* Floating Tag 1 */}
-                        <div className="absolute top-16 left-4 z-20 border border-[var(--line)] bg-white p-4 flex gap-3 items-center shadow-[0_20px_45px_rgba(0,0,0,0.02)] scroll-parallax-slow">
+                        <motion.div 
+                            animate={{ x: mouseCoords.x * 0.4, y: mouseCoords.y * 0.4 }}
+                            transition={{ type: "spring", stiffness: 120, damping: 20 }}
+                            className="absolute top-16 left-4 z-20 border border-[var(--line)] bg-white p-4 flex gap-3 items-center shadow-[0_20px_45px_rgba(0,0,0,0.02)]"
+                        >
                             <ShieldCheckIcon className="w-5 h-5 text-[var(--gold)]" />
                             <div>
                                 <span className="block text-[9px] font-bold uppercase tracking-wider text-[var(--text)]">Verified Candidate</span>
                                 <span className="block text-[8px] text-[var(--muted)]">CNIC & Selfie Match 98%</span>
                             </div>
-                        </div>
+                        </motion.div>
 
-                        {/* Phone Container */}
-                        <div className="phone-frame">
+                        {/* Phone Container with 3D Mouse Tilt */}
+                        <motion.div 
+                            animate={{ rotateY: mouseCoords.x * 0.6, rotateX: -mouseCoords.y * 0.6 }}
+                            transition={{ type: "spring", stiffness: 100, damping: 25 }}
+                            className="phone-frame scale-105 z-10 shadow-2xl relative"
+                        >
                             <div className="flex justify-between items-center border-b border-[var(--line)] pb-3 mb-4">
                                 <span className="text-[9px] font-bold tracking-widest uppercase text-[var(--text)]">Shadii.pk</span>
                                 <span className="w-2 h-2 rounded-full bg-emerald-500" />
@@ -470,16 +556,20 @@ export default function Home() {
                             <button className="btn-editorial-primary w-full py-2.5 text-[9px] tracking-widest uppercase" type="button">
                                 Send Invite
                             </button>
-                        </div>
+                        </motion.div>
 
                         {/* Floating Tag 2 */}
-                        <div className="absolute bottom-24 right-4 z-20 border border-[var(--line)] bg-white p-4 flex gap-3 items-center shadow-[0_20px_45px_rgba(0,0,0,0.02)] scroll-parallax-fast">
+                        <motion.div 
+                            animate={{ x: -mouseCoords.x * 0.4, y: -mouseCoords.y * 0.4 }}
+                            transition={{ type: "spring", stiffness: 120, damping: 20 }}
+                            className="absolute bottom-24 right-4 z-20 border border-[var(--line)] bg-white p-4 flex gap-3 items-center shadow-[0_20px_45px_rgba(0,0,0,0.02)]"
+                        >
                             <EyeSlashIcon className="w-5 h-5 text-[var(--berry)]" />
                             <div>
                                 <span className="block text-[9px] font-bold uppercase tracking-wider text-[var(--text)]">Photo Lock</span>
                                 <span className="block text-[8px] text-[var(--muted)]">Blurred until accepted</span>
                             </div>
-                        </div>
+                        </motion.div>
                     </div>
 
                 </div>
@@ -487,11 +577,18 @@ export default function Home() {
                 {/* Metric Strip */}
                 <div className="site-shell mt-16 pt-12 border-t border-[var(--line)]">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-                        {metrics.map((metric) => (
-                            <div key={metric.label} className="text-center md:text-left border-l border-[var(--line)] pl-4">
+                        {metrics.map((metric, index) => (
+                            <motion.div 
+                                initial={{ opacity: 0, y: 30 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ type: "spring", stiffness: 80, damping: 15, delay: index * 0.1 }}
+                                key={metric.label} 
+                                className="text-center md:text-left border-l border-[var(--line)] pl-4"
+                            >
                                 <strong className="font-display text-4xl text-[var(--berry)] block leading-none">{metric.value}</strong>
                                 <span className="text-[9px] font-bold uppercase tracking-widest text-[var(--muted)] mt-2 block">{metric.label}</span>
-                            </div>
+                            </motion.div>
                         ))}
                     </div>
                 </div>
@@ -523,36 +620,26 @@ export default function Home() {
                     </div>
 
                     <div className="bento-container">
-                        <div className="bento-item col-span-12 md:col-span-8">
-                            <span className="text-[10px] font-bold text-[var(--gold)] tracking-widest block mb-4">IDENTITY</span>
-                            <h3 className="font-display text-2xl mb-4 text-[var(--text)]">Manual Government Verification</h3>
-                            <p className="text-xs text-[var(--muted)] leading-relaxed max-w-md">
-                                Every profile uploaded is cross-referenced manually against official government details and user selfie captures. 
-                                We completely eliminate bots and fake rishta proposals.
-                            </p>
-                        </div>
-                        <div className="bento-item col-span-12 md:col-span-4">
-                            <span className="text-[10px] font-bold text-[var(--gold)] tracking-widest block mb-4">PRIVACY</span>
-                            <h3 className="font-display text-2xl mb-4 text-[var(--text)]">Complete Photo Shields</h3>
-                            <p className="text-xs text-[var(--muted)] leading-relaxed">
-                                Photos are blurred by default, allowing you to select who views them or to share them only on individual request.
-                            </p>
-                        </div>
-                        <div className="bento-item col-span-12 md:col-span-4">
-                            <span className="text-[10px] font-bold text-[var(--gold)] tracking-widest block mb-4">DISCOVERY</span>
-                            <h3 className="font-display text-2xl mb-4 text-[var(--text)]">Criteria Search</h3>
-                            <p className="text-xs text-[var(--muted)] leading-relaxed">
-                                Filter match selections by education, city location, cast sect, expectations, and family background variables.
-                            </p>
-                        </div>
-                        <div className="bento-item col-span-12 md:col-span-8">
-                            <span className="text-[10px] font-bold text-[var(--gold)] tracking-widest block mb-4">MESSAGING</span>
-                            <h3 className="font-display text-2xl mb-4 text-[var(--text)]">Respectful Matrimonial Invite Rules</h3>
-                            <p className="text-xs text-[var(--muted)] leading-relaxed max-w-md">
-                                Direct messaging requires consent. Free members can send one initial matrimonial request invitation, ensuring 
-                                conversation continues only when both sides are serious and comfortable.
-                            </p>
-                        </div>
+                        {featureCards.map((feat, index) => {
+                            const Icon = feat.icon;
+                            return (
+                                <motion.div 
+                                    initial="rest"
+                                    whileHover="hover"
+                                    variants={card3DVariants}
+                                    viewport={{ once: true, margin: "-50px" }}
+                                    key={feat.title}
+                                    className={`bento-item ${index === 0 || index === 3 ? "col-span-12 md:col-span-8" : "col-span-12 md:col-span-4"}`}
+                                >
+                                    <span className="text-[10px] font-bold text-[var(--gold)] tracking-widest block mb-4">{feat.tag}</span>
+                                    <h3 className="font-display text-2xl mb-4 text-[var(--text)]">{feat.title}</h3>
+                                    <p className="text-xs text-[var(--muted)] leading-relaxed max-w-md">{feat.copy}</p>
+                                    <div className="absolute top-6 right-6 text-[var(--gold)] opacity-35">
+                                        <Icon className="w-6 h-6" />
+                                    </div>
+                                </motion.div>
+                            );
+                        })}
                     </div>
                 </div>
             </section>
@@ -571,17 +658,14 @@ export default function Home() {
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-                        {/* Sim 1 */}
                         <div>
                             <span className="editorial-eyebrow text-center lg:text-left">01 / Verification Scan</span>
                             <VerificationMatcher />
                         </div>
-                        {/* Sim 2 */}
                         <div>
                             <span className="editorial-eyebrow text-center lg:text-left">02 / Photo Authorize</span>
                             <PhotoPrivacySimulator />
                         </div>
-                        {/* Sim 3 */}
                         <div>
                             <span className="editorial-eyebrow text-center lg:text-left">03 / Conversation Rule</span>
                             <ChatLimitSimulator />
@@ -609,9 +693,15 @@ export default function Home() {
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
                         {plans.map((plan) => (
-                            <div key={plan.name} className={`border p-8 bg-white flex flex-col justify-between relative ${
-                                plan.accent ? "border-[var(--gold)] shadow-[0_20px_50px_rgba(199,125,99,0.06)]" : "border-[var(--line)]"
-                            }`}>
+                            <motion.div 
+                                initial="rest"
+                                whileHover="hover"
+                                variants={card3DVariants}
+                                key={plan.name} 
+                                className={`border p-8 bg-white flex flex-col justify-between relative ${
+                                    plan.accent ? "border-[var(--gold)] shadow-[0_20px_50px_rgba(199,125,99,0.06)]" : "border-[var(--line)]"
+                                }`}
+                            >
                                 {plan.accent && (
                                     <span className="absolute -top-3.5 right-6 px-3 py-1 bg-[var(--gold)] text-white text-[8px] font-bold uppercase tracking-widest">
                                         Council Pick
@@ -638,7 +728,7 @@ export default function Home() {
                                 <a href="/portal/register?plan=free" className="btn-editorial-primary w-full text-center py-3.5 text-[9px] tracking-widest uppercase mt-10">
                                     {plan.name === "Free Trial" ? "Register Free" : `Activate ${plan.name}`}
                                 </a>
-                            </div>
+                            </motion.div>
                         ))}
                     </div>
 
@@ -664,7 +754,7 @@ export default function Home() {
                         </p>
                         
                         <div className="flex items-center gap-3 mt-8 pt-6 border-t border-[var(--line)] max-w-xs">
-                            <span className="w-8 h-8 rounded-full bg-[var(--berry)] text-white flex items-center justify-center text-xs font-bold font-display italic">SP</span>
+                            <span className="w-8 h-8 rounded-full bg-[var(--berry)] text-white flex items-center justify-center text-xs font-display italic font-bold">SP</span>
                             <div>
                                 <strong className="text-xs text-[var(--text)] block">Matrimonial Verification Council</strong>
                                 <span className="text-[9px] text-[var(--muted)] font-bold tracking-wider uppercase block mt-0.5">Shadii.pk Standards</span>
@@ -678,7 +768,7 @@ export default function Home() {
                             ["First-Message Rules", "Introduction invites block match spammers from accessing matches."],
                             ["Gateway Compliant Rails", "All policies and subscriptions follow rapid compliance rules."],
                         ].map(([title, desc]) => (
-                            <div key={title} className="border border-[var(--line)] p-5 bg-[var(--canvas-deep)]">
+                            <div key={title} className="border border-[var(--line)] p-5 bg-[var(--canvas-deep)] card-3d">
                                 <SparklesIcon className="w-4 h-4 text-[var(--gold)] mb-3" />
                                 <h4 className="text-xs font-bold uppercase tracking-widest text-[var(--text)]">{title}</h4>
                                 <p className="text-[11px] text-[var(--muted)] mt-1.5 leading-relaxed">{desc}</p>
@@ -701,7 +791,7 @@ export default function Home() {
                         </p>
                     </div>
 
-                    <div className="lg:col-span-7 space-y-3 bg-white border border-[var(--line)] p-6">
+                    <div className="lg:col-span-7 space-y-3 bg-white border border-[var(--line)] p-6 card-3d">
                         {faqs.map((faq, i) => (
                             <details key={faq.q} open={i === 0} className="border-b border-[var(--line)] py-4 last:border-0 last:pb-0 first:pt-0">
                                 <summary className="flex justify-between items-center cursor-pointer font-bold text-xs uppercase tracking-widest text-[var(--text)] outline-none">
@@ -718,7 +808,7 @@ export default function Home() {
             {/* CTA Final Invitation */}
             <section className="section pb-24 pt-20">
                 <div className="site-shell">
-                    <div className="border border-[var(--line)] p-12 md:p-20 text-center bg-white relative overflow-hidden">
+                    <div className="border border-[var(--line)] p-12 md:p-20 text-center bg-white relative overflow-hidden card-3d">
                         <MapPinIcon className="w-8 h-8 text-[var(--gold)] mx-auto mb-6" />
                         <span className="editorial-eyebrow">matrimonial portal</span>
                         <h2 className="font-display text-4xl md:text-5xl text-[var(--text)] mt-4 leading-tight">
