@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth, API_BASE } from '../../context/AuthContext';
 import { useSocket } from '../../context/SocketContext';
 import { getInitials, getProfilePhotoSrc } from '../../lib/profile';
@@ -14,10 +15,14 @@ import {
   Sparkles,
   UserRound,
   ChevronLeft,
+  Crown,
+  ShieldCheck,
+  HelpCircle,
 } from 'lucide-react';
 
 export default function Chat() {
   const { token, user } = useAuth();
+  const navigate = useNavigate();
   const { socket, messages, setMessages, typingUsers, sendMessage, sendTyping, markSeen, registerOnMessage } = useSocket();
   const [conversations, setConversations] = useState([]);
   const [selectedConv, setSelectedConv] = useState(null);
@@ -26,6 +31,8 @@ export default function Chat() {
   const [msgsLoading, setMsgsLoading] = useState(false);
   const [warning, setWarning] = useState('');
   const [query, setQuery] = useState('');
+  const [chatAccess, setChatAccess] = useState(null);
+  const [acceptingInvite, setAcceptingInvite] = useState(false);
   const messagesEndRef = useRef(null);
   const typingRef = useRef(0);
 
@@ -51,6 +58,9 @@ export default function Chat() {
       if (selectedConv && msg.conversationId === selectedConv.conversationId) {
         markSeen(selectedConv.conversationId);
       }
+      if (msg.chatAccess && selectedConv && msg.conversationId === selectedConv.conversationId) {
+        setChatAccess(msg.chatAccess);
+      }
       fetchConversations();
     });
 
@@ -68,18 +78,26 @@ export default function Chat() {
       setWarning(`Sharing ${data.label || 'contact info'} is blocked for member safety. Repeated flags may suspend the account.`);
       setMessages((prev) => prev.filter((message) => !message._id?.startsWith('temp_')));
     };
-    const handleSubscription = () => {
+    const handleSubscription = (data) => {
       setWarning('Free message limit reached. Upgrade your membership to continue chatting.');
       setMessages((prev) => prev.filter((message) => !message._id?.startsWith('temp_')));
+      if (data?.chatAccess) setChatAccess(data.chatAccess);
     };
     const handleError = (data) => {
       setWarning(data.error || 'Message could not be sent.');
       setMessages((prev) => prev.filter((message) => !message._id?.startsWith('temp_')));
+      if (data?.chatAccess) setChatAccess(data.chatAccess);
+    };
+    const handleSentConfirmation = (data) => {
+      if (selectedConv && data.conversationId === selectedConv.conversationId) {
+        if (data.chatAccess) setChatAccess(data.chatAccess);
+      }
     };
 
     socket.on('message:flagged', handleFlagged);
     socket.on('subscription:required', handleSubscription);
     socket.on('message:error', handleError);
+    socket.on('message:sent', handleSentConfirmation);
     socket.on('user:online', updatePresence(true));
     socket.on('user:offline', updatePresence(false));
 
@@ -87,10 +105,11 @@ export default function Chat() {
       socket.off('message:flagged', handleFlagged);
       socket.off('subscription:required', handleSubscription);
       socket.off('message:error', handleError);
+      socket.off('message:sent', handleSentConfirmation);
       socket.off('user:online');
       socket.off('user:offline');
     };
-  }, [socket, setMessages]);
+  }, [socket, setMessages, selectedConv?.conversationId]);
 
   const updatePresence = (isOnline) => ({ userId }) => {
     setConversations((prev) => prev.map((conv) => (
@@ -127,11 +146,41 @@ export default function Chat() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      if (data.success) setMessages(data.messages || []);
+      if (data.success) {
+        setMessages(data.messages || []);
+        setChatAccess(data.chatAccess || null);
+      }
     } catch (err) {
       console.error('Failed to load messages:', err);
     } finally {
       setMsgsLoading(false);
+    }
+  };
+
+  const handleAcceptInvite = async () => {
+    if (!selectedConv) return;
+    setAcceptingInvite(true);
+    setWarning('');
+    try {
+      const res = await fetch(`${API_BASE}/profile/photo-requests/${selectedConv.otherUser.id}/respond`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ action: 'accept' }),
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setWarning(data.message || 'Could not accept request.');
+        return;
+      }
+      await fetchMessages(selectedConv.otherUser.id);
+      fetchConversations();
+    } catch (_) {
+      setWarning('Connection error. Please try again.');
+    } finally {
+      setAcceptingInvite(false);
     }
   };
 
@@ -187,6 +236,11 @@ export default function Chat() {
       sendTyping(selectedConv.otherUser.id);
     }
   };
+
+  const canChat = chatAccess ? chatAccess.canSend : true;
+  const needsInviteAcceptance = chatAccess?.reason === 'accept_invite' || (chatAccess?.incomingRequestPending && !chatAccess?.isApproved);
+  const waitingForAcceptance = chatAccess?.reason === 'waiting_for_acceptance';
+  const needsSubscription = chatAccess?.reason === 'subscription_required';
 
   return (
     <div className="h-[calc(100vh-130px)] md:h-[calc(100vh-64px)] max-w-7xl mx-auto py-2">
@@ -306,23 +360,72 @@ export default function Chat() {
                 )}
               </section>
 
-              {/* Message Composer Form */}
-              <form onSubmit={handleSend} className="flex gap-3 border-t border-[#E7DED3] bg-white p-4 shadow-sm">
-                <input
-                  type="text"
-                  value={inputText}
-                  onChange={handleInputChange}
-                  placeholder="Type a respectful partner matchmaking message..."
-                  className="min-w-0 flex-1 border border-[#E7DED3] bg-white focus:border-[#8A1538] focus:ring-1 focus:ring-[#8A1538] transition-all px-4 py-3 text-sm text-[#202124] rounded-xl outline-none font-medium placeholder-[#5F6673]/30"
-                />
-                <button
-                  type="submit"
-                  disabled={!inputText.trim()}
-                  className="btn-premium-primary inline-flex min-w-14 items-center justify-center px-5 py-3 rounded-xl disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  <Send className="h-4 w-4 text-white" />
-                </button>
-              </form>
+              {/* Gating Logic Composer Wrapper */}
+              {canChat ? (
+                /* Message Composer Form */
+                <form onSubmit={handleSend} className="flex gap-3 border-t border-[#E7DED3] bg-white p-4 shadow-sm">
+                  <input
+                    type="text"
+                    value={inputText}
+                    onChange={handleInputChange}
+                    placeholder={chatAccess?.sentByMe === 0 ? 'Send a respectful intro message...' : 'Type a respectful partner matchmaking message...'}
+                    className="min-w-0 flex-1 border border-[#E7DED3] bg-white focus:border-[#8A1538] focus:ring-1 focus:ring-[#8A1538] transition-all px-4 py-3 text-sm text-[#202124] rounded-xl outline-none font-medium placeholder-[#5F6673]/30"
+                  />
+                  <button
+                    type="submit"
+                    disabled={!inputText.trim()}
+                    className="btn-premium-primary inline-flex min-w-14 items-center justify-center px-5 py-3 rounded-xl disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <Send className="h-4 w-4 text-white" />
+                  </button>
+                </form>
+              ) : (
+                /* Secure Gated Lock Block */
+                <div className="flex flex-col items-center justify-center bg-white border-t border-[#E7DED3] p-6 text-center gap-3 shadow-md">
+                  <span className="grid h-12 w-12 place-items-center border border-[#8A1538]/20 bg-[#FCE8EF] text-[#8A1538] rounded-full shadow-sm animate-pulse">
+                    {needsInviteAcceptance ? (
+                      <ShieldCheck className="h-5 w-5 text-[#8A1538]" />
+                    ) : needsSubscription ? (
+                      <Crown className="h-5 w-5 text-[#8A1538]" />
+                    ) : (
+                      <Lock className="h-5 w-5 text-[#8A1538]" />
+                    )}
+                  </span>
+                  <div>
+                    <h3 className="font-serif font-black text-md text-[#8A1538]">
+                      {needsInviteAcceptance
+                        ? 'Rishta Invite Received'
+                        : needsSubscription
+                          ? 'Premium Subscription Required'
+                          : 'Approval Pending'}
+                    </h3>
+                    <p className="mt-1 text-xs text-[#5F6673] font-semibold max-w-md leading-relaxed">
+                      {needsInviteAcceptance
+                        ? 'Accept this connection invite to view their profile details and reply for free.'
+                        : needsSubscription
+                          ? 'Both free intro messages are used. Upgrade to a premium plan to continue this conversation.'
+                          : 'Your intro has been sent. You can continue after they accept and send a reply.'}
+                    </p>
+                  </div>
+                  {needsInviteAcceptance && (
+                    <button
+                      onClick={handleAcceptInvite}
+                      disabled={acceptingInvite}
+                      className="btn-premium-primary px-6 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      {acceptingInvite ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : 'Accept Invite'}
+                    </button>
+                  )}
+                  {needsSubscription && (
+                    <button
+                      onClick={() => navigate('/billing')}
+                      className="btn-premium-primary px-6 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider cursor-pointer"
+                    >
+                      View Packages
+                    </button>
+                  )}
+                </div>
+              )}
             </>
           ) : (
             <div className="grid h-full place-items-center bg-[#FAF7F2]/10 p-10 text-center">

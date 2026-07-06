@@ -249,4 +249,13 @@ userSchema.virtual('isSubscribed').get(function () {
 
 userSchema.set('toJSON', { virtuals: true });
 
+// Performance Indexes for matchmaking search filter speedups
+userSchema.index({ gender: 1, isOnline: 1, isVerified: 1 });
+userSchema.index({ city: 1, region: 1 });
+userSchema.index({ cast: 1, sect: 1 });
+userSchema.index({ age: 1, profileCompleteness: 1 });
+userSchema.index({ 'subscription.isActive': 1, 'subscription.endDate': 1 });
+userSchema.index({ 'boost.isActive': 1, 'boost.endDate': 1 });
+userSchema.index({ createdAt: -1 });
+
 module.exports = mongoose.model('User', userSchema);

@@ -12,13 +12,14 @@ async function getChatAccess({ user, otherUserId }) {
     User.findById(otherUserId).select('photoViewRequests photoViewApproved'),
   ]);
 
+  const isAdmin = user.isAdmin || false;
   const isSubscribed = user.hasActiveSubscription?.() || false;
   const isApproved = user.photoViewApproved?.some((uid) => String(uid) === String(otherUserId)) || false;
   const outgoingRequestPending = otherUser?.photoViewRequests?.some((uid) => String(uid) === userId) || false;
   const incomingRequestPending = user.photoViewRequests?.some((uid) => String(uid) === String(otherUserId)) || false;
   const isFirstOutreach = sentByMe === 0 && sentByOther === 0;
   const isAcceptedReply = isApproved && sentByMe === 0 && sentByOther > 0;
-  const canSend = isSubscribed || isFirstOutreach || isAcceptedReply;
+  const canSend = isAdmin || isSubscribed || isFirstOutreach || isAcceptedReply;
 
   let reason = null;
   if (!canSend) {
@@ -37,12 +38,14 @@ async function getChatAccess({ user, otherUserId }) {
     outgoingRequestPending,
     canSend,
     reason,
-    remainingFreeMessages: isSubscribed ? null : canSend ? 1 : 0,
+    remainingFreeMessages: isAdmin ? null : isSubscribed ? null : canSend ? 1 : 0,
   };
 }
 
 async function createIntroRequestIfNeeded({ senderId, receiverId, access }) {
   if (!access || access.sentByMe !== 0 || access.sentByOther !== 0) return;
+  const sender = await User.findById(senderId);
+  if (sender?.isAdmin) return; // Admins bypass auto-creating requests
   const receiver = await User.findById(receiverId);
   if (!receiver) return;
   const alreadyRequested = receiver.photoViewRequests?.some((uid) => String(uid) === String(senderId));
