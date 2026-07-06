@@ -469,3 +469,34 @@ svg {
     background: radial-gradient(circle at 50% -20%, rgba(199, 125, 99, 0.15), transparent 70%);
     z-index: -1;
 }
+
+/* Elegant scrolling marquee banner */
+.luxury-marquee {
+    display: flex;
+    overflow: hidden;
+    user-select: none;
+    gap: 4rem;
+    border-block: 1px solid var(--line);
+    padding-block: 1.25rem;
+    background: var(--canvas-deep);
+    width: 100vw;
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+}
+
+.marquee-content {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-around;
+    min-width: 100%;
+    gap: 4rem;
+    animation: scroll-marquee 32s linear infinite;
+}
+
+@keyframes scroll-marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-100%); }
+}

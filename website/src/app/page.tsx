@@ -620,6 +620,38 @@ function MatchConsole() {
     );
 }
 
+function MarqueeBanner() {
+    const items = [
+        "CNIC Verified proposals",
+        "Zero dating swipes",
+        "Strict photo shields",
+        "Manual compliance audits",
+        "Family representative consent",
+        "Spam-free introduction rules",
+    ];
+
+    return (
+        <div className="luxury-marquee overflow-hidden">
+            <div className="marquee-content text-[10px] font-bold tracking-[0.25em] text-[var(--muted)] uppercase">
+                {items.map((item, index) => (
+                    <span key={index} className="flex items-center gap-4">
+                        <span>{item}</span>
+                        <span className="text-[var(--gold)]">•</span>
+                    </span>
+                ))}
+            </div>
+            <div className="marquee-content text-[10px] font-bold tracking-[0.25em] text-[var(--muted)] uppercase" aria-hidden="true">
+                {items.map((item, index) => (
+                    <span key={index} className="flex items-center gap-4">
+                        <span>{item}</span>
+                        <span className="text-[var(--gold)]">•</span>
+                    </span>
+                ))}
+            </div>
+        </div>
+    );
+}
+
 export default function Home() {
     const [mouseCoords, setMouseCoords] = useState({ x: 0, y: 0 });
 
@@ -764,6 +796,9 @@ export default function Home() {
                     </div>
                 </div>
             </section>
+
+            {/* Marquee Banner */}
+            <MarqueeBanner />
 
             {/* Manifesto Section */}
             <section className="section bg-[#0f1110] text-[#f7f5f0]">
