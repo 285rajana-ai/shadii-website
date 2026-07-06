@@ -1,0 +1,20 @@
+# Ignore everything not needed for Next.js build
+mobile/
+portal/
+admin/
+website/
+node_modules/
+.next/
+.git/
+.tmp-rebuild-mobile.png
+.tmp-rebuild-desktop.png
+*.webp
+*.png
+*.jpg
+*.log
+*.zip
+*.tar.gz
+*.json.bak
+.git.bak/
+.agents/
+.gemini/
