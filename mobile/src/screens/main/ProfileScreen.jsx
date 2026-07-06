@@ -131,6 +131,17 @@ export default function ProfileScreen({ navigation }) {
           <MaterialCommunityIcons name="chevron-right" size={22} color={colors.textMuted} />
         </Pressable>
 
+        {['admin', 'cacc', 'fasm', 'superadmin'].includes(user?.role) && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Administration Desk</Text>
+            <MenuAction 
+              icon="shield-crown-outline" 
+              label="Admin Dashboard Panel" 
+              onPress={() => navigation.navigate('AdminDashboard')} 
+            />
+          </View>
+        )}
+
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Safety and requests</Text>
           <MenuAction icon="bell-outline" label="Notifications" onPress={() => navigation.navigate('Notifications')} />

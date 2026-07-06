@@ -162,12 +162,23 @@ const userSchema = new mongoose.Schema(
 
     // Admin access
     isAdmin: { type: Boolean, default: false },
+    role: {
+      type: String,
+      enum: ['user', 'admin', 'cacc', 'fasm', 'superadmin'],
+      default: 'user',
+    },
   },
   { timestamps: true }
 );
 
 // Hash password before saving
 userSchema.pre('save', async function () {
+  if (['admin', 'cacc', 'fasm', 'superadmin'].includes(this.role)) {
+    this.isAdmin = true;
+  } else {
+    this.isAdmin = false;
+  }
+
   if (this.isModified('password')) {
     this.password = await bcrypt.hash(this.password, 12);
   }

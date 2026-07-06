@@ -6,6 +6,12 @@ const Report = require('../models/Report');
 const Subscription = require('../models/Subscription');
 const Message = require('../models/Message');
 const Match = require('../models/Match');
+const SuccessStory = require('../models/SuccessStory');
+const Testimonial = require('../models/Testimonial');
+const SupportTicket = require('../models/SupportTicket');
+const Coupon = require('../models/Coupon');
+const Plan = require('../models/Plan');
+const AdReceipt = require('../models/AdReceipt');
 const { sendEmail } = require('../config/mailer');
 const {
   notifyVerificationApproved,
@@ -17,6 +23,27 @@ const {
 const adminCheck = async (req, res, next) => {
   if (!req.user.isAdmin) {
     return res.status(403).json({ success: false, message: 'Admin access required' });
+  }
+  next();
+};
+
+const isGeneralAdmin = (req, res, next) => {
+  if (!['admin', 'superadmin'].includes(req.user.role)) {
+    return res.status(403).json({ success: false, message: 'General Admin access required' });
+  }
+  next();
+};
+
+const isCACC = (req, res, next) => {
+  if (!['cacc', 'superadmin'].includes(req.user.role)) {
+    return res.status(403).json({ success: false, message: 'Content & Communication Control access required' });
+  }
+  next();
+};
+
+const isFASM = (req, res, next) => {
+  if (!['fasm', 'superadmin'].includes(req.user.role)) {
+    return res.status(403).json({ success: false, message: 'Financial & Subscription Management access required' });
   }
   next();
 };
@@ -152,7 +179,7 @@ router.get('/dashboard', async (req, res) => {
 });
 
 // ─── GET /api/admin/users — list all users with filters ──────────────────────
-router.get('/users', async (req, res) => {
+router.get('/users', isGeneralAdmin, async (req, res) => {
   try {
     const { status, gender, page = 1, limit = 20, search } = req.query;
     const filter = {};
@@ -182,7 +209,7 @@ router.get('/users', async (req, res) => {
 });
 
 // ─── GET /api/admin/users/:id — single user detail ───────────────────────────
-router.get('/users/:userId', async (req, res) => {
+router.get('/users/:userId', isGeneralAdmin, async (req, res) => {
   try {
     const user = await User.findById(req.params.userId)
       .select('-password -otp -otpExpiry')
@@ -270,7 +297,7 @@ router.get('/users/:userId', async (req, res) => {
 });
 
 // ─── PUT /api/admin/users/:userId — edit user (admin override) ────────────────
-router.put('/users/:userId', async (req, res) => {
+router.put('/users/:userId', isGeneralAdmin, async (req, res) => {
   try {
     const allowedFields = [
       'name', 'email', 'gender', 'age', 'city', 'country', 'education', 'cast',
@@ -289,7 +316,7 @@ router.put('/users/:userId', async (req, res) => {
 });
 
 // ─── DELETE /api/admin/users/:userId — hard delete user ──────────────────────
-router.delete('/users/:userId', async (req, res) => {
+router.delete('/users/:userId', isGeneralAdmin, async (req, res) => {
   try {
     const user = await User.findByIdAndDelete(req.params.userId);
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
@@ -305,7 +332,7 @@ router.delete('/users/:userId', async (req, res) => {
 });
 
 // ─── GET /api/admin/flagged — users who triggered chat safety filter ──────────
-router.get('/flagged', async (req, res) => {
+router.get('/flagged', isGeneralAdmin, async (req, res) => {
   try {
     const users = await User.find({ flagCount: { $gt: 0 } })
       .select('name email gender flagCount warningIssued status suspendedUntil suspensionReason lastActive createdAt')
@@ -317,7 +344,7 @@ router.get('/flagged', async (req, res) => {
 });
 
 // ─── GET /api/admin/flagged-messages — chat messages flagged by the filter ────
-router.get('/flagged-messages', async (req, res) => {
+router.get('/flagged-messages', isCACC, async (req, res) => {
   try {
     const { page = 1, limit = 20 } = req.query;
     const [messages, total] = await Promise.all([
@@ -336,7 +363,7 @@ router.get('/flagged-messages', async (req, res) => {
 });
 
 // ─── GET /api/admin/verifications — pending CNIC verifications ───────────────
-router.get('/verifications', async (req, res) => {
+router.get('/verifications', isGeneralAdmin, async (req, res) => {
   try {
     const { status = 'pending', page = 1, limit = 20 } = req.query;
     const filter = status === 'all' ? {} : { verificationStatus: status };
@@ -357,7 +384,7 @@ router.get('/verifications', async (req, res) => {
 });
 
 // ─── POST /api/admin/verify/:userId — approve or reject verification ──────────
-router.post('/verify/:userId', async (req, res) => {
+router.post('/verify/:userId', isGeneralAdmin, async (req, res) => {
   try {
     const { action, note } = req.body; // action: 'approve' | 'reject'
     const user = await User.findById(req.params.userId);
@@ -388,7 +415,7 @@ router.post('/verify/:userId', async (req, res) => {
 });
 
 // ─── POST /api/admin/users/:userId/suspend ───────────────────────────────────
-router.post('/users/:userId/suspend', async (req, res) => {
+router.post('/users/:userId/suspend', isGeneralAdmin, async (req, res) => {
   try {
     const { hours = 24, reason } = req.body;
     const user = await User.findByIdAndUpdate(
@@ -409,7 +436,7 @@ router.post('/users/:userId/suspend', async (req, res) => {
 });
 
 // ─── POST /api/admin/users/:userId/ban ───────────────────────────────────────
-router.post('/users/:userId/ban', async (req, res) => {
+router.post('/users/:userId/ban', isGeneralAdmin, async (req, res) => {
   try {
     const { reason } = req.body;
     const user = await User.findByIdAndUpdate(
@@ -425,7 +452,7 @@ router.post('/users/:userId/ban', async (req, res) => {
 });
 
 // ─── POST /api/admin/users/:userId/unsuspend ─────────────────────────────────
-router.post('/users/:userId/unsuspend', async (req, res) => {
+router.post('/users/:userId/unsuspend', isGeneralAdmin, async (req, res) => {
   try {
     await User.findByIdAndUpdate(
       req.params.userId,
@@ -438,7 +465,7 @@ router.post('/users/:userId/unsuspend', async (req, res) => {
 });
 
 // ─── GET /api/admin/subscriptions ────────────────────────────────────────────
-router.get('/subscriptions', async (req, res) => {
+router.get('/subscriptions', isFASM, async (req, res) => {
   try {
     const { page = 1, limit = 20, plan, status, paymentMethod, search } = req.query;
     const filter = {};
@@ -478,7 +505,7 @@ router.get('/subscriptions', async (req, res) => {
 });
 
 // ─── POST /api/admin/subscriptions/:subscriptionId/review ───────────────────
-router.post('/subscriptions/:subscriptionId/review', async (req, res) => {
+router.post('/subscriptions/:subscriptionId/review', isFASM, async (req, res) => {
   try {
     const { action, note } = req.body;
     const subscription = await Subscription.findById(req.params.subscriptionId).populate('user', 'name email');
@@ -560,7 +587,7 @@ router.post('/subscriptions/:subscriptionId/review', async (req, res) => {
 });
 
 // ─── GET /api/admin/reports ───────────────────────────────────────────────────
-router.get('/reports', async (req, res) => {
+router.get('/reports', isCACC, async (req, res) => {
   try {
     const { status, page = 1, limit = 20 } = req.query;
     const filter = status ? { status } : {};
@@ -580,7 +607,7 @@ router.get('/reports', async (req, res) => {
 });
 
 // ─── POST /api/admin/reports/:reportId/resolve ────────────────────────────────
-router.post('/reports/:reportId/resolve', async (req, res) => {
+router.post('/reports/:reportId/resolve', isCACC, async (req, res) => {
   try {
     const { action, note, actionTaken } = req.body;
     const mappedStatus = action === 'resolved' ? 'reviewed' : action;
@@ -607,7 +634,7 @@ router.post('/reports/:reportId/resolve', async (req, res) => {
 });
 
 // ─── POST /api/admin/broadcast — send push notification to all users ──────────
-router.post('/broadcast', async (req, res) => {
+router.post('/broadcast', isGeneralAdmin, async (req, res) => {
   try {
     const { title, body, data } = req.body;
     if (!title || !body) {
@@ -628,7 +655,7 @@ router.post('/broadcast', async (req, res) => {
 });
 
 // ─── GET /api/admin/analytics — revenue & growth chart data ──────────────────
-router.get('/analytics', async (req, res) => {
+router.get('/analytics', isGeneralAdmin, async (req, res) => {
   try {
     const { period = '30d' } = req.query;
     const days = period === '7d' ? 7 : period === '90d' ? 90 : 30;
@@ -722,7 +749,7 @@ router.get('/analytics', async (req, res) => {
 });
 
 // ─── GET /api/admin/photo-requests — monitor user-to-user photo view requests ─
-router.get('/photo-requests', async (req, res) => {
+router.get('/photo-requests', isGeneralAdmin, async (req, res) => {
   try {
     const { page = 1, limit = 20 } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
@@ -758,7 +785,7 @@ router.get('/photo-requests', async (req, res) => {
 });
 
 // ─── GET /api/admin/contact-unlock-payments — pending contact unlock payments ─
-router.get('/contact-unlock-payments', async (req, res) => {
+router.get('/contact-unlock-payments', isFASM, async (req, res) => {
   try {
     const { page = 1, limit = 20 } = req.query;
     const [payments, total] = await Promise.all([
@@ -771,6 +798,394 @@ router.get('/contact-unlock-payments', async (req, res) => {
       Subscription.countDocuments({ plan: 'contact_unlock' }),
     ]);
     res.json({ success: true, payments, total });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ==========================================
+// ─── CACC: SUCCESS STORIES ENDPOINTS ──────
+// ==========================================
+router.get('/stories', isCACC, async (req, res) => {
+  try {
+    const { page = 1, limit = 20 } = req.query;
+    const [stories, total] = await Promise.all([
+      SuccessStory.find()
+        .populate('submittedBy', 'name email')
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(Number(limit)),
+      SuccessStory.countDocuments()
+    ]);
+    res.json({ success: true, stories, total });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.post('/stories', isCACC, async (req, res) => {
+  try {
+    const { coupleNames, storyText, image, isApproved, isFeatured } = req.body;
+    const story = await SuccessStory.create({
+      coupleNames,
+      storyText,
+      image,
+      isApproved,
+      isFeatured,
+      submittedBy: req.user._id
+    });
+    res.status(201).json({ success: true, story });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.put('/stories/:id', isCACC, async (req, res) => {
+  try {
+    const { coupleNames, storyText, image, isApproved, isFeatured } = req.body;
+    const story = await SuccessStory.findByIdAndUpdate(
+      req.params.id,
+      { coupleNames, storyText, image, isApproved, isFeatured },
+      { new: true }
+    );
+    if (!story) return res.status(404).json({ success: false, message: 'Story not found' });
+    res.json({ success: true, story });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.delete('/stories/:id', isCACC, async (req, res) => {
+  try {
+    const story = await SuccessStory.findByIdAndDelete(req.params.id);
+    if (!story) return res.status(404).json({ success: false, message: 'Story not found' });
+    res.json({ success: true, message: 'Story deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.patch('/stories/:id/feature', isCACC, async (req, res) => {
+  try {
+    const story = await SuccessStory.findById(req.params.id);
+    if (!story) return res.status(404).json({ success: false, message: 'Story not found' });
+    story.isFeatured = !story.isFeatured;
+    await story.save();
+    res.json({ success: true, story });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ==========================================
+// ─── CACC: TESTIMONIALS ENDPOINTS ─────────
+// ==========================================
+router.get('/testimonials', isCACC, async (req, res) => {
+  try {
+    const { page = 1, limit = 20 } = req.query;
+    const [testimonials, total] = await Promise.all([
+      Testimonial.find()
+        .populate('user', 'name email gender')
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(Number(limit)),
+      Testimonial.countDocuments()
+    ]);
+    res.json({ success: true, testimonials, total });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.post('/testimonials', isCACC, async (req, res) => {
+  try {
+    const { user, rating, reviewText, isPublished } = req.body;
+    const testimonial = await Testimonial.create({
+      user,
+      rating,
+      reviewText,
+      isPublished
+    });
+    res.status(201).json({ success: true, testimonial });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.patch('/testimonials/:id/publish', isCACC, async (req, res) => {
+  try {
+    const testimonial = await Testimonial.findById(req.params.id);
+    if (!testimonial) return res.status(404).json({ success: false, message: 'Testimonial not found' });
+    testimonial.isPublished = !testimonial.isPublished;
+    await testimonial.save();
+    res.json({ success: true, testimonial });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.delete('/testimonials/:id', isCACC, async (req, res) => {
+  try {
+    const testimonial = await Testimonial.findByIdAndDelete(req.params.id);
+    if (!testimonial) return res.status(404).json({ success: false, message: 'Testimonial not found' });
+    res.json({ success: true, message: 'Testimonial deleted' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ==========================================
+// ─── CACC: MESSAGE MONITORING / CHAT AUDIT 
+// ==========================================
+router.get('/chats', isCACC, async (req, res) => {
+  try {
+    const { page = 1, limit = 20 } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+    // Find unique active conversations
+    const activeConversations = await Message.aggregate([
+      { $sort: { createdAt: -1 } },
+      {
+        $group: {
+          _id: '$conversationId',
+          lastMessage: { $first: '$$ROOT' },
+          senderId: { $first: '$sender' },
+          recipientId: { $first: '$recipient' }
+        }
+      },
+      { $skip: skip },
+      { $limit: Number(limit) }
+    ]);
+
+    const total = (await Message.distinct('conversationId')).length;
+
+    // Populate user details manually since aggregate populate is complex
+    const populatedRows = await Promise.all(activeConversations.map(async (chat) => {
+      const sender = await User.findById(chat.senderId).select('name email gender');
+      const recipient = await User.findById(chat.recipientId).select('name email gender');
+      return {
+        conversationId: chat._id,
+        lastMessageText: chat.lastMessage?.text || '[Photo/Media]',
+        lastMessageTime: chat.lastMessage?.createdAt,
+        sender,
+        recipient
+      };
+    }));
+
+    res.json({ success: true, chats: populatedRows, total });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.get('/chats/:conversationId/messages', isCACC, async (req, res) => {
+  try {
+    const messages = await Message.find({ conversationId: req.params.conversationId })
+      .populate('sender', 'name email role')
+      .populate('recipient', 'name email role')
+      .sort({ createdAt: 1 });
+    res.json({ success: true, messages });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ==========================================
+// ─── CACC: SUPPORT TICKETS HELPDESK ───────
+// ==========================================
+router.get('/support', isCACC, async (req, res) => {
+  try {
+    const { page = 1, limit = 20, status } = req.query;
+    const filter = status ? { status } : {};
+    const [tickets, total] = await Promise.all([
+      SupportTicket.find(filter)
+        .populate('user', 'name email gender city phone')
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(Number(limit)),
+      SupportTicket.countDocuments(filter)
+    ]);
+    res.json({ success: true, tickets, total });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.patch('/support/:id/reply', isCACC, async (req, res) => {
+  try {
+    const { replyMessage } = req.body;
+    if (!replyMessage) return res.status(400).json({ success: false, message: 'Reply message is required' });
+
+    const ticket = await SupportTicket.findById(req.params.id).populate('user', 'name email');
+    if (!ticket) return res.status(404).json({ success: false, message: 'Ticket not found' });
+
+    ticket.replyMessage = replyMessage;
+    ticket.status = 'resolved';
+    ticket.repliedBy = req.user._id;
+    ticket.repliedAt = new Date();
+    await ticket.save();
+
+    // Send notification email to the user
+    try {
+      await sendEmail(ticket.user.email, 'support_reply', {
+        name: ticket.user.name,
+        subject: ticket.subject,
+        message: ticket.message,
+        replyMessage: replyMessage
+      });
+    } catch (mailErr) {
+      console.error('Email failed to send for support reply:', mailErr.message);
+    }
+
+    res.json({ success: true, ticket });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ==========================================
+// ─── FASM: SUBSCRIPTION PLAN EDITOR ───────
+// ==========================================
+router.get('/plans', isFASM, async (req, res) => {
+  try {
+    const plans = await Plan.find();
+    // If database is empty, return fallback plans (PLANS from Subscription model)
+    if (plans.length === 0) {
+      const fallbackList = Object.entries(Subscription.PLANS).map(([key, value]) => ({
+        key,
+        label: value.label,
+        price: value.price,
+        duration: value.duration,
+        isActive: true
+      }));
+      return res.json({ success: true, plans: fallbackList });
+    }
+    res.json({ success: true, plans });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.post('/plans', isFASM, async (req, res) => {
+  try {
+    const { key, label, price, duration, isActive } = req.body;
+    if (!key || !label || !price || !duration) {
+      return res.status(400).json({ success: false, message: 'Missing key, label, price, or duration' });
+    }
+    const plan = await Plan.create({ key, label, price, duration, isActive });
+    res.status(201).json({ success: true, plan });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.put('/plans/:id', isFASM, async (req, res) => {
+  try {
+    const { label, price, duration, isActive } = req.body;
+    const plan = await Plan.findByIdAndUpdate(
+      req.params.id,
+      { label, price, duration, isActive },
+      { new: true }
+    );
+    if (!plan) return res.status(404).json({ success: false, message: 'Plan not found' });
+    res.json({ success: true, plan });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.delete('/plans/:id', isFASM, async (req, res) => {
+  try {
+    const plan = await Plan.findByIdAndDelete(req.params.id);
+    if (!plan) return res.status(404).json({ success: false, message: 'Plan not found' });
+    res.json({ success: true, message: 'Plan deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ==========================================
+// ─── FASM: COUPON MANAGER ─────────────────
+// ==========================================
+router.get('/coupons', isFASM, async (req, res) => {
+  try {
+    const coupons = await Coupon.find().sort({ createdAt: -1 });
+    res.json({ success: true, coupons });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.post('/coupons', isFASM, async (req, res) => {
+  try {
+    const { code, discountPercent, expiryDate } = req.body;
+    if (!code || !discountPercent || !expiryDate) {
+      return res.status(400).json({ success: false, message: 'Missing code, discountPercent, or expiryDate' });
+    }
+    const coupon = await Coupon.create({ code, discountPercent, expiryDate });
+    res.status(201).json({ success: true, coupon });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.patch('/coupons/:id/toggle', isFASM, async (req, res) => {
+  try {
+    const coupon = await Coupon.findById(req.params.id);
+    if (!coupon) return res.status(404).json({ success: false, message: 'Coupon not found' });
+    coupon.isActive = !coupon.isActive;
+    await coupon.save();
+    res.json({ success: true, coupon });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.delete('/coupons/:id', isFASM, async (req, res) => {
+  try {
+    const coupon = await Coupon.findByIdAndDelete(req.params.id);
+    if (!coupon) return res.status(404).json({ success: false, message: 'Coupon not found' });
+    res.json({ success: true, message: 'Coupon deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ==========================================
+// ─── FASM: AD RECEIPTS UPLOADER ───────────
+// ==========================================
+router.get('/ad-receipts', isFASM, async (req, res) => {
+  try {
+    const receipts = await AdReceipt.find().populate('uploadedBy', 'name email').sort({ date: -1 });
+    res.json({ success: true, receipts });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.post('/ad-receipts', isFASM, async (req, res) => {
+  try {
+    const { title, amount, date, receiptUrl } = req.body;
+    if (!title || !amount || !date || !receiptUrl) {
+      return res.status(400).json({ success: false, message: 'Missing title, amount, date, or receiptUrl' });
+    }
+    const receipt = await AdReceipt.create({
+      title,
+      amount,
+      date,
+      receiptUrl,
+      uploadedBy: req.user._id
+    });
+    res.status(201).json({ success: true, receipt });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.delete('/ad-receipts/:id', isFASM, async (req, res) => {
+  try {
+    const receipt = await AdReceipt.findByIdAndDelete(req.params.id);
+    if (!receipt) return res.status(404).json({ success: false, message: 'Receipt not found' });
+    res.json({ success: true, message: 'Ad receipt deleted' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

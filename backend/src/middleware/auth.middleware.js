@@ -50,3 +50,27 @@ exports.isAdmin = async (req, res, next) => {
   }
   next();
 };
+
+// Content and Communication Control middleware
+exports.isCACC = async (req, res, next) => {
+  if (!req.user || !['cacc', 'superadmin'].includes(req.user.role)) {
+    return res.status(403).json({ success: false, message: 'Content & Communication Control access required' });
+  }
+  next();
+};
+
+// Financial and Subscription Management middleware
+exports.isFASM = async (req, res, next) => {
+  if (!req.user || !['fasm', 'superadmin'].includes(req.user.role)) {
+    return res.status(403).json({ success: false, message: 'Financial & Subscription Management access required' });
+  }
+  next();
+};
+
+// Super Admin middleware
+exports.isSuperAdmin = async (req, res, next) => {
+  if (!req.user || req.user.role !== 'superadmin') {
+    return res.status(403).json({ success: false, message: 'Super Admin access required' });
+  }
+  next();
+};

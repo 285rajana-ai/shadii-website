@@ -33,6 +33,7 @@ import IncomingRequestsScreen from '../screens/main/IncomingRequestsScreen';
 import NotificationsScreen from '../screens/main/NotificationsScreen';
 import ReportUserScreen from '../screens/main/ReportUserScreen';
 import SettingsScreen from '../screens/main/SettingsScreen';
+import AdminDashboardScreen from '../screens/main/AdminDashboardScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -67,6 +68,7 @@ export default function AppNavigator() {
             <Stack.Screen name="BlockedUsers" component={BlockedUsersScreen} />
             <Stack.Screen name="Help" component={HelpSupportScreen} />
             <Stack.Screen name="IncomingRequests" component={IncomingRequestsScreen} />
+            <Stack.Screen name="AdminDashboard" component={AdminDashboardScreen} />
           </>
         )}
       </Stack.Navigator>

@@ -49,6 +49,7 @@ const buildUserPayload = (user) => ({
   email: user.email,
   gender: user.gender,
   isAdmin: user.isAdmin,
+  role: user.role || 'user',
   isVerified: user.isVerified,
   isEmailVerified: user.isEmailVerified,
   isPhoneVerified: user.isPhoneVerified,
