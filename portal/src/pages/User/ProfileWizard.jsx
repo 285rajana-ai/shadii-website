@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth, API_BASE } from '../../context/AuthContext';
-import { User, Image, ShieldCheck, Save, Upload, Check, AlertCircle, Trash2, KeyRound, Loader2 } from 'lucide-react';
+import { User, Image, ShieldCheck, Save, Upload, Check, AlertCircle, Trash2, KeyRound, Loader2, Lock } from 'lucide-react';
 
 const CAST_OPTIONS = [
   'Abbasi', 'Ansari', 'Arain', 'Awan', 'Baloch', 'Bhatti', 'Bosan', 'Butt',
@@ -11,7 +11,23 @@ const CAST_OPTIONS = [
 ];
 
 const SECT_OPTIONS = [
-  'Sunni', 'Shia', 'Wahabi', 'Deobandi', 'Barelvi', 'Ahl-e-Hadith', 'Other'
+  'Sunni', 'Shia', 'Deobandi', 'Barelvi', 'Ahl-e-Hadith', 'Other'
+];
+
+const PAKISTAN_REGIONS = [
+  'Punjab',
+  'Sindh',
+  'Khyber Pakhtunkhwa',
+  'Balochistan',
+  'Islamabad Capital Territory',
+  'Azad Kashmir',
+  'Gilgit-Baltistan'
+];
+
+const PHOTO_VISIBILITY_OPTIONS = [
+  { id: 'everyone', label: 'Everyone', helper: 'Visible on browse cards' },
+  { id: 'registered', label: 'Registered Users', helper: 'Only signed-in members' },
+  { id: 'connected', label: 'Connected Users', helper: 'After Rishta approval' }
 ];
 
 export default function ProfileWizard() {
@@ -32,6 +48,7 @@ export default function ProfileWizard() {
     cast: user?.cast || '',
     sect: user?.sect || '',
     maritalStatus: user?.maritalStatus || '',
+    region: user?.region || '',
     city: user?.city || '',
     country: user?.country || 'Pakistan',
     motherTongue: user?.motherTongue || '',
@@ -39,6 +56,8 @@ export default function ProfileWizard() {
     interests: user?.interests ? user.interests.join(', ') : '',
     aboutMe: user?.aboutMe || '',
     hidePhotos: user?.hidePhotos || false,
+    profilePhotoVisibility: user?.profilePhotoVisibility || 'registered',
+    photoVisibility: user?.photoVisibility || 'connected',
   });
 
   // Photos State
@@ -196,20 +215,20 @@ export default function ProfileWizard() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto flex flex-col gap-6">
+    <div className="max-w-4xl mx-auto flex flex-col gap-6 text-[#202124]">
       {/* Header Wizard Panel */}
-      <section className="glass-panel p-6 rounded-2xl relative overflow-hidden flex items-center justify-between">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#800020]/5 to-transparent blur-3xl pointer-events-none" />
+      <section className="glass-panel p-6 rounded-2xl relative overflow-hidden flex items-center justify-between bg-white border border-[#E7DED3]">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#8A1538]/5 to-transparent blur-3xl pointer-events-none" />
         <div>
-          <h1 className="text-2xl md:text-3xl font-serif font-black text-[#580820] tracking-tight">
+          <h1 className="text-2xl md:text-3xl font-serif font-black text-[#8A1538] tracking-tight">
             Complete Your Profile
           </h1>
-          <p className="mt-1 text-xs font-bold text-[#1F1515]/45 uppercase tracking-wider">
+          <p className="mt-1 text-xs font-bold text-[#5F6673]/60 uppercase tracking-wider">
             Trustworthy profiles receive 8x more response rate
           </p>
         </div>
         <div className="text-right">
-          <span className="block text-xs font-bold text-[#1F1515]/50">Verification Status</span>
+          <span className="block text-xs font-bold text-[#5F6673]/60">Verification Status</span>
           <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase mt-1 tracking-wider border ${
             user?.isVerified
               ? 'bg-emerald-50 border-emerald-500/20 text-emerald-700'
@@ -221,12 +240,12 @@ export default function ProfileWizard() {
       </section>
 
       {/* Tabs */}
-      <div className="glass-panel p-1 rounded-2xl flex border border-[#D4AF37]/15 bg-[#FAF8F5] shadow-sm">
+      <div className="glass-panel p-1 rounded-2xl flex border border-[#E7DED3] bg-[#FAF7F2] shadow-sm">
         <WizardTabButton active={activeTab === 'details'} onClick={() => setActiveTab('details')} icon={User}>
           1. Bio & Lifestyle
         </WizardTabButton>
         <WizardTabButton active={activeTab === 'photos'} onClick={() => setActiveTab('photos')} icon={Image}>
-          2. Photos
+          2. Photos & Gallery
         </WizardTabButton>
         <WizardTabButton active={activeTab === 'verification'} onClick={() => setActiveTab('verification')} icon={ShieldCheck}>
           3. Verification
@@ -241,8 +260,8 @@ export default function ProfileWizard() {
         </div>
       )}
       {success && (
-        <div className="flex items-start gap-3 border border-[#D4AF37]/25 bg-[#FAF8F5] p-4 text-sm rounded-xl text-[#580820] shadow-sm">
-          <Check className="w-5 h-5 shrink-0 text-[#D4AF37]" />
+        <div className="flex items-start gap-3 border border-emerald-800/20 bg-emerald-50/50 p-4 text-sm rounded-xl text-[#147A5C] shadow-sm">
+          <Check className="w-5 h-5 shrink-0 text-[#147A5C]" />
           <span className="font-semibold">{success}</span>
         </div>
       )}
@@ -251,7 +270,7 @@ export default function ProfileWizard() {
           DETAILS FORM WIZARD STEP
           ========================================== */}
       {activeTab === 'details' && (
-        <form onSubmit={saveDetails} className="glass-panel p-6 md:p-8 rounded-2xl space-y-6 shadow-md">
+        <form onSubmit={saveDetails} className="glass-panel p-6 md:p-8 rounded-2xl space-y-6 bg-white border border-[#E7DED3] shadow-sm">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <Label>Full Name</Label>
@@ -284,7 +303,7 @@ export default function ProfileWizard() {
               />
               {/* Inline Height Suggestions */}
               {details.height && details.height.endsWith("'") && (
-                <div className="absolute z-10 left-0 right-0 mt-1.5 p-3 bg-white border border-[#D4AF37]/20 shadow-xl max-h-48 overflow-y-auto grid grid-cols-4 gap-2 rounded-xl">
+                <div className="absolute z-10 left-0 right-0 mt-1.5 p-3 bg-white border border-[#E7DED3] shadow-xl max-h-48 overflow-y-auto grid grid-cols-4 gap-2 rounded-xl">
                   {Array.from({ length: 12 }).map((_, inch) => {
                     const opt = `${details.height}${inch}"`;
                     return (
@@ -292,7 +311,7 @@ export default function ProfileWizard() {
                         type="button"
                         key={inch}
                         onClick={() => setDetails(prev => ({ ...prev, height: opt }))}
-                        className="px-2 py-1.5 text-xs border border-[#D4AF37]/25 bg-white hover:bg-[#800020] hover:text-white transition-colors rounded-lg text-center cursor-pointer font-bold text-[#1F1515]"
+                        className="px-2 py-1.5 text-xs border border-[#E7DED3] bg-white hover:bg-[#8A1538] hover:text-white transition-colors rounded-lg text-center cursor-pointer font-bold text-[#202124]"
                       >
                         {opt}
                       </button>
@@ -307,7 +326,7 @@ export default function ProfileWizard() {
                 name="education"
                 value={details.education}
                 onChange={handleDetailsChange}
-                className="w-full px-3 py-2.5 border border-[#D4AF37]/20 bg-white/70 focus:bg-white focus:border-[#800020] focus:ring-1 focus:ring-[#800020] text-sm rounded-lg outline-none font-medium text-[#1F1515] transition-all"
+                className="w-full px-3 py-2.5 border border-[#E7DED3] bg-white focus:border-[#8A1538] focus:ring-1 focus:ring-[#8A1538] text-sm rounded-lg outline-none font-medium text-[#202124] transition-all"
               >
                 <option value="">Select education</option>
                 <option value="Matric">Matric</option>
@@ -330,13 +349,13 @@ export default function ProfileWizard() {
                 placeholder="Arain, Rajput, Syed"
               />
               {showCasteDropdown && (
-                <div className="absolute z-20 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-[#D4AF37]/20 shadow-xl rounded-xl">
+                <div className="absolute z-20 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-[#E7DED3] shadow-xl rounded-xl">
                   {CAST_OPTIONS.filter(c => c.toLowerCase().includes((details.cast || '').toLowerCase())).map(c => (
                     <button
                       type="button"
                       key={c}
                       onMouseDown={() => setDetails(prev => ({ ...prev, cast: c }))}
-                      className="w-full text-left px-4 py-2.5 text-xs font-bold text-[#1F1515] hover:bg-[#800020] hover:text-white transition-colors cursor-pointer"
+                      className="w-full text-left px-4 py-2.5 text-xs font-bold text-[#202124] hover:bg-[#8A1538] hover:text-white transition-colors cursor-pointer"
                     >
                       {c}
                     </button>
@@ -356,13 +375,13 @@ export default function ProfileWizard() {
                 placeholder="Sunni, Shia"
               />
               {showSectDropdown && (
-                <div className="absolute z-20 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-[#D4AF37]/20 shadow-xl rounded-xl">
+                <div className="absolute z-20 left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-[#E7DED3] shadow-xl rounded-xl">
                   {SECT_OPTIONS.filter(s => s.toLowerCase().includes((details.sect || '').toLowerCase())).map(s => (
                     <button
                       type="button"
                       key={s}
                       onMouseDown={() => setDetails(prev => ({ ...prev, sect: s }))}
-                      className="w-full text-left px-4 py-2.5 text-xs font-bold text-[#1F1515] hover:bg-[#800020] hover:text-white transition-colors cursor-pointer"
+                      className="w-full text-left px-4 py-2.5 text-xs font-bold text-[#202124] hover:bg-[#8A1538] hover:text-white transition-colors cursor-pointer"
                     >
                       {s}
                     </button>
@@ -376,7 +395,7 @@ export default function ProfileWizard() {
                 name="maritalStatus"
                 value={details.maritalStatus}
                 onChange={handleDetailsChange}
-                className="w-full px-3 py-2.5 border border-[#D4AF37]/20 bg-white/70 focus:bg-white focus:border-[#800020] focus:ring-1 focus:ring-[#800020] text-sm rounded-lg outline-none font-medium text-[#1F1515] transition-all"
+                className="w-full px-3 py-2.5 border border-[#E7DED3] bg-white focus:border-[#8A1538] focus:ring-1 focus:ring-[#8A1538] text-sm rounded-lg outline-none font-medium text-[#202124] transition-all"
               >
                 <option value="">Select status</option>
                 <option value="Never Married">Never Married</option>
@@ -394,6 +413,18 @@ export default function ProfileWizard() {
                 onChange={handleDetailsChange}
                 placeholder="Punjabi, Urdu, Pashto"
               />
+            </div>
+            <div>
+              <Label>Province / Region</Label>
+              <select
+                name="region"
+                value={details.region}
+                onChange={handleDetailsChange}
+                className="w-full px-3 py-2.5 border border-[#E7DED3] bg-white focus:border-[#8A1538] focus:ring-1 focus:ring-[#8A1538] text-sm rounded-lg outline-none font-medium text-[#202124] transition-all"
+              >
+                <option value="">Select province</option>
+                {PAKISTAN_REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
+              </select>
             </div>
             <div>
               <Label>City</Label>
@@ -417,7 +448,7 @@ export default function ProfileWizard() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-6 pt-4 border-t border-[#D4AF37]/15">
+          <div className="grid grid-cols-1 gap-6 pt-4 border-t border-[#E7DED3]">
             <div>
               <Label>Hobbies (comma separated)</Label>
               <Field
@@ -446,28 +477,66 @@ export default function ProfileWizard() {
                 onChange={handleDetailsChange}
                 rows="4"
                 placeholder="Describe your family background, career, and partner expectations..."
-                className="w-full border border-[#D4AF37]/20 bg-white/70 focus:bg-white focus:border-[#800020] focus:ring-1 focus:ring-[#800020] transition-all p-3 text-sm text-[#1F1515] rounded-xl outline-none font-medium placeholder-[#1F1515]/30 leading-relaxed"
+                className="w-full border border-[#E7DED3] bg-white focus:border-[#8A1538] focus:ring-1 focus:ring-[#8A1538] transition-all p-3 text-sm text-[#202124] rounded-xl outline-none font-medium placeholder-[#5F6673]/30 leading-relaxed"
               />
             </div>
           </div>
 
-          {/* Privacy Switch option */}
-          <div className="flex items-center justify-between border-t border-[#D4AF37]/15 pt-6">
+          {/* Granular Visibility Settings */}
+          <div className="border-t border-[#E7DED3] pt-6 space-y-6">
             <div>
-              <span className="block text-sm font-bold text-[#580820]">Hide Profile Photos</span>
-              <p className="text-[10px] text-[#1F1515]/50 font-semibold uppercase tracking-wider mt-0.5">
-                Require connection approval from members before they can unblur your pictures.
+              <h3 className="text-sm font-bold text-[#8A1538] flex items-center gap-1.5">
+                <Lock className="w-4 h-4 text-[#8A1538]" />
+                Photo Privacy & Visibility
+              </h3>
+              <p className="text-[10px] text-[#5F6673] font-bold uppercase tracking-wider mt-0.5">
+                Control who is allowed to view your profile avatar and photo gallery
               </p>
             </div>
-            <label className="flex cursor-pointer items-center select-none relative">
-              <input
-                type="checkbox"
-                checked={details.hidePhotos}
-                onChange={(e) => setDetails({ ...details, hidePhotos: e.target.checked })}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-white border border-[#D4AF37]/35 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[#D4AF37] after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#800020] peer-checked:after:bg-white" />
-            </label>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <Label>Profile Picture Visibility</Label>
+                <select
+                  name="profilePhotoVisibility"
+                  value={details.profilePhotoVisibility}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setDetails(prev => ({
+                      ...prev,
+                      profilePhotoVisibility: val,
+                      hidePhotos: val === 'connected' || prev.photoVisibility === 'connected'
+                    }));
+                  }}
+                  className="w-full px-3 py-2.5 border border-[#E7DED3] bg-white focus:border-[#8A1538] focus:ring-1 focus:ring-[#8A1538] text-sm rounded-lg outline-none font-medium text-[#202124] transition-all"
+                >
+                  {PHOTO_VISIBILITY_OPTIONS.map(opt => (
+                    <option key={opt.id} value={opt.id}>{opt.label} — {opt.helper}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <Label>Gallery Visibility</Label>
+                <select
+                  name="photoVisibility"
+                  value={details.photoVisibility}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setDetails(prev => ({
+                      ...prev,
+                      photoVisibility: val,
+                      hidePhotos: val === 'connected' || prev.profilePhotoVisibility === 'connected'
+                    }));
+                  }}
+                  className="w-full px-3 py-2.5 border border-[#E7DED3] bg-white focus:border-[#8A1538] focus:ring-1 focus:ring-[#8A1538] text-sm rounded-lg outline-none font-medium text-[#202124] transition-all"
+                >
+                  {PHOTO_VISIBILITY_OPTIONS.map(opt => (
+                    <option key={opt.id} value={opt.id}>{opt.label} — {opt.helper}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
           </div>
 
           <div className="flex justify-end pt-4">
@@ -477,7 +546,7 @@ export default function ProfileWizard() {
               className="btn-premium-primary inline-flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              Save Changes
+              Save Bio Settings
             </button>
           </div>
         </form>
@@ -487,26 +556,26 @@ export default function ProfileWizard() {
           PHOTOS UPLOAD WIZARD STEP
           ========================================== */}
       {activeTab === 'photos' && (
-        <div className="glass-panel p-6 md:p-8 rounded-2xl space-y-6 shadow-md">
+        <div className="glass-panel p-6 md:p-8 rounded-2xl space-y-6 bg-white border border-[#E7DED3] shadow-sm">
           <div>
-            <h2 className="font-serif text-lg font-black text-[#580820]">Upload Gallery</h2>
-            <p className="text-xs text-[#1F1515]/50 font-semibold uppercase tracking-wider mt-0.5">
+            <h2 className="font-serif text-lg font-black text-[#8A1538]">Upload Gallery</h2>
+            <p className="text-xs text-[#5F6673] font-semibold uppercase tracking-wider mt-0.5">
               Add clear pictures to build trust. Max size 5MB.
             </p>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {/* Uploader Card */}
-            <label className="border-2 border-dashed border-[#D4AF37]/35 hover:border-[#800020] hover:bg-[#800020]/5 cursor-pointer flex flex-col items-center justify-center aspect-square rounded-xl p-4 transition-all relative">
+            <label className="border-2 border-dashed border-[#E7DED3] hover:border-[#8A1538] hover:bg-[#8A1538]/5 cursor-pointer flex flex-col items-center justify-center aspect-square rounded-xl p-4 transition-all relative">
               {uploadingPhoto ? (
-                <div className="flex flex-col items-center gap-2 text-[#800020]">
+                <div className="flex flex-col items-center gap-2 text-[#8A1538]">
                   <Loader2 className="w-6 h-6 animate-spin" />
                   <span className="text-[10px] font-black uppercase">Uploading...</span>
                 </div>
               ) : (
                 <>
-                  <Upload className="w-6 h-6 text-[#D4AF37] mb-2" />
-                  <span className="text-[10px] font-black uppercase text-[#1F1515]/60 text-center">Add Photo</span>
+                  <Upload className="w-6 h-6 text-[#8A1538] opacity-50 mb-2" />
+                  <span className="text-[10px] font-black uppercase text-[#202124]/60 text-center">Add Photo</span>
                 </>
               )}
               <input
@@ -520,13 +589,13 @@ export default function ProfileWizard() {
 
             {/* Photo Cards List */}
             {photos.map((photo, index) => (
-              <div key={index} className="aspect-square border border-[#D4AF37]/15 rounded-xl overflow-hidden relative group">
+              <div key={index} className="aspect-square border border-[#E7DED3] rounded-xl overflow-hidden relative group">
                 <img
                   src={photo}
                   alt={`Gallery photo ${index + 1}`}
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-[#1F1515]/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                <div className="absolute inset-0 bg-[#202124]/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
                   <button
                     onClick={() => deletePhoto(photo)}
                     className="p-2.5 bg-red-800 text-white rounded-lg cursor-pointer hover:brightness-110 shadow-sm"
@@ -545,10 +614,10 @@ export default function ProfileWizard() {
           VERIFICATION UPLOAD WIZARD STEP
           ========================================== */}
       {activeTab === 'verification' && (
-        <div className="glass-panel p-6 md:p-8 rounded-2xl space-y-6 shadow-md">
+        <div className="glass-panel p-6 md:p-8 rounded-2xl space-y-6 bg-white border border-[#E7DED3] shadow-sm">
           <div>
-            <h2 className="font-serif text-lg font-black text-[#580820]">Official Verification</h2>
-            <p className="text-xs text-[#1F1515]/50 font-semibold uppercase tracking-wider mt-0.5">
+            <h2 className="font-serif text-lg font-black text-[#8A1538]">Official Verification</h2>
+            <p className="text-xs text-[#5F6673] font-semibold uppercase tracking-wider mt-0.5">
               Securely verify your CNIC identity card. Verification increases match requests by up to 200%.
             </p>
           </div>
@@ -588,8 +657,8 @@ function WizardTabButton({ active, onClick, icon: Icon, children }) {
       onClick={onClick}
       className={`flex-1 py-3 text-center text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 ${
         active
-          ? 'bg-[#800020] text-white shadow-sm border border-[#800020]/20'
-          : 'text-[#1F1515]/60 hover:text-[#800020]'
+          ? 'bg-[#8A1538] text-white shadow-sm border border-[#8A1538]/10'
+          : 'text-[#5F6673] hover:text-[#8A1538]'
       }`}
     >
       <Icon className="w-4 h-4" />
@@ -599,43 +668,43 @@ function WizardTabButton({ active, onClick, icon: Icon, children }) {
 }
 
 function Label({ children }) {
-  return <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-[#1F1515]/65">{children}</label>;
+  return <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-[#5F6673]">{children}</label>;
 }
 
 function Field(props) {
   return (
     <input 
       {...props} 
-      className="w-full border border-[#D4AF37]/20 bg-white/70 focus:bg-white focus:border-[#800020] focus:ring-1 focus:ring-[#800020] transition-all px-3 py-2.5 text-sm text-[#1F1515] rounded-lg outline-none font-medium placeholder-[#1F1515]/30" 
+      className="w-full border border-[#E7DED3] bg-white focus:border-[#8A1538] focus:ring-1 focus:ring-[#8A1538] transition-all px-3 py-2.5 text-sm text-[#202124] rounded-lg outline-none font-medium placeholder-[#5F6673]/30" 
     />
   );
 }
 
 function DocUploadCard({ title, required, fileSrc, loading, onChange }) {
   return (
-    <div className="border border-[#D4AF37]/15 bg-white/80 p-4 rounded-xl flex flex-col justify-between items-center text-center shadow-sm relative aspect-[1.1/1]">
+    <div className="border border-[#E7DED3] bg-[#FAF7F2] p-4 rounded-xl flex flex-col justify-between items-center text-center shadow-sm relative aspect-[1.1/1]">
       <div className="mb-2">
-        <span className="block text-sm font-bold text-[#580820]">{title}</span>
-        <span className="text-[9px] uppercase tracking-wider font-extrabold text-[#1F1515]/40 block mt-0.5">
+        <span className="block text-sm font-bold text-[#8A1538]">{title}</span>
+        <span className="text-[9px] uppercase tracking-wider font-extrabold text-[#5F6673]/50 block mt-0.5">
           {required ? 'Required' : 'Optional'}
         </span>
       </div>
 
       {fileSrc ? (
-        <div className="w-full flex-1 border border-[#D4AF37]/15 rounded-lg overflow-hidden relative my-2">
+        <div className="w-full flex-1 border border-[#E7DED3] rounded-lg overflow-hidden relative my-2 bg-white">
           <img src={fileSrc} alt={title} className="w-full h-full object-cover" />
-          <div className="absolute top-2 right-2 bg-emerald-700 text-white rounded-full p-1 shadow-sm">
+          <div className="absolute top-2 right-2 bg-[#147A5C] text-white rounded-full p-1 shadow-sm">
             <Check className="w-3.5 h-3.5" />
           </div>
         </div>
       ) : (
-        <label className="w-full flex-1 border-2 border-dashed border-[#D4AF37]/35 rounded-lg flex items-center justify-center cursor-pointer hover:border-[#800020] transition-colors my-2">
-          <Upload className="w-5 h-5 text-[#D4AF37]" />
+        <label className="w-full flex-1 border-2 border-dashed border-[#E7DED3] rounded-lg bg-white flex items-center justify-center cursor-pointer hover:border-[#8A1538] transition-colors my-2">
+          <Upload className="w-5 h-5 text-[#8A1538] opacity-50" />
           <input type="file" accept="image/*" onChange={onChange} disabled={loading} className="hidden" />
         </label>
       )}
 
-      <span className="text-[9px] text-[#1F1515]/45 font-medium mt-1">
+      <span className="text-[9px] text-[#5F6673]/60 font-medium mt-1">
         {fileSrc ? 'Document uploaded ✓' : 'Upload photo'}
       </span>
     </div>

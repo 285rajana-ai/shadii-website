@@ -175,20 +175,20 @@ export default function Subscription() {
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 text-[#202124]">
       {/* Page Title Header */}
-      <section className="glass-panel p-6 md:p-8 rounded-2xl relative overflow-hidden flex items-center justify-between">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#800020]/5 to-transparent blur-3xl pointer-events-none" />
+      <section className="glass-panel p-6 md:p-8 rounded-2xl relative overflow-hidden flex items-center justify-between bg-white border border-[#E7DED3]">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#8A1538]/5 to-transparent blur-3xl pointer-events-none" />
         <div>
-          <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#D4AF37] mb-2">
-            <Gem className="h-4 w-4 text-[#D4AF37]" />
+          <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#8A1538] mb-2">
+            <Gem className="h-4 w-4 text-[#8A1538]" />
             Shadii Premium Services
           </div>
-          <h1 className="text-2xl md:text-3xl font-serif font-black text-[#580820] tracking-tight">
+          <h1 className="text-2xl md:text-3xl font-serif font-black text-[#8A1538] tracking-tight">
             Premium Membership Packages
           </h1>
-          <p className="mt-1 text-xs font-bold text-[#1F1515]/45 uppercase tracking-wider">
-            Choose a plan to communicate with matches and browse photos without blurring
+          <p className="mt-1 text-xs font-bold text-[#5F6673] uppercase tracking-wider">
+            Choose a plan to communicate with matches and browse photos without restriction
           </p>
         </div>
       </section>
@@ -200,18 +200,18 @@ export default function Subscription() {
         </div>
       )}
       {success && (
-        <div className="flex items-start gap-3 border border-[#D4AF37]/25 bg-[#FAF8F5] p-4 text-sm rounded-xl text-[#580820] shadow-sm">
-          <CheckCircle2 className="w-5 h-5 shrink-0 text-[#D4AF37]" />
+        <div className="flex items-start gap-3 border border-emerald-800/20 bg-emerald-50/50 p-4 text-sm rounded-xl text-[#147A5C] shadow-sm">
+          <CheckCircle2 className="w-5 h-5 shrink-0 text-[#147A5C]" />
           <span className="font-semibold">{success}</span>
         </div>
       )}
 
       {/* Active Subscription badge */}
       {user?.subscription?.isActive && (
-        <div className="glass-panel p-6 rounded-2xl border border-emerald-500/20 bg-emerald-50/50 flex flex-col items-center justify-center text-center relative overflow-hidden">
+        <div className="glass-panel p-6 rounded-2xl border border-emerald-500/20 bg-emerald-50/50 flex flex-col items-center justify-center text-center relative overflow-hidden bg-white">
           <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 blur-2xl rounded-full" />
-          <CheckCircle2 className="w-10 h-10 text-emerald-700 mb-2.5" />
-          <h3 className="font-serif font-black text-lg text-emerald-800">Your Premium Account is Active</h3>
+          <CheckCircle2 className="w-10 h-10 text-[#147A5C] mb-2.5" />
+          <h3 className="font-serif font-black text-lg text-emerald-800">Your Premium Plan is Active</h3>
           <p className="text-[10px] text-emerald-600 font-extrabold uppercase tracking-widest mt-1">
             Tier: {user.subscription.plan} • Expires: {new Date(user.subscription.endDate).toLocaleDateString()}
           </p>
@@ -222,9 +222,9 @@ export default function Subscription() {
         <>
           {/* Plans Grid */}
           {plansLoading ? (
-            <div className="glass-panel grid min-h-[20rem] place-items-center text-sm text-[#1F1515]/60 rounded-2xl">
+            <div className="glass-panel grid min-h-[20rem] place-items-center text-sm text-[#202124]/60 rounded-2xl bg-white border border-[#E7DED3]">
               <span className="inline-flex flex-col items-center gap-2">
-                <Loader2 className="h-6 w-6 animate-spin text-[#800020]" />
+                <Loader2 className="h-6 w-6 animate-spin text-[#8A1538]" />
                 <span className="font-semibold uppercase tracking-wider text-[10px]">Loading Pricing Plans...</span>
               </span>
             </div>
@@ -235,33 +235,33 @@ export default function Subscription() {
                 return (
                   <div 
                     key={plan.id} 
-                    className={`glass-panel flex flex-col justify-between overflow-hidden rounded-2xl transition-all duration-300 relative ${
-                      isRecommended ? 'border-l-4 border-l-[#D4AF37] shadow-lg scale-[1.02] bg-gradient-to-b from-white/90 to-white/70' : 'bg-white/80'
+                    className={`glass-panel flex flex-col justify-between overflow-hidden rounded-2xl transition-all duration-300 relative border border-[#E7DED3] bg-white ${
+                      isRecommended ? 'border-l-4 border-l-[#8A1538] shadow-md scale-[1.01]' : ''
                     }`}
                   >
                     {isRecommended && (
-                      <div className="absolute top-3 right-3 bg-[#D4AF37] text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded shadow-sm">
+                      <div className="absolute top-3 right-3 bg-[#8A1538] text-white text-[9px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded shadow-sm">
                         Recommended
                       </div>
                     )}
                     <div className="p-6">
-                      <h3 className="font-serif text-xl font-black text-[#580820]">{plan.label}</h3>
+                      <h3 className="font-serif text-xl font-black text-[#8A1538]">{plan.label}</h3>
                       <div className="my-4">
-                        <span className="text-3xl font-serif font-black text-[#800020]">PKR {plan.price.toLocaleString()}</span>
-                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#1F1515]/40 ml-1">/ {plan.duration} Days</span>
+                        <span className="text-3xl font-serif font-black text-[#202124]">PKR {plan.price.toLocaleString()}</span>
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#5F6673] ml-1">/ {plan.duration} Days</span>
                       </div>
 
-                      <ul className="space-y-2.5 text-xs text-[#1F1515]/70 border-t border-[#D4AF37]/15 pt-4 mt-4 font-semibold">
+                      <ul className="space-y-2.5 text-xs text-[#202124]/75 border-t border-[#EFE7DD] pt-4 mt-4 font-semibold">
                         {plan.features?.map((feat, i) => (
                           <li key={i} className="flex items-start gap-2">
-                            <CheckCircle2 className="w-4 h-4 text-[#D4AF37] shrink-0 mt-0.5" />
+                            <CheckCircle2 className="w-4 h-4 text-[#147A5C] shrink-0 mt-0.5" />
                             <span>{feat}</span>
                           </li>
                         ))}
                       </ul>
                     </div>
 
-                    <div className="p-4 bg-[#FCFBF7]/80 border-t border-[#D4AF37]/10 flex items-center justify-center">
+                    <div className="p-4 bg-[#FAF7F2] border-t border-[#E7DED3] flex items-center justify-center">
                       <button
                         onClick={() => setSelectedPlan(plan)}
                         className="w-full btn-premium-primary py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider text-center"
@@ -277,14 +277,14 @@ export default function Subscription() {
 
           {/* Checkout Selection Modal-like Panel */}
           {selectedPlan && (
-            <div className="glass-panel p-6 md:p-8 rounded-2xl space-y-6 shadow-md border border-[#D4AF37]/20">
-              <h3 className="font-serif text-lg font-black text-[#580820] border-b border-[#D4AF37]/15 pb-3">
+            <div className="glass-panel p-6 md:p-8 rounded-2xl space-y-6 shadow-sm border border-[#E7DED3] bg-white">
+              <h3 className="font-serif text-lg font-black text-[#8A1538] border-b border-[#EFE7DD] pb-3">
                 Order details: {selectedPlan.label} (PKR {selectedPlan.price.toLocaleString()})
               </h3>
 
               <form onSubmit={handleInitiate} className="space-y-6">
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-[#1F1515]/50 mb-3">
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-[#5F6673] mb-3">
                     Select Payment Method
                   </label>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -293,30 +293,30 @@ export default function Subscription() {
                       onClick={() => setPaymentMethod('credit_card')}
                       className={`p-4 border text-left flex items-center justify-between transition-all rounded-xl cursor-pointer ${
                         paymentMethod === 'credit_card'
-                          ? 'border-[#800020] bg-[#800020]/5 shadow-sm'
-                          : 'border-[#D4AF37]/20 bg-white/70 hover:border-[#800020]'
+                          ? 'border-[#8A1538] bg-[#FCE8EF]/40 shadow-sm'
+                          : 'border-[#E7DED3] bg-white hover:border-[#8A1538]'
                       }`}
                     >
                       <div>
-                        <span className="block font-bold text-sm text-[#1F1515]">Credit/Debit Card</span>
-                        <span className="text-[10px] text-[#1F1515]/50 font-semibold mt-0.5 block">Pay securely via Stripe API</span>
+                        <span className="block font-bold text-sm text-[#202124]">Credit/Debit Card</span>
+                        <span className="text-[10px] text-[#5F6673]/50 font-semibold mt-0.5 block">Pay securely via Stripe API</span>
                       </div>
-                      <CreditCard className="w-5 h-5 text-[#D4AF37]" />
+                      <CreditCard className="w-5 h-5 text-[#8A1538]" />
                     </button>
                     <button
                       type="button"
                       onClick={() => setPaymentMethod('easypaisa')}
                       className={`p-4 border text-left flex items-center justify-between transition-all rounded-xl cursor-pointer ${
                         paymentMethod === 'easypaisa'
-                          ? 'border-[#800020] bg-[#800020]/5 shadow-sm'
-                          : 'border-[#D4AF37]/20 bg-white/70 hover:border-[#800020]'
+                          ? 'border-[#8A1538] bg-[#FCE8EF]/40 shadow-sm'
+                          : 'border-[#E7DED3] bg-white hover:border-[#8A1538]'
                       }`}
                     >
                       <div>
-                        <span className="block font-bold text-sm text-[#1F1515]">EasyPaisa Wallet</span>
-                        <span className="text-[10px] text-[#1F1515]/50 font-semibold mt-0.5 block">Transfer via Easypaisa mobile app</span>
+                        <span className="block font-bold text-sm text-[#202124]">EasyPaisa Wallet</span>
+                        <span className="text-[10px] text-[#5F6673]/50 font-semibold mt-0.5 block">Transfer via Easypaisa mobile app</span>
                       </div>
-                      <ChevronRight className="w-4 h-4 text-[#D4AF37]" />
+                      <ChevronRight className="w-4 h-4 text-[#8A1538]" />
                     </button>
 
                     <button
@@ -324,20 +324,20 @@ export default function Subscription() {
                       onClick={() => setPaymentMethod('bank_transfer')}
                       className={`p-4 border text-left flex items-center justify-between transition-all rounded-xl cursor-pointer ${
                         paymentMethod === 'bank_transfer'
-                          ? 'border-[#800020] bg-[#800020]/5 shadow-sm'
-                          : 'border-[#D4AF37]/20 bg-white/70 hover:border-[#800020]'
+                          ? 'border-[#8A1538] bg-[#FCE8EF]/40 shadow-sm'
+                          : 'border-[#E7DED3] bg-white hover:border-[#8A1538]'
                       }`}
                     >
                       <div>
-                        <span className="block font-bold text-sm text-[#1F1515]">Bank Transfer</span>
-                        <span className="text-[10px] text-[#1F1515]/50 font-semibold mt-0.5 block">Transfer using any Pakistani bank app</span>
+                        <span className="block font-bold text-sm text-[#202124]">Bank Transfer</span>
+                        <span className="text-[10px] text-[#5F6673]/50 font-semibold mt-0.5 block">Transfer using any Pakistani bank app</span>
                       </div>
-                      <ChevronRight className="w-4 h-4 text-[#D4AF37]" />
+                      <ChevronRight className="w-4 h-4 text-[#8A1538]" />
                     </button>
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-3 border-t border-[#D4AF37]/15 pt-5">
+                <div className="flex justify-end gap-3 border-t border-[#E7DED3] pt-5">
                   <button
                     type="button"
                     onClick={() => setSelectedPlan(null)}
@@ -359,43 +359,43 @@ export default function Subscription() {
         </>
       ) : (
         /* Invoice Instructions & Proof Submission Form */
-        <div className="glass-panel p-6 md:p-8 rounded-2xl space-y-6 shadow-md border border-[#D4AF37]/20 bg-white/90">
-          <h3 className="font-serif text-lg font-black text-[#580820] border-b border-[#D4AF37]/15 pb-3">
+        <div className="glass-panel p-6 md:p-8 rounded-2xl space-y-6 bg-white border border-[#E7DED3] shadow-sm">
+          <h3 className="font-serif text-lg font-black text-[#8A1538] border-b border-[#EFE7DD] pb-3">
             Payment Transfer Instructions - Order ID: {initiationData.subscriptionId}
           </h3>
 
-          <div className="bg-[#FAF8F5] border border-[#D4AF37]/15 p-6 rounded-xl space-y-4 text-sm font-medium text-[#1F1515]/85">
-            <p className="font-bold text-[#1F1515]">Please send exactly <strong className="text-[#800020]">PKR {initiationData.amount}</strong> to the following account:</p>
+          <div className="bg-[#FAF7F2] border border-[#E7DED3] p-6 rounded-xl space-y-4 text-sm font-medium text-[#202124]/85">
+            <p className="font-bold text-[#202124]">Please send exactly <strong className="text-[#8A1538]">PKR {initiationData.amount}</strong> to the following account:</p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <span className="block text-[9px] uppercase font-extrabold text-[#1F1515]/40 tracking-wider">Account Title</span>
-                <span className="font-serif font-black text-md text-[#580820]">{initiationData.paymentInstructions.accountTitle}</span>
+                <span className="block text-[9px] uppercase font-extrabold text-[#5F6673] tracking-wider">Account Title</span>
+                <span className="font-serif font-black text-md text-[#8A1538]">{initiationData.paymentInstructions.accountTitle}</span>
               </div>
               <div>
-                <span className="block text-[9px] uppercase font-extrabold text-[#1F1515]/40 tracking-wider">Account / Mobile Number</span>
-                <span className="font-mono font-black text-md text-[#800020]">{initiationData.paymentInstructions.accountNumber}</span>
+                <span className="block text-[9px] uppercase font-extrabold text-[#5F6673] tracking-wider">Account / Mobile Number</span>
+                <span className="font-mono font-black text-md text-[#8A1538]">{initiationData.paymentInstructions.accountNumber}</span>
               </div>
               {initiationData.paymentInstructions.bankName && (
                 <div>
-                  <span className="block text-[9px] uppercase font-extrabold text-[#1F1515]/40 tracking-wider">Bank Name</span>
-                  <span className="font-bold text-md text-[#1F1515]">{initiationData.paymentInstructions.bankName}</span>
+                  <span className="block text-[9px] uppercase font-extrabold text-[#5F6673] tracking-wider">Bank Name</span>
+                  <span className="font-bold text-md text-[#202124]">{initiationData.paymentInstructions.bankName}</span>
                 </div>
               )}
               <div>
-                <span className="block text-[9px] uppercase font-extrabold text-[#1F1515]/40 tracking-wider">Order Memo Reference</span>
-                <span className="font-mono font-bold text-md text-[#B5902B]">{initiationData.paymentInstructions.reference}</span>
+                <span className="block text-[9px] uppercase font-extrabold text-[#5F6673] tracking-wider">Order Memo Reference</span>
+                <span className="font-mono font-bold text-md text-[#C5A059]">{initiationData.paymentInstructions.reference}</span>
               </div>
             </div>
             
-            <p className="text-[10px] text-[#1F1515]/50 font-bold uppercase tracking-wider border-t border-[#D4AF37]/15 pt-3">
+            <p className="text-[10px] text-[#5F6673]/50 font-bold uppercase tracking-wider border-t border-[#E7DED3] pt-3">
               * Note: Please write the Order Memo Reference in the transfer memo box.
             </p>
           </div>
 
           <form onSubmit={handleUploadProof} className="space-y-6">
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-[#1F1515]/65 mb-1.5">
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-[#5F6673] mb-1.5">
                 Transaction ID (TRX ID)
               </label>
               <input
@@ -403,17 +403,17 @@ export default function Subscription() {
                 value={paymentRef}
                 onChange={(e) => setPaymentRef(e.target.value)}
                 placeholder="e.g. TRX123456789"
-                className="w-full border border-[#D4AF37]/20 bg-white/70 focus:bg-white focus:border-[#800020] focus:ring-1 focus:ring-[#800020] transition-all px-3 py-2.5 text-sm text-[#1F1515] rounded-lg outline-none font-medium placeholder-[#1F1515]/30"
+                className="w-full border border-[#E7DED3] bg-white focus:border-[#8A1538] focus:ring-1 focus:ring-[#8A1538] transition-all px-3 py-2.5 text-sm text-[#202124] rounded-lg outline-none font-medium placeholder-[#5F6673]/30"
               />
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-[#1F1515]/65 mb-1.5">
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-[#5F6673] mb-1.5">
                 Upload Proof Receipt Screen
               </label>
-              <div className="border-2 border-dashed border-[#D4AF37]/35 bg-[#FAF8F5] p-8 text-center flex flex-col items-center justify-center rounded-xl relative aspect-[1.5/1]">
-                <FileText className="w-8 h-8 text-[#D4AF37] mb-2" />
-                <p className="text-[10px] font-bold uppercase tracking-wider text-[#1F1515]/60 mb-3">Drag or select receipt transfer screenshot</p>
+              <div className="border-2 border-dashed border-[#E7DED3] bg-[#FAF7F2] p-8 text-center flex flex-col items-center justify-center rounded-xl relative aspect-[1.5/1]">
+                <FileText className="w-8 h-8 text-[#8A1538] opacity-50 mb-2" />
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[#5F6673] mb-3">Drag or select receipt transfer screenshot</p>
                 <input
                   type="file"
                   accept="image/*"
@@ -430,7 +430,7 @@ export default function Subscription() {
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 border-t border-[#D4AF37]/15 pt-5">
+            <div className="flex justify-end gap-3 border-t border-[#E7DED3] pt-5">
               <button
                 type="button"
                 onClick={() => setInitiationData(null)}
@@ -443,7 +443,7 @@ export default function Subscription() {
                 disabled={loading}
                 className="btn-premium-primary px-6 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider"
               >
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Submit Payment Screenshot'}
+                {loading ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : 'Submit Payment Screenshot'}
               </button>
             </div>
           </form>
