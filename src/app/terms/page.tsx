@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { businessInfo } from "@/lib/business-info";
 
 export const metadata: Metadata = {
-    title: "Terms of Service | Shadii.pk",
+    title: "Terms & Conditions | Shadii.pk",
     description:
-        "Terms of Service for using the Shadii.pk website and mobile application.",
+        "Terms and Conditions for using the Shadii.pk website and mobile application.",
 };
 
 const terms = [
@@ -60,9 +61,12 @@ const terms = [
     {
         title: "Contact",
         items: [
-            "General support: support@shadii.pk",
-            "Abuse reports: abuse@shadii.pk",
-            "Website: https://shadii.pk",
+            `General support: ${businessInfo.supportEmail}`,
+            `Billing support: ${businessInfo.billingEmail}`,
+            `Contact number: ${businessInfo.contactNumber}`,
+            `Business address: ${businessInfo.businessAddress}`,
+            `Abuse reports: ${businessInfo.abuseEmail}`,
+            `Website: ${businessInfo.website}`,
         ],
     },
 ];
@@ -78,12 +82,12 @@ export default function TermsPage() {
                         Shadii.pk Legal
                     </div>
                     <h1 className="font-display text-4xl font-bold tracking-tight text-[var(--text)] sm:text-5xl">
-                        Terms of Service
+                        Terms & Conditions
                     </h1>
                     <p className="mt-4 max-w-3xl text-sm leading-7 text-[var(--muted)] sm:text-base">
                         These terms govern your use of the Shadii.pk platform, including the website, mobile application, and related services.
                     </p>
-                    <p className="mt-4 text-xs text-[var(--muted)]/60">Last updated: 11 May 2026</p>
+                    <p className="mt-4 text-xs text-[var(--muted)]/60">Last updated: {businessInfo.lastUpdated}</p>
                 </div>
 
                 <div className="space-y-6">
@@ -102,6 +106,12 @@ export default function TermsPage() {
                 <div className="mt-10 flex flex-wrap gap-4 text-sm">
                     <Link href="/privacy" className="btn-secondary px-5 py-3 text-sm">
                         Privacy Policy
+                    </Link>
+                    <Link href="/refund-policy" className="btn-secondary px-5 py-3 text-sm">
+                        Refund Policy
+                    </Link>
+                    <Link href="/contact-us" className="btn-secondary px-5 py-3 text-sm">
+                        Contact Us
                     </Link>
                     <Link href="/delete-account" className="btn-secondary px-5 py-3 text-sm">
                         Account Deletion

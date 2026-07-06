@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { businessInfo } from "@/lib/business-info";
 
 export const metadata: Metadata = {
     title: "Privacy Policy | Shadii.pk",
@@ -52,16 +53,18 @@ const sections = [
         items: [
             "You can update most profile information from the app.",
             "You can delete your account from the Settings screen.",
-            "You can request help regarding your data by emailing support@shadii.pk.",
+            `You can request help regarding your data by emailing ${businessInfo.supportEmail}.`,
             "You can control selected privacy settings such as online status visibility inside the app.",
         ],
     },
     {
         title: "Contact",
         items: [
-            "Privacy and support requests: support@shadii.pk",
-            "Abuse reports: abuse@shadii.pk",
-            "Website: https://shadii.pk",
+            `Privacy and support requests: ${businessInfo.supportEmail}`,
+            `Contact number: ${businessInfo.contactNumber}`,
+            `Business address: ${businessInfo.businessAddress}`,
+            `Abuse reports: ${businessInfo.abuseEmail}`,
+            `Website: ${businessInfo.website}`,
         ],
     },
 ];
@@ -83,7 +86,7 @@ export default function PrivacyPage() {
                         This policy explains how Shadii.pk collects, uses, stores, and protects user information in the app and on the website.
                         By using Shadii.pk, you agree to this policy.
                     </p>
-                    <p className="mt-4 text-xs text-[var(--muted)]/60">Last updated: 11 May 2026</p>
+                    <p className="mt-4 text-xs text-[var(--muted)]/60">Last updated: {businessInfo.lastUpdated}</p>
                 </div>
 
                 <div className="space-y-6">
@@ -101,7 +104,13 @@ export default function PrivacyPage() {
 
                 <div className="mt-10 flex flex-wrap gap-4 text-sm">
                     <Link href="/terms" className="btn-secondary px-5 py-3 text-sm">
-                        Terms of Service
+                        Terms & Conditions
+                    </Link>
+                    <Link href="/refund-policy" className="btn-secondary px-5 py-3 text-sm">
+                        Refund Policy
+                    </Link>
+                    <Link href="/contact-us" className="btn-secondary px-5 py-3 text-sm">
+                        Contact Us
                     </Link>
                     <Link href="/delete-account" className="btn-secondary px-5 py-3 text-sm">
                         Account Deletion
