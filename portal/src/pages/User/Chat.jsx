@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth, API_BASE } from '../../context/AuthContext';
 import { useSocket } from '../../context/SocketContext';
 import { getInitials, getProfilePhotoSrc } from '../../lib/profile';
+import ProfileDetailModal from '../../components/ProfileDetailModal';
 import {
   Ban,
   CheckCheck,
@@ -23,6 +24,7 @@ import {
 export default function Chat() {
   const { token, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { socket, messages, setMessages, typingUsers, sendMessage, sendTyping, markSeen, registerOnMessage } = useSocket();
   const [conversations, setConversations] = useState([]);
   const [selectedConv, setSelectedConv] = useState(null);
@@ -33,6 +35,7 @@ export default function Chat() {
   const [query, setQuery] = useState('');
   const [chatAccess, setChatAccess] = useState(null);
   const [acceptingInvite, setAcceptingInvite] = useState(false);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
   const messagesEndRef = useRef(null);
   const typingRef = useRef(0);
 
@@ -45,6 +48,54 @@ export default function Chat() {
   useEffect(() => {
     fetchConversations();
   }, []);
+
+  useEffect(() => {
+    const checkSelectUser = async () => {
+      const selectUserId = location.state?.selectUserId;
+      if (!selectUserId || convsLoading) return;
+
+      const existing = conversations.find(
+        (c) => String(c.otherUser.id) === String(selectUserId)
+      );
+      if (existing) {
+        setSelectedConv(existing);
+      } else {
+        try {
+          const res = await fetch(`${API_BASE}/profile/${selectUserId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const data = await res.json();
+          if (data.success && data.profile) {
+            const p = data.profile;
+            const mainPhoto = p.photos?.find((ph) => ph.isMain) || p.photos?.[0];
+            const tempConv = {
+              conversationId: [String(user.id), String(p._id)].sort().join('_'),
+              otherUser: {
+                id: p._id,
+                name: p.name,
+                isVerified: p.isVerified,
+                isOnline: p.isOnline,
+                lastActive: p.lastActive,
+                photo: mainPhoto?.url || null,
+                gender: p.gender,
+              },
+              lastMessage: null,
+              unreadCount: 0,
+            };
+            setConversations((prev) => [tempConv, ...prev]);
+            setSelectedConv(tempConv);
+          }
+        } catch (err) {
+          console.error('Failed to load profile details for initial outreach:', err);
+        }
+      }
+      
+      // Clear location state
+      window.history.replaceState(null, '');
+    };
+
+    checkSelectUser();
+  }, [location.state?.selectUserId, convsLoading, conversations]);
 
   useEffect(() => {
     if (selectedConv) {
@@ -309,20 +360,25 @@ export default function Chat() {
                     <ChevronLeft className="h-4 w-4" />
                     Back
                   </button>
-                  <Avatar user={selectedConv.otherUser} size="lg" />
-                  <div className="min-w-0">
-                    <h2 className="truncate font-serif text-lg font-black text-[#8A1538]">
-                      {selectedConv.otherUser.name}
-                    </h2>
-                    <p className="text-xs font-bold uppercase tracking-wider text-[#5F6673]/45 mt-0.5">
-                      {typingUsers[selectedConv.otherUser.id] ? (
-                        <span className="text-[#8A1538] animate-pulse">typing...</span>
-                      ) : selectedConv.otherUser.isOnline ? (
-                        <span className="text-emerald-700">Online now</span>
-                      ) : (
-                        'Offline'
-                      )}
-                    </p>
+                  <div 
+                    onClick={() => setDetailModalOpen(true)}
+                    className="flex min-w-0 items-center gap-3 cursor-pointer group"
+                  >
+                    <Avatar user={selectedConv.otherUser} size="lg" />
+                    <div className="min-w-0">
+                      <h2 className="truncate font-serif text-lg font-black text-[#8A1538] group-hover:underline">
+                        {selectedConv.otherUser.name}
+                      </h2>
+                      <p className="text-xs font-bold uppercase tracking-wider text-[#5F6673]/45 mt-0.5">
+                        {typingUsers[selectedConv.otherUser.id] ? (
+                          <span className="text-[#8A1538] animate-pulse">typing...</span>
+                        ) : selectedConv.otherUser.isOnline ? (
+                          <span className="text-emerald-700">Online now</span>
+                        ) : (
+                          'Offline'
+                        )}
+                      </p>
+                    </div>
                   </div>
                 </div>
                 <button
@@ -440,6 +496,14 @@ export default function Chat() {
           )}
         </main>
       </div>
+
+      {selectedConv && (
+        <ProfileDetailModal
+          profileId={selectedConv.otherUser.id}
+          isOpen={detailModalOpen}
+          onClose={() => setDetailModalOpen(false)}
+        />
+      )}
     </div>
   );
 }

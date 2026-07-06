@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth, API_BASE } from '../../context/AuthContext';
 import { getInitials, getProfilePhotoSrc } from '../../lib/profile';
+import ProfileDetailModal from '../../components/ProfileDetailModal';
 import {
   BadgeCheck,
   Check,
@@ -50,6 +52,7 @@ const QUICK_FILTERS = [
 
 export default function Discover() {
   const { token, user } = useAuth();
+  const navigate = useNavigate();
   const [profiles, setProfiles] = useState([]);
   const [incoming, setIncoming] = useState(defaultIncoming);
   const [loading, setLoading] = useState(false);
@@ -58,6 +61,8 @@ export default function Discover() {
   const [activeChipFilter, setActiveChipFilter] = useState('all');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [selectedProfileId, setSelectedProfileId] = useState(null);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
   
   const [filters, setFilters] = useState({
     ageMin: '18',
@@ -175,13 +180,16 @@ export default function Discover() {
         headers: authHeaders,
       });
       const data = await res.json();
-      if (data.success) {
+      if (data.success || data.message === 'Already requested') {
         const isFree = !user?.subscription?.isActive;
         const successMsg = isFree 
           ? 'Connection request sent! Free accounts can send exactly 1 message request once approved. Upgrade to premium for unlimited chatting.'
           : 'Connection request sent successfully! You will be notified once they approve.';
         setSuccess(data.message === 'Already requested' ? 'Connection request already sent.' : successMsg);
         fetchBrowse();
+        
+        // Navigate to chat room immediately
+        navigate('/chat', { state: { selectUserId: profileId } });
       } else {
         setError(data.message || 'Failed to request connection.');
       }
@@ -355,6 +363,10 @@ export default function Discover() {
                     profile={profile}
                     onPhotoRequest={() => requestPhotoUnlock(profile.id)}
                     onContactRequest={() => requestContactShare(profile.id)}
+                    onViewDetails={() => {
+                      setSelectedProfileId(profile.id);
+                      setDetailModalOpen(true);
+                    }}
                   />
                 ))}
               </div>
@@ -452,6 +464,13 @@ export default function Discover() {
           onContactResponse={handleContactResponse}
         />
       )}
+
+      <ProfileDetailModal
+        profileId={selectedProfileId}
+        isOpen={detailModalOpen}
+        onClose={() => setDetailModalOpen(false)}
+        onConnect={selectedProfileId ? () => requestPhotoUnlock(selectedProfileId) : null}
+      />
     </div>
   );
 }
@@ -517,13 +536,16 @@ function CheckField({ children, ...props }) {
   );
 }
 
-function ProfileCard({ profile, onPhotoRequest, onContactRequest }) {
+function ProfileCard({ profile, onPhotoRequest, onContactRequest, onViewDetails }) {
   const photoSrc = getProfilePhotoSrc(profile, profile.isPhotoBlurred);
 
   return (
     <article className="glass-card flex flex-col overflow-hidden rounded-2xl relative min-h-[380px] bg-white border border-[#E7DED3]">
       {/* Image Area */}
-      <div className="relative aspect-[1/1.1] image-fallback overflow-hidden bg-[#F6F0E8]">
+      <div 
+        onClick={onViewDetails}
+        className="relative aspect-[1/1.1] image-fallback overflow-hidden bg-[#F6F0E8] cursor-pointer group"
+      >
         <img
           src={photoSrc}
           alt={profile.name || 'Profile photo'}
@@ -547,7 +569,10 @@ function ProfileCard({ profile, onPhotoRequest, onContactRequest }) {
             <p className="font-serif text-lg font-black text-white">Photos Private</p>
             <p className="text-[9px] uppercase tracking-widest text-[#FFFDF9]/85 font-extrabold mt-0.5">Rishta Approval Needed</p>
             <button 
-              onClick={onPhotoRequest} 
+              onClick={(e) => {
+                e.stopPropagation();
+                onPhotoRequest();
+              }} 
               className="btn-premium-primary mt-4 px-4 py-2 text-[10px] font-bold uppercase tracking-wider rounded-lg"
             >
               Request Access
@@ -558,9 +583,12 @@ function ProfileCard({ profile, onPhotoRequest, onContactRequest }) {
 
       {/* Info Details Area */}
       <div className="flex flex-1 flex-col p-4 bg-white relative">
-        <div className="flex items-start justify-between gap-3">
+        <div 
+          onClick={onViewDetails}
+          className="flex items-start justify-between gap-3 cursor-pointer group/title"
+        >
           <div className="min-w-0">
-            <h3 className="truncate font-serif text-xl font-bold text-[#8A1538]">
+            <h3 className="truncate font-serif text-xl font-bold text-[#8A1538] group-hover/title:underline">
               {profile.name}, {profile.age}
             </h3>
             <p className="mt-1 flex items-center gap-1 text-xs font-bold text-[#5F6673]">
@@ -574,7 +602,10 @@ function ProfileCard({ profile, onPhotoRequest, onContactRequest }) {
         </div>
 
         {/* Profile Details attributes */}
-        <dl className="mt-4 grid grid-cols-2 gap-x-2 gap-y-2.5 border-y border-[#EFE7DD] py-3 text-[10px] text-[#202124]">
+        <dl 
+          onClick={onViewDetails}
+          className="mt-4 grid grid-cols-2 gap-x-2 gap-y-2.5 border-y border-[#EFE7DD] py-3 text-[10px] text-[#202124] cursor-pointer"
+        >
           <Info label="Sect" value={profile.sect || 'Not set'} />
           <Info label="Caste" value={profile.cast || 'Not set'} />
           <Info label="Education" value={profile.education || 'Not set'} />
