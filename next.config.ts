@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 
+// Trigger production rebuild: rollback to original light theme website design
 const nextConfig: NextConfig = {
   async rewrites() {
     return [
