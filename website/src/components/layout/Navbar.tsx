@@ -35,12 +35,7 @@ export function Navbar() {
         <header className="fixed inset-x-0 top-0 z-50">
             <div className="site-shell pt-4">
                 <div
-                    className={[
-                        "nav-shell flex items-center justify-between gap-4 rounded-[1.6rem] border px-4 py-3 transition-all sm:px-5",
-                        scrolled
-                            ? "border-[var(--gold)]/35 bg-white/95 shadow-[0_10px_30px_rgba(194,155,87,0.06)] backdrop-blur-2xl"
-                            : "border-[var(--gold)]/20 bg-white/80 backdrop-blur-md",
-                    ].join(" ")}
+                    className="nav-shell flex items-center justify-between gap-4 rounded-[1.6rem] px-4 py-3 transition-all sm:px-5 liquid-glass liquid-glass-glow"
                 >
                     <div className="sm:hidden">
                         <BrandMark compact lightText={false} />
