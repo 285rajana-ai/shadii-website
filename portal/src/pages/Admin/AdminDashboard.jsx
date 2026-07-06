@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth, API_BASE } from '../../context/AuthContext';
 import { 
   Users, CreditCard, ShieldAlert, BadgeAlert, Megaphone, BarChart3, 
   Search, Eye, Ban, Check, X, Shield, FileImage, ExternalLink, Calendar,
-  Activity, CheckCircle2, UserCheck, AlertCircle, Sparkles, Plus, Trash2, Edit, Percent, HelpCircle
+  Activity, CheckCircle2, UserCheck, AlertCircle, Sparkles, Plus, Trash2, Edit, Percent, HelpCircle,
+  Gem, ArrowLeft, LogOut
 } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -48,8 +50,42 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 h-[calc(100vh-100px)]">
-      {/* Lightbox Modal */}
+    <div className="h-screen w-full flex flex-col overflow-hidden bg-[#0D0811]">
+      {/* ============ TOP ADMIN HEADER BAR ============ */}
+      <div className="h-14 shrink-0 bg-[#800020] flex items-center justify-between px-5 border-b border-[#5C0010]">
+        {/* Left: Branding */}
+        <div className="flex items-center gap-3">
+          <span className="grid h-8 w-8 place-items-center bg-white/10 rounded-lg border border-white/20">
+            <Gem className="h-4 w-4 text-[#C5A059]" />
+          </span>
+          <div>
+            <span className="font-serif text-base font-black text-white tracking-wide">Shadii<span className="text-[#C5A059]">.pk</span></span>
+            <span className="block text-[8px] uppercase tracking-[0.25em] text-white/50 font-bold">Operations Console</span>
+          </div>
+        </div>
+
+        {/* Center: Role Badge */}
+        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-white/10 rounded-full border border-white/20">
+          <Shield className="w-3.5 h-3.5 text-[#C5A059]" />
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white">
+            {user?.role === 'superadmin' ? 'Super Admin' : user?.role === 'cacc' ? 'CACC Officer' : user?.role === 'fasm' ? 'FASM Officer' : 'Admin'}
+          </span>
+        </div>
+
+        {/* Right: User + Exit */}
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-bold text-white/70 hidden md:inline">{user?.name}</span>
+          <Link
+            to="/"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-[10px] font-black uppercase tracking-wider rounded-lg border border-white/20 transition-all"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Exit Admin
+          </Link>
+        </div>
+      </div>
+
+      {/* ============ LIGHTBOX MODAL ============ */}
       {lightbox && (
         <div 
           className="fixed inset-0 bg-black/85 flex items-center justify-center z-50 p-4"
@@ -67,16 +103,16 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Main Admin Frame */}
-      <div className="bg-white border border-[#E5DEC9] h-full flex divide-x divide-[#E5DEC9]">
-        {/* Left Admin Navigation Sidebar */}
-        <div className="w-64 shrink-0 flex flex-col h-full bg-[#FCFBF7]">
-          <div className="p-6 border-b border-[#E5DEC9] bg-[#800020] text-white">
-            <h2 className="font-serif text-lg font-bold">Operations Desk</h2>
-            <p className="text-[10px] uppercase tracking-widest text-[#C5A059] font-bold mt-1">Admin Panel Mode</p>
+      {/* ============ BODY: SIDEBAR + CONTENT ============ */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left Admin Navigation Sidebar - Dark Theme */}
+        <div className="w-60 shrink-0 flex flex-col h-full bg-[#150A14] border-r border-white/10">
+          {/* Sidebar Section Label */}
+          <div className="px-5 pt-5 pb-3">
+            <span className="text-[9px] uppercase tracking-[0.25em] font-black text-white/30">Navigation</span>
           </div>
 
-          <div className="flex-1 overflow-y-auto py-4 space-y-1">
+          <div className="flex-1 overflow-y-auto pb-4 space-y-0.5 px-3">
             {[
               { id: 'overview', label: 'Overview', icon: BarChart3, roles: ['superadmin', 'admin', 'cacc', 'fasm'] },
               { id: 'users', label: 'User Directory', icon: Users, roles: ['superadmin', 'admin'] },
@@ -90,7 +126,7 @@ export default function AdminDashboard() {
               { id: 'plans', label: 'Plan Editor', icon: Shield, roles: ['superadmin', 'fasm'] },
               { id: 'coupons', label: 'Promo Coupons', icon: Activity, roles: ['superadmin', 'fasm'] },
               { id: 'ad-receipts', label: 'Billing & Receipts', icon: FileImage, roles: ['superadmin', 'fasm'] },
-              { id: 'broadcast', label: 'System Broadcast', icon: Megaphone, roles: ['superadmin', 'admin'] },
+              { id: 'broadcast', label: 'Broadcast', icon: Megaphone, roles: ['superadmin', 'admin'] },
             ].filter((tab) => tab.roles.includes(user?.role || 'admin')).map((tab) => {
               const Icon = tab.icon;
               const isSelected = activeTab === tab.id;
@@ -102,22 +138,27 @@ export default function AdminDashboard() {
                     setError('');
                     setSuccess('');
                   }}
-                  className={`w-full px-6 py-3.5 text-left flex items-center gap-3 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer border-l-4 ${
+                  className={`w-full px-3 py-2.5 text-left flex items-center gap-2.5 text-[11px] font-bold uppercase tracking-wider transition-all cursor-pointer rounded-lg ${
                     isSelected
-                      ? 'bg-white border-l-[#800020] text-[#800020]'
-                      : 'border-l-transparent text-[#605252] hover:bg-[#F5EFEB] hover:text-[#800020]'
+                      ? 'bg-[#800020] text-white shadow-lg shadow-[#800020]/30'
+                      : 'text-white/50 hover:bg-white/5 hover:text-white'
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
+                  <Icon className="w-4 h-4 shrink-0" />
                   {tab.label}
                 </button>
               );
             })}
           </div>
+
+          {/* Sidebar Footer: version / user */}
+          <div className="px-5 py-4 border-t border-white/10">
+            <p className="text-[9px] font-bold uppercase tracking-widest text-white/25">Shadii.pk Admin v2.0</p>
+          </div>
         </div>
 
         {/* Right Dashboard Content Panel */}
-        <div className="flex-1 flex flex-col h-full overflow-y-auto bg-white p-6 md:p-8">
+        <div className="flex-1 flex flex-col overflow-y-auto bg-[#FCFAF7] p-6 md:p-8">
           {error && (
             <div className="bg-[#FAF2F2] border border-[#800020] text-[#800020] p-4 mb-6 text-sm flex items-start gap-2">
               <AlertCircle className="w-5 h-5 shrink-0" />

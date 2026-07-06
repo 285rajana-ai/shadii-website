@@ -1,42 +1,61 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  StyleSheet, Text, View, ScrollView, TextInput, Pressable, 
-  ActivityIndicator, Image, Alert, Modal, StatusBar 
+import {
+  StyleSheet, Text, View, ScrollView, TextInput, Pressable,
+  ActivityIndicator, Image, Alert, Modal, StatusBar, Dimensions
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useSelector } from 'react-redux';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AppBackground, Card } from '../../components/ui/LightPrimitives';
+import { Card } from '../../components/ui/LightPrimitives';
 import colors from '../../theme/colors';
 import { radius, spacing } from '../../theme/spacing';
 import { API_BASE_URL } from '../../utils/constants';
 
+const { width: SCREEN_W } = Dimensions.get('window');
+
+// ─── Role Badge Label ──────────────────────────────────────────────
+function roleName(role) {
+  if (role === 'superadmin') return 'Super Admin';
+  if (role === 'cacc') return 'CACC Officer';
+  if (role === 'fasm') return 'FASM Officer';
+  return 'Admin';
+}
+
+// ─── Status Badge ──────────────────────────────────────────────────
+function StatusPill({ label, color = colors.primary, bg = colors.primaryLightBg }) {
+  return (
+    <View style={[styles.pill, { backgroundColor: bg }]}>
+      <Text style={[styles.pillText, { color }]}>{label.toUpperCase()}</Text>
+    </View>
+  );
+}
+
+// ─── Main Screen ──────────────────────────────────────────────────
 export default function AdminDashboardScreen({ navigation }) {
   const { user, token } = useSelector((s) => s.auth);
   const insets = useSafeAreaInsets();
 
-  // Selected sub-tab within mobile admin panel
-  // By default, open the tab matching their role
   const getInitialTab = () => {
     if (user?.role === 'cacc') return 'support';
     if (user?.role === 'fasm') return 'coupons';
-    return 'verifications'; // default for admin and superadmin
+    return 'verifications';
   };
 
   const [activeTab, setActiveTab] = useState(getInitialTab());
 
-  // Verification List State (Admin)
+  // ── Verification State ──────────────────────────────────────────
   const [verifications, setVerifications] = useState([]);
   const [loadingVerify, setLoadingVerify] = useState(false);
   const [lightboxUrl, setLightboxUrl] = useState(null);
 
-  // Support Tickets State (CACC)
+  // ── Support Tickets State ───────────────────────────────────────
   const [tickets, setTickets] = useState([]);
   const [loadingSupport, setLoadingSupport] = useState(false);
   const [replyTicketId, setReplyTicketId] = useState(null);
   const [replyText, setReplyText] = useState('');
 
-  // Promo Code State (FASM)
+  // ── Promo Codes State ───────────────────────────────────────────
   const [coupons, setCoupons] = useState([]);
   const [loadingCoupons, setLoadingCoupons] = useState(false);
   const [promoCode, setPromoCode] = useState('');
@@ -52,7 +71,7 @@ export default function AdminDashboardScreen({ navigation }) {
     }
   }, [activeTab]);
 
-  // --- VERIFICATION HANDLERS (Admin) ---
+  // ── API Handlers ────────────────────────────────────────────────
   const fetchVerifications = async () => {
     setLoadingVerify(true);
     try {
@@ -60,10 +79,8 @@ export default function AdminDashboardScreen({ navigation }) {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
-      if (data.success) {
-        setVerifications(data.users || []);
-      }
-    } catch (err) {
+      if (data.success) setVerifications(data.users || []);
+    } catch {
       Alert.alert('Error', 'Failed to fetch verification queue.');
     } finally {
       setLoadingVerify(false);
@@ -74,32 +91,27 @@ export default function AdminDashboardScreen({ navigation }) {
     const isApprove = action === 'approve';
     Alert.prompt(
       isApprove ? 'Approve Verification' : 'Reject Verification',
-      isApprove ? 'Optionally add a note:' : 'Enter rejection reason:',
+      isApprove ? 'Add an optional note:' : 'Enter rejection reason:',
       async (note) => {
         try {
           const res = await fetch(`${API_BASE_URL}/admin/verify/${userId}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`
-            },
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
             body: JSON.stringify({ action, note })
           });
           const data = await res.json();
           if (data.success) {
-            Alert.alert('Success', `Verification request ${isApprove ? 'approved' : 'rejected'}.`);
+            Alert.alert('Done', isApprove ? 'Profile verified with Blue Tick ✓' : 'Profile rejected.');
             fetchVerifications();
-          } else {
-            Alert.alert('Error', data.message || 'Operation failed.');
           }
-        } catch (err) {
-          Alert.alert('Error', 'Connection failed.');
+        } catch {
+          Alert.alert('Error', 'Action failed. Try again.');
         }
-      }
+      },
+      'plain-text'
     );
   };
 
-  // --- SUPPORT HELPDESK HANDLERS (CACC) ---
   const fetchTickets = async () => {
     setLoadingSupport(true);
     try {
@@ -107,40 +119,34 @@ export default function AdminDashboardScreen({ navigation }) {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
-      if (data.success) {
-        setTickets(data.tickets || []);
-      }
-    } catch (err) {
-      Alert.alert('Error', 'Failed to fetch support tickets.');
+      if (data.success) setTickets(data.tickets || []);
+    } catch {
+      Alert.alert('Error', 'Failed to load support tickets.');
     } finally {
       setLoadingSupport(false);
     }
   };
 
   const submitTicketReply = async (ticketId) => {
-    if (!replyText.trim()) return;
+    if (!replyText.trim()) return Alert.alert('Empty', 'Reply cannot be blank.');
     try {
       const res = await fetch(`${API_BASE_URL}/admin/support/${ticketId}/reply`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ replyMessage: replyText })
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ reply: replyText })
       });
       const data = await res.json();
       if (data.success) {
-        Alert.alert('Success', 'Reply submitted & ticket resolved.');
-        setReplyText('');
+        Alert.alert('Sent', 'Reply submitted successfully.');
         setReplyTicketId(null);
+        setReplyText('');
         fetchTickets();
       }
-    } catch (err) {
-      Alert.alert('Error', 'Failed to send reply.');
+    } catch {
+      Alert.alert('Error', 'Reply failed.');
     }
   };
 
-  // --- PROMO COUPONS HANDLERS (FASM) ---
   const fetchCoupons = async () => {
     setLoadingCoupons(true);
     try {
@@ -148,54 +154,39 @@ export default function AdminDashboardScreen({ navigation }) {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
-      if (data.success) {
-        setCoupons(data.coupons || []);
-      }
-    } catch (err) {
-      Alert.alert('Error', 'Failed to fetch coupons list.');
+      if (data.success) setCoupons(data.coupons || []);
+    } catch {
+      Alert.alert('Error', 'Failed to load promo codes.');
     } finally {
       setLoadingCoupons(false);
     }
   };
 
   const createPromoCode = async () => {
-    if (!promoCode || !discountPct) return;
+    if (!promoCode.trim() || !discountPct.trim()) return Alert.alert('Missing', 'Enter both code and discount %.');
     try {
-      const expiry = new Date();
-      expiry.setDate(expiry.getDate() + 30); // 30 days validity default
-
       const res = await fetch(`${API_BASE_URL}/admin/coupons`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          code: promoCode.toUpperCase().trim(),
-          discountPercent: Number(discountPct),
-          expiryDate: expiry.toISOString()
-        })
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ code: promoCode.toUpperCase(), discountPercent: Number(discountPct) })
       });
       const data = await res.json();
       if (data.success) {
-        Alert.alert('Success', `Promo code ${promoCode} created!`);
+        Alert.alert('Created', `Promo code "${promoCode.toUpperCase()}" is now active.`);
         setPromoCode('');
         setDiscountPct('');
         fetchCoupons();
-      } else {
-        Alert.alert('Error', data.message || 'Failed to create promo.');
       }
-    } catch (err) {
-      Alert.alert('Error', 'Connection failed.');
+    } catch {
+      Alert.alert('Error', 'Could not create promo code.');
     }
   };
 
-  const deletePromoCode = async (id) => {
-    Alert.alert('Delete Coupon', 'Are you sure you want to delete this promo code?', [
+  const deletePromoCode = (id) => {
+    Alert.alert('Delete Promo Code', 'Remove this promotion permanently?', [
       { text: 'Cancel', style: 'cancel' },
       {
-        text: 'Delete',
-        style: 'destructive',
+        text: 'Delete', style: 'destructive',
         onPress: async () => {
           try {
             const res = await fetch(`${API_BASE_URL}/admin/coupons/${id}`, {
@@ -204,10 +195,10 @@ export default function AdminDashboardScreen({ navigation }) {
             });
             const data = await res.json();
             if (data.success) {
-              Alert.alert('Success', 'Promo code deleted.');
+              Alert.alert('Deleted', 'Promo code removed.');
               fetchCoupons();
             }
-          } catch (err) {
+          } catch {
             Alert.alert('Error', 'Failed to delete promo.');
           }
         }
@@ -215,138 +206,173 @@ export default function AdminDashboardScreen({ navigation }) {
     ]);
   };
 
-  // --- UI TAB SELECTOR ROWS ---
-  const renderTabs = () => {
-    const tabsList = [];
-    if (['admin', 'superadmin'].includes(user?.role)) {
-      tabsList.push({ id: 'verifications', label: 'Verifications', icon: 'shield-check-outline' });
-    }
-    if (['cacc', 'superadmin'].includes(user?.role)) {
-      tabsList.push({ id: 'support', label: 'Support Queue', icon: 'help-circle-outline' });
-    }
-    if (['fasm', 'superadmin'].includes(user?.role)) {
-      tabsList.push({ id: 'coupons', label: 'Promo Coupons', icon: 'tag-outline' });
-    }
+  // ── Tab Configuration ────────────────────────────────────────────
+  const allTabs = [
+    { id: 'verifications', label: 'ID Verify', icon: 'shield-check', roles: ['admin', 'superadmin'] },
+    { id: 'support', label: 'Support', icon: 'headset', roles: ['cacc', 'superadmin'] },
+    { id: 'coupons', label: 'Promotions', icon: 'tag-multiple', roles: ['fasm', 'superadmin'] },
+  ];
+  const tabs = allTabs.filter(t => t.roles.includes(user?.role));
 
-    if (tabsList.length <= 1) return null; // No need for tabs selector if only one role
-
-    return (
-      <View style={styles.tabRow}>
-        {tabsList.map((t) => {
-          const active = activeTab === t.id;
-          return (
-            <Pressable 
-              key={t.id}
-              onPress={() => setActiveTab(t.id)}
-              style={[styles.tabButton, active && styles.tabButtonActive]}
-            >
-              <MaterialCommunityIcons name={t.icon} size={18} color={active ? colors.primary : colors.textMuted} />
-              <Text style={[styles.tabLabel, active && styles.tabLabelActive]}>{t.label}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
-    );
-  };
-
+  // ── Render ───────────────────────────────────────────────────────
   return (
-    <AppBackground>
-      <StatusBar barStyle="dark-content" />
-      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
-        <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
-          <MaterialCommunityIcons name="chevron-left" size={24} color={colors.text} />
-        </Pressable>
-        <View style={styles.headerTitleWrap}>
-          <Text style={styles.eyebrow}>{user?.role?.toUpperCase()} CONTROL</Text>
-          <Text style={styles.title}>Admin Panel</Text>
+    <View style={styles.root}>
+      <StatusBar barStyle="light-content" backgroundColor="#800020" />
+
+      {/* ── HEADER ── */}
+      <LinearGradient
+        colors={['#800020', '#5C0010', '#3A000A']}
+        style={[styles.header, { paddingTop: insets.top + 12 }]}
+      >
+        <View style={styles.headerTop}>
+          <Pressable style={styles.backBtn} onPress={() => navigation.goBack()}>
+            <MaterialCommunityIcons name="chevron-left" size={22} color="rgba(255,255,255,0.9)" />
+          </Pressable>
+          <View style={styles.headerCenter}>
+            <Text style={styles.headerEyebrow}>{roleName(user?.role)}</Text>
+            <Text style={styles.headerTitle}>Admin Console</Text>
+          </View>
+          <View style={styles.roleBadge}>
+            <MaterialCommunityIcons name="shield-crown" size={12} color="#C5A059" />
+            <Text style={styles.roleBadgeText}>{user?.role?.toUpperCase()}</Text>
+          </View>
         </View>
-      </View>
 
-      {renderTabs()}
+        {/* User Info Strip */}
+        <View style={styles.userStrip}>
+          <MaterialCommunityIcons name="account-circle" size={18} color="rgba(255,255,255,0.6)" />
+          <Text style={styles.userStripName}>{user?.name}</Text>
+          <Text style={styles.userStripEmail}>· {user?.email}</Text>
+        </View>
+      </LinearGradient>
 
-      {/* Main View Area */}
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      {/* ── TAB BAR ── */}
+      {tabs.length > 1 && (
+        <View style={styles.tabBar}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabScroll}>
+            {tabs.map((t) => {
+              const active = activeTab === t.id;
+              return (
+                <Pressable
+                  key={t.id}
+                  onPress={() => setActiveTab(t.id)}
+                  style={[styles.tab, active && styles.tabActive]}
+                >
+                  <MaterialCommunityIcons
+                    name={t.icon}
+                    size={16}
+                    color={active ? colors.primary : colors.textMuted}
+                  />
+                  <Text style={[styles.tabLabel, active && styles.tabLabelActive]}>{t.label}</Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </View>
+      )}
 
-        {/* 1. ID VERIFICATIONS TAB */}
+      {/* ── CONTENT ── */}
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+
+        {/* ── 1. ID VERIFICATIONS ── */}
         {activeTab === 'verifications' && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Verification Requests Queue</Text>
+          <View>
+            <SectionHeader icon="shield-check-outline" title="Verification Queue" subtitle="Pending government ID reviews" />
             {loadingVerify ? (
               <ActivityIndicator size="large" color={colors.primary} style={styles.loader} />
             ) : verifications.length === 0 ? (
-              <Card style={styles.emptyCard}>
-                <Text style={styles.emptyText}>Verification queue is empty. No pending checks.</Text>
-              </Card>
+              <EmptyCard icon="shield-check" message="Verification queue is empty. All identities reviewed." />
             ) : (
               verifications.map((v) => (
-                <Card key={v._id} style={styles.verifyItem}>
-                  <View style={styles.verifyItemHeader}>
-                    <Text style={styles.verifyName}>{v.name}</Text>
-                    <Text style={styles.verifyMeta}>{v.gender?.toUpperCase()} · Age {v.age} · {v.city}</Text>
-                  </View>
-                  
-                  {/* CNIC Images & Live Photo preview thumbnails */}
-                  <View style={styles.photoGrid}>
-                    {v.cnicFront ? (
-                      <Pressable style={styles.photoThumbWrap} onPress={() => setLightboxUrl(v.cnicFront)}>
-                        <Image source={{ uri: v.cnicFront }} style={styles.photoThumb} />
-                        <Text style={styles.photoThumbLabel}>CNIC Front</Text>
-                      </Pressable>
-                    ) : null}
-                    {v.cnicBack ? (
-                      <Pressable style={styles.photoThumbWrap} onPress={() => setLightboxUrl(v.cnicBack)}>
-                        <Image source={{ uri: v.cnicBack }} style={styles.photoThumb} />
-                        <Text style={styles.photoThumbLabel}>CNIC Back</Text>
-                      </Pressable>
-                    ) : null}
-                    {v.livePhoto ? (
-                      <Pressable style={styles.photoThumbWrap} onPress={() => setLightboxUrl(v.livePhoto)}>
-                        <Image source={{ uri: v.livePhoto }} style={styles.photoThumb} />
-                        <Text style={styles.photoThumbLabel}>Live Photo</Text>
-                      </Pressable>
-                    ) : null}
+                <View key={v._id} style={styles.itemCard}>
+                  {/* Person Header */}
+                  <View style={styles.itemCardHeader}>
+                    <View style={styles.avatarCircle}>
+                      <Text style={styles.avatarInitial}>{v.name?.[0]?.toUpperCase() || '?'}</Text>
+                    </View>
+                    <View style={styles.itemCardInfo}>
+                      <Text style={styles.itemCardName}>{v.name}</Text>
+                      <Text style={styles.itemCardMeta}>{v.gender?.toUpperCase()} · Age {v.age} · {v.city}</Text>
+                    </View>
+                    <StatusPill label="Pending" color="#B7791F" bg="#FEF3C7" />
                   </View>
 
+                  {/* CNIC Document thumbnails */}
+                  {(v.cnicFront || v.cnicBack || v.livePhoto) && (
+                    <View style={styles.docRow}>
+                      {v.cnicFront && (
+                        <Pressable style={styles.docThumb} onPress={() => setLightboxUrl(v.cnicFront)}>
+                          <Image source={{ uri: v.cnicFront }} style={styles.docImg} />
+                          <Text style={styles.docLabel}>CNIC Front</Text>
+                        </Pressable>
+                      )}
+                      {v.cnicBack && (
+                        <Pressable style={styles.docThumb} onPress={() => setLightboxUrl(v.cnicBack)}>
+                          <Image source={{ uri: v.cnicBack }} style={styles.docImg} />
+                          <Text style={styles.docLabel}>CNIC Back</Text>
+                        </Pressable>
+                      )}
+                      {v.livePhoto && (
+                        <Pressable style={styles.docThumb} onPress={() => setLightboxUrl(v.livePhoto)}>
+                          <Image source={{ uri: v.livePhoto }} style={styles.docImg} />
+                          <Text style={styles.docLabel}>Live Photo</Text>
+                        </Pressable>
+                      )}
+                    </View>
+                  )}
+
+                  {/* Action Buttons */}
                   <View style={styles.actionRow}>
-                    <Pressable 
-                      style={[styles.actionBtn, styles.rejectBtn]} 
+                    <Pressable
+                      style={[styles.actionBtn, styles.rejectBtn]}
                       onPress={() => handleVerifyAction(v._id, 'reject')}
                     >
-                      <Text style={styles.rejectBtnText}>Reject Request</Text>
+                      <MaterialCommunityIcons name="close-circle-outline" size={15} color={colors.error} />
+                      <Text style={styles.rejectBtnText}>Reject</Text>
                     </Pressable>
-                    <Pressable 
-                      style={[styles.actionBtn, styles.approveBtn]} 
+                    <Pressable
+                      style={[styles.actionBtn, styles.approveBtn]}
                       onPress={() => handleVerifyAction(v._id, 'approve')}
                     >
-                      <Text style={styles.approveBtnText}>Verify (Blue Tick)</Text>
+                      <MaterialCommunityIcons name="check-decagram" size={15} color="#FFFFFF" />
+                      <Text style={styles.approveBtnText}>Grant Blue Tick</Text>
                     </Pressable>
                   </View>
-                </Card>
+                </View>
               ))
             )}
           </View>
         )}
 
-        {/* 2. SUPPORT QUEUE TAB */}
+        {/* ── 2. SUPPORT TICKETS ── */}
         {activeTab === 'support' && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Open Support Tickets</Text>
+          <View>
+            <SectionHeader icon="headset" title="Support Queue" subtitle="Open user help requests" />
             {loadingSupport ? (
               <ActivityIndicator size="large" color={colors.primary} style={styles.loader} />
             ) : tickets.length === 0 ? (
-              <Card style={styles.emptyCard}>
-                <Text style={styles.emptyText}>All support tickets resolved! Clean desk.</Text>
-              </Card>
+              <EmptyCard icon="check-circle-outline" message="All support tickets are resolved! Clean desk." />
             ) : (
               tickets.map((t) => (
-                <Card key={t._id} style={styles.ticketItem}>
-                  <View style={styles.verifyItemHeader}>
-                    <Text style={styles.ticketUser}>From: {t.user?.name || 'Deleted User'}</Text>
-                    <Text style={styles.verifyMeta}>{t.user?.email || 'N/A'}</Text>
+                <View key={t._id} style={styles.itemCard}>
+                  <View style={styles.itemCardHeader}>
+                    <View style={[styles.avatarCircle, { backgroundColor: '#E0F0FF' }]}>
+                      <Text style={[styles.avatarInitial, { color: colors.info }]}>{t.user?.name?.[0]?.toUpperCase() || '?'}</Text>
+                    </View>
+                    <View style={styles.itemCardInfo}>
+                      <Text style={styles.itemCardName}>{t.user?.name || 'Deleted User'}</Text>
+                      <Text style={styles.itemCardMeta}>{t.user?.email || 'N/A'}</Text>
+                    </View>
+                    <StatusPill label="Open" color={colors.info} bg="#EFF6FF" />
                   </View>
-                  <View style={styles.ticketContent}>
+
+                  <View style={styles.ticketBody}>
                     <Text style={styles.ticketSubject}>Subject: {t.subject}</Text>
-                    <Text style={styles.ticketMsg}>"{t.message}"</Text>
+                    <Text style={styles.ticketMessage}>"{t.message}"</Text>
                   </View>
 
                   {replyTicketId === t._id ? (
@@ -356,48 +382,53 @@ export default function AdminDashboardScreen({ navigation }) {
                         numberOfLines={3}
                         value={replyText}
                         onChangeText={setReplyText}
-                        placeholder="Write support resolution reply..."
+                        placeholder="Write your support response..."
+                        placeholderTextColor={colors.textMuted}
                         style={styles.replyInput}
                       />
                       <View style={styles.actionRow}>
-                        <Pressable 
-                          style={[styles.actionBtn, styles.cancelBtn]} 
+                        <Pressable
+                          style={[styles.actionBtn, styles.cancelBtn]}
                           onPress={() => { setReplyTicketId(null); setReplyText(''); }}
                         >
                           <Text style={styles.cancelBtnText}>Cancel</Text>
                         </Pressable>
-                        <Pressable 
-                          style={[styles.actionBtn, styles.approveBtn]} 
+                        <Pressable
+                          style={[styles.actionBtn, styles.approveBtn]}
                           onPress={() => submitTicketReply(t._id)}
                         >
-                          <Text style={styles.approveBtnText}>Submit Reply</Text>
+                          <MaterialCommunityIcons name="send" size={14} color="#fff" />
+                          <Text style={styles.approveBtnText}>Send Reply</Text>
                         </Pressable>
                       </View>
                     </View>
                   ) : (
-                    <Pressable 
+                    <Pressable
                       style={styles.replyTrigger}
                       onPress={() => { setReplyTicketId(t._id); setReplyText(''); }}
                     >
-                      <MaterialCommunityIcons name="reply" size={16} color={colors.primary} />
+                      <MaterialCommunityIcons name="reply" size={15} color={colors.primary} />
                       <Text style={styles.replyTriggerText}>Compose Response</Text>
                     </Pressable>
                   )}
-                </Card>
+                </View>
               ))
             )}
           </View>
         )}
 
-        {/* 3. PROMO COUPONS TAB */}
+        {/* ── 3. PROMO COUPONS ── */}
         {activeTab === 'coupons' && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Generate Promotion Code</Text>
-            <Card style={styles.promoForm}>
+          <View>
+            <SectionHeader icon="tag-multiple" title="Promo Codes" subtitle="Create & manage discount promotions" />
+
+            {/* Create Form */}
+            <View style={styles.itemCard}>
+              <Text style={styles.formSectionLabel}>Generate New Code</Text>
               <TextInput
                 value={promoCode}
                 onChangeText={setPromoCode}
-                placeholder="PROMO CODE (e.g. SAVE25)"
+                placeholder="CODE (e.g. SAVE25)"
                 placeholderTextColor={colors.textMuted}
                 autoCapitalize="characters"
                 style={styles.formInput}
@@ -405,327 +436,530 @@ export default function AdminDashboardScreen({ navigation }) {
               <TextInput
                 value={discountPct}
                 onChangeText={setDiscountPct}
-                placeholder="Discount Percentage (1-100)"
+                placeholder="Discount % (1–100)"
                 placeholderTextColor={colors.textMuted}
                 keyboardType="numeric"
-                style={styles.formInput}
+                style={[styles.formInput, { marginTop: 8 }]}
               />
-              <Pressable style={styles.submitCodeBtn} onPress={createPromoCode}>
-                <Text style={styles.submitCodeText}>Generate Code</Text>
+              <Pressable style={styles.createBtn} onPress={createPromoCode}>
+                <MaterialCommunityIcons name="tag-plus" size={16} color="#fff" />
+                <Text style={styles.createBtnText}>Generate Promo Code</Text>
               </Pressable>
-            </Card>
+            </View>
 
-            <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Active Promo Registries</Text>
+            <SectionHeader icon="ticket-percent" title="Active Promotions" subtitle={`${coupons.length} codes in registry`} />
             {loadingCoupons ? (
               <ActivityIndicator size="large" color={colors.primary} style={styles.loader} />
             ) : coupons.length === 0 ? (
-              <Card style={styles.emptyCard}>
-                <Text style={styles.emptyText}>No promo codes defined yet.</Text>
-              </Card>
+              <EmptyCard icon="tag-off-outline" message="No promo codes active yet. Create one above." />
             ) : (
               coupons.map((c) => (
-                <Card key={c._id} style={styles.couponItem}>
-                  <View>
-                    <Text style={styles.couponCode}>{c.code}</Text>
-                    <Text style={styles.couponMeta}>{c.discountPercent}% Discount · Expires 30 days</Text>
+                <View key={c._id} style={[styles.itemCard, styles.couponCard]}>
+                  <View style={styles.couponLeft}>
+                    <View style={styles.couponBadgeWrap}>
+                      <MaterialCommunityIcons name="ticket-percent" size={18} color={colors.primary} />
+                    </View>
+                    <View>
+                      <Text style={styles.couponCode}>{c.code}</Text>
+                      <Text style={styles.couponMeta}>{c.discountPercent}% off · 30-day validity</Text>
+                    </View>
                   </View>
-                  <Pressable onPress={() => deletePromoCode(c._id)} style={styles.deleteIcon}>
+                  <Pressable onPress={() => deletePromoCode(c._id)} style={styles.deleteBtn}>
                     <MaterialCommunityIcons name="trash-can-outline" size={20} color={colors.error} />
                   </Pressable>
-                </Card>
+                </View>
               ))
             )}
           </View>
         )}
 
-        <View style={{ height: 100 }} />
+        <View style={{ height: insets.bottom + 40 }} />
       </ScrollView>
 
-      {/* Fullscreen Lightbox Modal */}
-      {lightboxUrl && (
-        <Modal transparent visible={!!lightboxUrl} animationType="fade">
-          <View style={styles.lightboxBg}>
-            <Pressable style={styles.lightboxClose} onPress={() => setLightboxUrl(null)}>
-              <Text style={styles.lightboxCloseText}>✕ CLOSE</Text>
-            </Pressable>
-            <Image source={{ uri: lightboxUrl }} style={styles.lightboxImg} resizeMode="contain" />
-          </View>
-        </Modal>
-      )}
-    </AppBackground>
+      {/* ── LIGHTBOX MODAL ── */}
+      <Modal transparent visible={!!lightboxUrl} animationType="fade" onRequestClose={() => setLightboxUrl(null)}>
+        <View style={styles.lightboxBg}>
+          <Pressable style={styles.lightboxClose} onPress={() => setLightboxUrl(null)}>
+            <MaterialCommunityIcons name="close-circle" size={32} color="rgba(255,255,255,0.9)" />
+          </Pressable>
+          <Image source={{ uri: lightboxUrl }} style={styles.lightboxImg} resizeMode="contain" />
+        </View>
+      </Modal>
+    </View>
   );
 }
 
+// ─── Sub-Components ───────────────────────────────────────────────
+function SectionHeader({ icon, title, subtitle }) {
+  return (
+    <View style={styles.sectionHeader}>
+      <View style={styles.sectionIconWrap}>
+        <MaterialCommunityIcons name={icon} size={18} color={colors.primary} />
+      </View>
+      <View>
+        <Text style={styles.sectionTitle}>{title}</Text>
+        {subtitle ? <Text style={styles.sectionSubtitle}>{subtitle}</Text> : null}
+      </View>
+    </View>
+  );
+}
+
+function EmptyCard({ icon, message }) {
+  return (
+    <View style={styles.emptyCard}>
+      <View style={styles.emptyIconWrap}>
+        <MaterialCommunityIcons name={icon} size={28} color={colors.primary} />
+      </View>
+      <Text style={styles.emptyText}>{message}</Text>
+    </View>
+  );
+}
+
+// ─── Styles ──────────────────────────────────────────────────────
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: '#F7F3EF',
+  },
+
+  // ── Header
   header: {
+    paddingBottom: 16,
+    paddingHorizontal: spacing.lg,
+  },
+  headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    marginBottom: spacing.md,
-    gap: spacing.md,
+    gap: spacing.sm,
+    marginBottom: 10,
   },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 14,
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.surface,
+    backgroundColor: 'rgba(255,255,255,0.12)',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255,255,255,0.2)',
   },
-  headerTitleWrap: {
+  headerCenter: {
     flex: 1,
   },
-  eyebrow: {
-    color: colors.primary,
+  headerEyebrow: {
+    color: 'rgba(255,255,255,0.55)',
+    fontSize: 9,
+    fontWeight: '900',
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+  },
+  headerTitle: {
+    color: '#FFFFFF',
+    fontSize: 22,
+    fontWeight: '900',
+    letterSpacing: -0.3,
+  },
+  roleBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(197,160,89,0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(197,160,89,0.35)',
+    borderRadius: radius.full,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  roleBadgeText: {
+    color: '#C5A059',
     fontSize: 9,
     fontWeight: '900',
     letterSpacing: 1.5,
   },
-  title: {
-    color: colors.text,
-    fontSize: 24,
-    fontWeight: '900',
-  },
-  tabRow: {
-    flexDirection: 'row',
-    paddingHorizontal: spacing.lg,
-    marginBottom: spacing.md,
-    gap: spacing.sm,
-  },
-  tabButton: {
+  userStrip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
+  },
+  userStripName: {
+    color: 'rgba(255,255,255,0.75)',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  userStripEmail: {
+    color: 'rgba(255,255,255,0.4)',
+    fontSize: 11,
+  },
+
+  // ── Tab Bar
+  tabBar: {
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  tabScroll: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    borderRadius: radius.md,
-    backgroundColor: colors.surface,
+    gap: spacing.sm,
+  },
+  tab: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: radius.full,
+    backgroundColor: colors.surfaceLight,
     borderWidth: 1,
     borderColor: colors.border,
   },
-  tabButtonActive: {
+  tabActive: {
     backgroundColor: colors.primaryLightBg,
     borderColor: colors.primary,
   },
   tabLabel: {
-    fontSize: 11,
-    fontWeight: 'bold',
+    fontSize: 12,
+    fontWeight: '700',
     color: colors.textMuted,
   },
   tabLabelActive: {
     color: colors.primary,
   },
+
+  // ── Scroll Content
   scroll: {
-    paddingHorizontal: spacing.lg,
+    flex: 1,
   },
-  section: {
-    marginTop: spacing.sm,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: '900',
-    color: colors.text,
-    marginBottom: spacing.sm,
-  },
-  emptyCard: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: spacing.xl,
-    backgroundColor: colors.surface,
-  },
-  emptyText: {
-    fontSize: 12,
-    color: colors.textMuted,
-    textAlign: 'center',
+  scrollContent: {
+    padding: spacing.md,
+    gap: spacing.sm,
   },
   loader: {
     marginTop: spacing.xl,
+    marginBottom: spacing.xl,
   },
-  verifyItem: {
-    marginBottom: spacing.md,
+
+  // ── Section Header
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 12,
+  },
+  sectionIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primaryLightBg,
+  },
+  sectionTitle: {
+    fontSize: 15,
+    fontWeight: '900',
+    color: colors.text,
+    letterSpacing: -0.2,
+  },
+  sectionSubtitle: {
+    fontSize: 11,
+    color: colors.textMuted,
+    marginTop: 1,
+  },
+
+  // ── Item Cards
+  itemCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: colors.border,
     padding: spacing.md,
-  },
-  verifyItemHeader: {
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    paddingBottom: spacing.xs,
     marginBottom: spacing.sm,
+    shadowColor: '#1D1A16',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  verifyName: {
+  itemCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 12,
+  },
+  avatarCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primaryLightBg,
+  },
+  avatarInitial: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: colors.primary,
+  },
+  itemCardInfo: {
+    flex: 1,
+  },
+  itemCardName: {
     fontSize: 14,
-    fontWeight: 'bold',
+    fontWeight: '800',
     color: colors.text,
   },
-  verifyMeta: {
-    fontSize: 10,
+  itemCardMeta: {
+    fontSize: 11,
     color: colors.textMuted,
     marginTop: 2,
   },
-  photoGrid: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginBottom: spacing.md,
+
+  // ── Status Pill
+  pill: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: radius.full,
   },
-  photoThumbWrap: {
+  pillText: {
+    fontSize: 9,
+    fontWeight: '900',
+    letterSpacing: 0.8,
+  },
+
+  // ── Document Thumbnails
+  docRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+  },
+  docThumb: {
     flex: 1,
     alignItems: 'center',
+    gap: 4,
   },
-  photoThumb: {
+  docImg: {
     width: '100%',
-    height: 70,
-    borderRadius: radius.sm,
+    height: 72,
+    borderRadius: radius.md,
     backgroundColor: colors.surfaceLight,
   },
-  photoThumbLabel: {
+  docLabel: {
     fontSize: 9,
+    fontWeight: '700',
     color: colors.textMuted,
-    marginTop: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
+
+  // ── Action Buttons
   actionRow: {
     flexDirection: 'row',
-    gap: spacing.sm,
+    gap: 8,
+    marginTop: 4,
   },
   actionBtn: {
     flex: 1,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.md,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 5,
+    paddingVertical: 10,
+    borderRadius: radius.lg,
   },
   rejectBtn: {
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: colors.error,
-    backgroundColor: 'transparent',
+    backgroundColor: '#FFF7F7',
   },
   rejectBtnText: {
-    fontSize: 11,
-    fontWeight: 'bold',
+    fontSize: 12,
+    fontWeight: '800',
     color: colors.error,
   },
   approveBtn: {
     backgroundColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 4,
   },
   approveBtnText: {
-    fontSize: 11,
-    fontWeight: 'bold',
+    fontSize: 12,
+    fontWeight: '800',
     color: '#FFFFFF',
   },
-  ticketItem: {
-    marginBottom: spacing.md,
-    padding: spacing.md,
+  cancelBtn: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceLight,
   },
-  ticketUser: {
-    fontSize: 13,
-    fontWeight: 'bold',
-    color: colors.text,
+  cancelBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.textMuted,
   },
-  ticketContent: {
-    padding: spacing.sm,
+
+  // ── Support Ticket
+  ticketBody: {
     backgroundColor: colors.surfaceLight,
     borderRadius: radius.md,
-    marginBottom: spacing.sm,
+    padding: spacing.sm,
+    marginBottom: 10,
   },
   ticketSubject: {
-    fontSize: 11,
-    fontWeight: 'bold',
+    fontSize: 12,
+    fontWeight: '800',
     color: colors.primary,
     marginBottom: 4,
   },
-  ticketMsg: {
-    fontSize: 11,
+  ticketMessage: {
+    fontSize: 12,
     color: colors.text,
     fontStyle: 'italic',
+    lineHeight: 18,
   },
   replyTrigger: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     alignSelf: 'flex-end',
-    paddingVertical: spacing.xs,
+    paddingVertical: 4,
   },
   replyTriggerText: {
-    fontSize: 11,
-    fontWeight: 'bold',
+    fontSize: 12,
+    fontWeight: '800',
     color: colors.primary,
   },
   replyBox: {
-    marginTop: spacing.xs,
-    paddingTop: spacing.sm,
     borderTopWidth: 1,
     borderTopColor: colors.border,
+    paddingTop: spacing.sm,
+    marginTop: 4,
+    gap: 8,
   },
   replyInput: {
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,
     padding: spacing.sm,
-    fontSize: 11,
+    fontSize: 13,
     color: colors.text,
     backgroundColor: '#FFFFFF',
-    marginBottom: spacing.sm,
     textAlignVertical: 'top',
+    minHeight: 80,
   },
-  cancelBtn: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: 'transparent',
+
+  // ── Coupon Cards
+  couponCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.md,
   },
-  cancelBtnText: {
+  couponLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  couponBadgeWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primaryLightBg,
+  },
+  couponCode: {
+    fontSize: 15,
+    fontWeight: '900',
+    color: colors.primary,
+    letterSpacing: 1.5,
+  },
+  couponMeta: {
     fontSize: 11,
-    fontWeight: 'bold',
     color: colors.textMuted,
+    marginTop: 2,
   },
-  promoForm: {
-    padding: spacing.md,
-    gap: spacing.sm,
-    marginBottom: spacing.lg,
+  deleteBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFF1F1',
+  },
+
+  // ── Promo Form
+  formSectionLabel: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: colors.textSecondary,
+    marginBottom: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   formInput: {
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    fontSize: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 14,
+    fontWeight: '700',
     color: colors.text,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surfaceLight,
   },
-  submitCodeBtn: {
-    backgroundColor: colors.primary,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.md,
+  createBtn: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 4,
+    gap: 6,
+    backgroundColor: colors.primary,
+    borderRadius: radius.lg,
+    paddingVertical: 12,
+    marginTop: 12,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 5,
   },
-  submitCodeText: {
+  createBtnText: {
     color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: 'bold',
+    fontSize: 13,
+    fontWeight: '900',
+    letterSpacing: 0.3,
   },
-  couponItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+
+  // ── Empty State
+  emptyCard: {
     alignItems: 'center',
-    padding: spacing.md,
+    justifyContent: 'center',
+    gap: 12,
+    paddingVertical: 36,
+    paddingHorizontal: 20,
+    backgroundColor: '#FFFFFF',
+    borderRadius: radius.xl,
+    borderWidth: 1,
+    borderColor: colors.border,
     marginBottom: spacing.sm,
   },
-  couponCode: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: colors.primary,
-    letterSpacing: 1,
+  emptyIconWrap: {
+    width: 64,
+    height: 64,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primaryLightBg,
   },
-  couponMeta: {
-    fontSize: 10,
+  emptyText: {
+    fontSize: 13,
     color: colors.textMuted,
-    marginTop: 2,
+    textAlign: 'center',
+    lineHeight: 20,
   },
-  deleteIcon: {
-    padding: spacing.xs,
-  },
+
+  // ── Lightbox
   lightboxBg: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.92)',
@@ -734,19 +968,12 @@ const styles = StyleSheet.create({
   },
   lightboxClose: {
     position: 'absolute',
-    top: 50,
+    top: 52,
     right: 20,
-    padding: 10,
     zIndex: 10,
   },
-  lightboxCloseText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: 'bold',
-    letterSpacing: 1,
-  },
   lightboxImg: {
-    width: '90%',
-    height: '75%',
-  }
+    width: SCREEN_W - 40,
+    height: '70%',
+  },
 });

@@ -55,8 +55,11 @@ function AdminRoute({ children }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#FCFBF7] flex items-center justify-center text-[#605252]">
-        Checking credentials...
+      <div className="min-h-screen bg-[#0D0811] flex items-center justify-center text-[#C5A059]">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-[#C5A059] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-xs uppercase tracking-widest font-bold">Authenticating Admin Session...</p>
+        </div>
       </div>
     );
   }
@@ -69,16 +72,8 @@ function AdminRoute({ children }) {
     return <Navigate to="/" replace />;
   }
 
-  return (
-    <div className="min-h-screen bg-[#FAF8F5] text-[#1F1515]">
-      <Navbar />
-      <main className="md:pl-64 pt-16 md:pt-0 pb-20 md:pb-8 min-h-screen transition-all duration-300">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
-          {children}
-        </div>
-      </main>
-    </div>
-  );
+  // Admin gets full-screen ownership — no user Navbar injected
+  return <div className="h-screen w-full overflow-hidden bg-[#0D0811]">{children}</div>;
 }
 
 export default function App() {
