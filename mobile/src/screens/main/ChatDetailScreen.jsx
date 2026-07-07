@@ -266,7 +266,7 @@ export default function ChatDetailScreen({ route, navigation }) {
   };
 
   const headerHeight = insets.top + 76;
-  const canChat = chatAccess ? chatAccess.canSend : connectionStatus === 'accepted';
+  const canChat = chatAccess ? chatAccess.canSend : true;
   const needsInviteAcceptance = chatAccess?.reason === 'accept_invite' || (chatAccess?.incomingRequestPending && !chatAccess?.isApproved);
   const waitingForAcceptance = chatAccess?.reason === 'waiting_for_acceptance';
   const needsSubscription = chatAccess?.reason === 'subscription_required';
