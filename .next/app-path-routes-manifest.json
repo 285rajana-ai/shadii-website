@@ -1,0 +1,13 @@
+{
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/contact-us/page": "/contact-us",
+  "/delete-account/page": "/delete-account",
+  "/favicon.ico/route": "/favicon.ico",
+  "/page": "/",
+  "/privacy-policy/page": "/privacy-policy",
+  "/privacy/page": "/privacy",
+  "/refund-policy/page": "/refund-policy",
+  "/terms-and-conditions/page": "/terms-and-conditions",
+  "/terms/page": "/terms"
+}

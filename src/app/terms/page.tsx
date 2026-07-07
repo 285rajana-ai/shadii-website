@@ -73,49 +73,51 @@ const terms = [
 
 export default function TermsPage() {
     return (
-        <main className="page-shell min-h-screen pt-32 pb-10">
+        <main className="min-h-screen flex flex-col justify-between">
             <Navbar />
             
-            <div className="site-shell max-w-4xl relative z-10">
-                <div className="mb-10 luxury-card surface-card--strong corner-ornament-card">
-                    <div className="eyebrow mb-4">
-                        Shadii.pk Legal
+            <div className="flex-1 flex flex-col justify-center my-12">
+                <div className="site-shell max-w-4xl relative z-10 pt-28 pb-10">
+                    <div className="mb-10 luxury-card surface-card--strong corner-ornament-card">
+                        <div className="eyebrow mb-4">
+                            Shadii.pk Legal
+                        </div>
+                        <h1 className="font-display text-4xl font-bold tracking-tight text-[var(--text)] sm:text-5xl">
+                            Terms & Conditions
+                        </h1>
+                        <p className="mt-4 max-w-3xl text-sm leading-7 text-[var(--muted)] sm:text-base">
+                            These terms govern your use of the Shadii.pk platform, including the website, mobile application, and related services.
+                        </p>
+                        <p className="mt-4 text-xs text-[var(--muted)]/60">Last updated: {businessInfo.lastUpdated}</p>
                     </div>
-                    <h1 className="font-display text-4xl font-bold tracking-tight text-[var(--text)] sm:text-5xl">
-                        Terms & Conditions
-                    </h1>
-                    <p className="mt-4 max-w-3xl text-sm leading-7 text-[var(--muted)] sm:text-base">
-                        These terms govern your use of the Shadii.pk platform, including the website, mobile application, and related services.
-                    </p>
-                    <p className="mt-4 text-xs text-[var(--muted)]/60">Last updated: {businessInfo.lastUpdated}</p>
-                </div>
 
-                <div className="space-y-6">
-                    {terms.map((section) => (
-                        <section key={section.title} className="luxury-card mb-6">
-                            <h2 className="text-xl font-bold text-[var(--berry)] mb-4">{section.title}</h2>
-                            <ul className="list-disc space-y-3 pl-5 text-sm leading-7 text-[var(--muted)] sm:text-base font-medium">
-                                {section.items.map((item) => (
-                                    <li key={item}>{item}</li>
-                                ))}
-                            </ul>
-                        </section>
-                    ))}
-                </div>
+                    <div className="space-y-6">
+                        {terms.map((section) => (
+                            <section key={section.title} className="luxury-card mb-6">
+                                <h2 className="text-xl font-bold text-[var(--berry)] mb-4">{section.title}</h2>
+                                <ul className="list-disc space-y-3 pl-5 text-sm leading-7 text-[var(--muted)] sm:text-base font-medium">
+                                    {section.items.map((item) => (
+                                        <li key={item}>{item}</li>
+                                    ))}
+                                </ul>
+                            </section>
+                        ))}
+                    </div>
 
-                <div className="mt-10 flex flex-wrap gap-4 text-sm">
-                    <Link href="/privacy" className="btn-secondary px-5 py-3 text-sm">
-                        Privacy Policy
-                    </Link>
-                    <Link href="/refund-policy" className="btn-secondary px-5 py-3 text-sm">
-                        Refund Policy
-                    </Link>
-                    <Link href="/contact-us" className="btn-secondary px-5 py-3 text-sm">
-                        Contact Us
-                    </Link>
-                    <Link href="/delete-account" className="btn-secondary px-5 py-3 text-sm">
-                        Account Deletion
-                    </Link>
+                    <div className="mt-10 flex flex-wrap gap-4 text-sm">
+                        <Link href="/privacy" className="btn-editorial-secondary px-5 py-3 text-sm rounded-2xl">
+                            Privacy Policy
+                        </Link>
+                        <Link href="/refund-policy" className="btn-editorial-secondary px-5 py-3 text-sm rounded-2xl">
+                            Refund Policy
+                        </Link>
+                        <Link href="/contact-us" className="btn-editorial-secondary px-5 py-3 text-sm rounded-2xl">
+                            Contact Us
+                        </Link>
+                        <Link href="/delete-account" className="btn-editorial-secondary px-5 py-3 text-sm rounded-2xl">
+                            Account Deletion
+                        </Link>
+                    </div>
                 </div>
             </div>
             
