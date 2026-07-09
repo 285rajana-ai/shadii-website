@@ -2,7 +2,7 @@
   "expo": {
     "name": "Shadii.pk",
     "slug": "shadii-pk",
-    "version": "1.0.9",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -15,14 +15,15 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "pk.shadii",
-      "buildNumber": "11",
+      "buildNumber": "12",
       "config": {
         "usesNonExemptEncryption": false
       }
     },
     "android": {
       "package": "pk.shadii",
-      "versionCode": 11,
+      "versionCode": 12,
+
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",

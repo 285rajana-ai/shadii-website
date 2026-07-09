@@ -27,9 +27,7 @@ const CONTACT_CARD_WIDTH = (width - (20 * 2) - 10) / 2;
 
 const CONTACT = {
     general: 'help@shadii.pk',
-    admin: 'admin@shadii.pk',
     support: 'support@shadii.pk',
-    abuse: 'abuse@shadii.pk',
 };
 
 const FAQ_DATA = [
@@ -178,8 +176,6 @@ export default function HelpSupportScreen({ navigation }) {
                         {[
                             { icon: 'help-circle-outline', label: 'General Help', email: CONTACT.general, color: colors.accent },
                             { icon: 'headset', label: 'Support', email: CONTACT.support, color: '#3498DB' },
-                            { icon: 'shield-alert-outline', label: 'Report Abuse', email: CONTACT.abuse, color: colors.error },
-                            { icon: 'account-cog-outline', label: 'Admin', email: CONTACT.admin, color: '#9B59B6' },
                         ].map((c, i) => (
                             <TouchableOpacity
                                 key={i}
@@ -253,6 +249,22 @@ export default function HelpSupportScreen({ navigation }) {
                         </View>
                     ))}
 
+                    {/* Social Media Links */}
+                    <View style={styles.socialContainer}>
+                        <Text style={styles.socialTitle}>Follow Us on Social Media</Text>
+                        <View style={styles.socialRow}>
+                            <TouchableOpacity style={styles.socialIconBtn} onPress={() => Linking.openURL('https://facebook.com/shadii.pk/')} activeOpacity={0.75}>
+                                <MaterialCommunityIcons name="facebook" size={22} color={colors.accent} />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.socialIconBtn} onPress={() => Linking.openURL('https://www.instagram.com/shadii.pk')} activeOpacity={0.75}>
+                                <MaterialCommunityIcons name="instagram" size={22} color={colors.accent} />
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.socialIconBtn} onPress={() => Linking.openURL('https://www.tiktok.com/@shadii.pk')} activeOpacity={0.75}>
+                                <MaterialCommunityIcons name="music-note" size={22} color={colors.accent} />
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+
                     {/* Bottom Links */}
                     <View style={styles.bottomLinks}>
                         <TouchableOpacity onPress={() => Linking.openURL('https://shadii.pk/terms')}>
@@ -323,7 +335,11 @@ const styles = StyleSheet.create({
     faqAText: { fontSize: 14, color: colors.textSecondary, lineHeight: 22 },
     faqDivider: { height: 1, backgroundColor: colors.divider, marginHorizontal: 16 },
 
-    bottomLinks: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 8 },
+    bottomLinks: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 12 },
     linkText: { fontSize: 12, color: colors.accent, fontWeight: '600' },
     linkDot: { color: colors.textMuted, fontSize: 14 },
+    socialContainer: { alignItems: 'center', marginVertical: 24, paddingVertical: 16, borderTopWidth: 1, borderTopColor: colors.divider },
+    socialTitle: { fontSize: 13, fontWeight: '700', color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 },
+    socialRow: { flexDirection: 'row', alignItems: 'center', gap: 20 },
+    socialIconBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 1.5, elevation: 1 },
 });

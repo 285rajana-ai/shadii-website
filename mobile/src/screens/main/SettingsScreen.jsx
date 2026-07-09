@@ -26,9 +26,7 @@ import { API_BASE_URL } from '../../utils/constants';
 
 const CONTACT_EMAILS = {
     general: 'help@shadii.pk',
-    admin: 'admin@shadii.pk',
     support: 'support@shadii.pk',
-    abuse: 'abuse@shadii.pk',
 };
 
 export default function SettingsScreen({ navigation }) {
@@ -273,8 +271,6 @@ export default function SettingsScreen({ navigation }) {
                         <MenuItem icon="lifebuoy" label="Help & Support" onPress={() => navigation.navigate('Help')} />
                         <View style={styles.rowDivider} />
                         <MenuItem icon="email-outline" label="Contact Support" sub={CONTACT_EMAILS.support} onPress={() => openEmail(CONTACT_EMAILS.support)} />
-                        <View style={styles.rowDivider} />
-                        <MenuItem icon="shield-alert-outline" label="Report Abuse" sub={CONTACT_EMAILS.abuse} onPress={() => openEmail(CONTACT_EMAILS.abuse)} />
                         <View style={styles.rowDivider} />
                         <MenuItem icon="file-document-outline" label="Terms of Service" onPress={() => Linking.openURL('https://shadii.pk/terms')} />
                         <View style={styles.rowDivider} />

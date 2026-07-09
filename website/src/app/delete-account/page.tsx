@@ -65,7 +65,7 @@ export default function DeleteAccountPage() {
                     <section className="luxury-card mb-6">
                         <h2 className="text-xl font-bold text-[var(--berry)] mb-4 font-display">Need help?</h2>
                         <p className="text-sm leading-7 text-[var(--muted)] sm:text-base font-medium">
-                            Contact support at <a className="text-[var(--berry)] hover:underline" href="mailto:support@shadii.pk">support@shadii.pk</a> or report abuse at <a className="text-[var(--berry)] hover:underline" href="mailto:abuse@shadii.pk">abuse@shadii.pk</a>.
+                            Contact support at <a className="text-[var(--berry)] hover:underline" href="mailto:support@shadii.pk">support@shadii.pk</a> or help at <a className="text-[var(--berry)] hover:underline" href="mailto:help@shadii.pk">help@shadii.pk</a>.
                         </p>
                     </section>
 

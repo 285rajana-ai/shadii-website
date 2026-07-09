@@ -104,10 +104,10 @@ export const REPORT_REASONS = [
 ];
 
 export const CONTACT_EMAILS = {
-  admin: 'admin@shadii.pk',
+  admin: 'support@shadii.pk',
   help: 'help@shadii.pk',
   support: 'support@shadii.pk',
-  abuse: 'abuse@shadii.pk',
+  abuse: 'support@shadii.pk',
 };
 
 export const APP_NAME = 'Shadii.pk';
