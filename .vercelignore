@@ -1,7 +1,7 @@
 # Ignore everything not needed for Next.js build
 mobile/
 portal/
-admin/
+/admin/
 website/
 node_modules/
 .next/
