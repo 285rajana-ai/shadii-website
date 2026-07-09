@@ -40,3 +40,7 @@ Thumbs.db
 ```
 .vercel
 .env*
+.next/
+.expo/
+*.aab
+*.apk
