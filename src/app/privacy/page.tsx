@@ -5,9 +5,14 @@ import { Footer } from "@/components/layout/Footer";
 import { businessInfo } from "@/lib/business-info";
 
 export const metadata: Metadata = {
-    title: "Privacy Policy | Shadii.pk",
+    title: "Privacy Policy",
     description:
-        "Privacy Policy for Shadii.pk covering account data, verification uploads, messages, payments, and account deletion.",
+        "Privacy Policy for Shadii.pk covering secure account data, verification uploads, encrypted messages, payments, and account deletion.",
+    keywords: [
+        "shadii.pk privacy policy",
+        "matrimonial profile privacy",
+        "secure rishta service data protection"
+    ],
 };
 
 const sections = [

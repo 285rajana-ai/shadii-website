@@ -5,9 +5,14 @@ import { Footer } from "@/components/layout/Footer";
 import { businessInfo } from "@/lib/business-info";
 
 export const metadata: Metadata = {
-    title: "Terms & Conditions | Shadii.pk",
+    title: "Terms and Conditions",
     description:
-        "Terms and Conditions for using the Shadii.pk website and mobile application.",
+        "Terms and Conditions for using the Shadii.pk website and mobile application. Read about eligibility rules, profile verification guidelines, and safety practices.",
+    keywords: [
+        "shadii.pk terms of service",
+        "matrimonial service eligibility rules",
+        "rishta platform safety guidelines"
+    ],
 };
 
 const terms = [

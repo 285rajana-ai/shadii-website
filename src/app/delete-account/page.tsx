@@ -4,9 +4,10 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 
 export const metadata: Metadata = {
-    title: "Account Deletion | Shadii.pk",
+    title: "Account Deletion Request",
     description:
-        "Instructions for deleting your Shadii.pk account and requesting removal of associated data.",
+        "Instructions for deleting your Shadii.pk account and requesting permanent removal of associated profile data.",
+    robots: { index: false, follow: false },
 };
 
 const steps = [

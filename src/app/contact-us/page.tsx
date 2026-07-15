@@ -6,9 +6,16 @@ import { Navbar } from "@/components/layout/Navbar";
 import { businessInfo } from "@/lib/business-info";
 
 export const metadata: Metadata = {
-    title: "Contact Us | Shadii.pk",
+    title: "Contact Us",
     description:
-        "Contact Shadii.pk support for account, payment, privacy, safety, and business inquiries.",
+        "Get in touch with Shadii.pk customer support. Contact us for profile verification, payment assistance, safety audits, and general matrimonial platform help.",
+    keywords: [
+        "contact shadii.pk",
+        "shadii.pk support number",
+        "shadii.pk address",
+        "pakistani rishta contact bureau",
+        "lahore marriage bureau office"
+    ],
 };
 
 const contactCards = [

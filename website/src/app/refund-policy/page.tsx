@@ -5,9 +5,14 @@ import { Navbar } from "@/components/layout/Navbar";
 import { businessInfo } from "@/lib/business-info";
 
 export const metadata: Metadata = {
-    title: "Refund Policy | Shadii.pk",
+    title: "Refund Policy",
     description:
-        "Refund policy for Shadii.pk subscriptions, boosts, paid introductions, and payment disputes.",
+        "Refund policy for Shadii.pk subscriptions, boosts, paid introductions, and payment gateway dispute guidelines.",
+    keywords: [
+        "shadii.pk refund policy",
+        "matrimonial subscription refund",
+        "premium rishta package cancellation"
+    ],
 };
 
 const sections = [
