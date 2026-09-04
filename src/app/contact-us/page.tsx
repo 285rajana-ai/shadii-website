@@ -32,9 +32,14 @@ const contactCards = [
         icon: PhoneIcon,
     },
     {
-        label: "Business Address",
+        label: "Registered Office Address",
         value: businessInfo.businessAddress,
         icon: MapPinIcon,
+    },
+    {
+        label: "Business Affiliation",
+        value: `${businessInfo.legalName} (${businessInfo.businessAffiliation})`,
+        icon: GlobeAltIcon,
     },
     {
         label: "Website",

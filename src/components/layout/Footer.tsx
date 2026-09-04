@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BrandMark } from "../ui/BrandMark";
+import { businessInfo } from "@/lib/business-info";
 
 const columns = [
     {
@@ -28,6 +29,7 @@ const columns = [
             { href: "/privacy-policy", label: "Privacy Policy" },
             { href: "/terms-and-conditions", label: "Terms & Conditions" },
             { href: "/refund-policy", label: "Refund Policy" },
+            { href: "/cancellation-policy", label: "Cancellation Policy" },
         ],
     },
 ];
@@ -56,6 +58,11 @@ export function Footer() {
                             Built for serious Pakistani matchmaking with privacy-first profiles, clean design,
                             and a calmer path from first introduction to family conversation.
                         </p>
+                        <div className="mt-5 space-y-1 text-xs text-[var(--muted)]">
+                            <p className="font-semibold text-[var(--text)]">Office Address:</p>
+                            <p>{businessInfo.businessAddress}</p>
+                            <p className="text-[var(--muted)]/80">Business Affiliation: {businessInfo.businessAffiliation}</p>
+                        </div>
                         <div className="mt-6 flex items-center gap-4">
                             <a
                                 href="https://facebook.com/shadii.pk/"
@@ -124,6 +131,9 @@ export function Footer() {
                         </Link>
                         <Link href="/refund-policy" className="transition-colors hover:text-[var(--text)]">
                             Refund Policy
+                        </Link>
+                        <Link href="/cancellation-policy" className="transition-colors hover:text-[var(--text)]">
+                            Cancellation Policy
                         </Link>
                         <Link href="/contact-us" className="transition-colors hover:text-[var(--text)]">
                             Contact Us
