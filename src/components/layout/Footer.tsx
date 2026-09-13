@@ -62,6 +62,7 @@ export function Footer() {
                             <p className="font-semibold text-[var(--text)]">Office Address:</p>
                             <p>{businessInfo.businessAddress}</p>
                             <p className="text-[var(--muted)]/80">Business Affiliation: {businessInfo.businessAffiliation}</p>
+                            <p className="text-[var(--muted)]/80">NTN: {businessInfo.ntn}</p>
                         </div>
                         <div className="mt-6 flex items-center gap-4">
                             <a

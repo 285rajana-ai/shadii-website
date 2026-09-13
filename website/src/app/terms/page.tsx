@@ -71,6 +71,7 @@ const terms = [
             `Contact number: ${businessInfo.contactNumber}`,
             `Registered office address: ${businessInfo.businessAddress}`,
             `Business affiliation: ${businessInfo.legalName} (${businessInfo.businessAffiliation})`,
+            `National Tax Number (NTN): ${businessInfo.ntn}`,
             `Abuse reports: ${businessInfo.abuseEmail}`,
             `Website: ${businessInfo.website}`,
         ],

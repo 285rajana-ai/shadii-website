@@ -42,6 +42,11 @@ const contactCards = [
         icon: GlobeAltIcon,
     },
     {
+        label: "National Tax Number (NTN)",
+        value: businessInfo.ntn,
+        icon: GlobeAltIcon,
+    },
+    {
         label: "Website",
         value: businessInfo.website,
         href: businessInfo.website,

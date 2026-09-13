@@ -2,6 +2,7 @@ export const businessInfo = {
     brandName: "Shadii.pk",
     legalName: "Shadii.pk",
     businessAffiliation: "Qadri Gold House",
+    ntn: "4174941-3",
     website: "https://shadii.pk",
     supportEmail: "admin@shadii.pk",
     billingEmail: "admin@shadii.pk",

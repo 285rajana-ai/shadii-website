@@ -63,6 +63,7 @@ const sections = [
         items: [
             `Brand Name: ${businessInfo.brandName}`,
             `Legal Entity & Business Affiliation: ${businessInfo.legalName} (A project of ${businessInfo.businessAffiliation})`,
+            `National Tax Number (NTN): ${businessInfo.ntn}`,
             `Registered Office Address: ${businessInfo.businessAddress}`,
             `Direct Phone / Helpline: ${businessInfo.contactNumber}`,
             `Billing & Merchant Queries: ${businessInfo.billingEmail}`,
